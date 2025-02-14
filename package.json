@@ -6,10 +6,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "node": "^22.14.0",
+    "find-cypress-specs": "^1.47.4",
     "typescript": "^5.7.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.13.4"
+  },
   "keywords": [
     "cypress",
     "load-balancing"
