@@ -74,6 +74,10 @@ class SpecMap {
         fs.writeFileSync()
     }
 
+    mergeFiles(masterFileName: string, ...runnerFiles: FilePath[]) {
+
+    }
+
     public prepareForLoadBalancing(filePaths: Array<FilePath>): void {
         filePaths.map(filePath => {
             //Create new entry for files that have not been executed yet since no average exists yet

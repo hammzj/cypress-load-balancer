@@ -1,0 +1,56 @@
+{
+  "src/components/AccessoryPanelBorrowerSection.cy.ts": {
+    "durations": [
+      30000
+    ],
+    "average": 30000
+  },
+  "src/components/AccessoryPanelField.cy.ts": {
+    "durations": [
+      882
+    ],
+    "average": 882
+  },
+  "src/components/AccessoryPanelFilterSection.cy.ts": {
+    "durations": [
+      30000
+    ],
+    "average": 30000
+  },
+  "src/components/AccessoryPanelScenarioLoan.cy.ts": {
+    "durations": [
+      1370000
+    ],
+    "average": 1370000
+  },
+  "src/components/DownloadLockConfirmationButton.cy.ts": {
+    "durations": [
+      250
+    ],
+    "average": 250
+  },
+  "src/components/components/LoanDetailsCard.cy.ts": {
+    "durations": [
+      5000
+    ],
+    "average": 5000
+  },
+  "src/components/ProductIneligibleRow.cy.ts": {
+    "durations": [
+      426
+    ],
+    "average": 426
+  },
+  "src/components/PriceExceptionNotes.cy.ts": {
+    "durations": [
+      6000
+    ],
+    "average": 6000
+  },
+  "src/pages/LoanScenarioPage.cy.ts": {
+    "durations": [
+      22000
+    ],
+    "average": 22000
+  }
+}
