@@ -8,7 +8,7 @@
     "moduleResolution": "NodeNext",
     "baseUrl": "./",
     "paths": {},
-    "types": ["cypress", "mocha", "node"],
+    "types": ["cypress", "mocha", "node", "sinon", "sinon-chai"],
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": false,
@@ -24,6 +24,6 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
   },
-  "include": ["bin/**/*", "src/**/*", "lib/**/*"],
+  "include": ["bin/**/*", "src/**/*"],
   "exclude": ["tests", "cypress", ".cypress_load_balancing"]
 }

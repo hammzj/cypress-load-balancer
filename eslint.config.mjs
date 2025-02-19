@@ -35,6 +35,7 @@ export default [
       "mocha/no-mocha-arrows": 0,
       "mocha/no-setup-in-describe": 0,
       "mocha/no-exclusive-tests": 2,
+      "mocha/consistent-spacing-between-blocks": 0,
       "cypress/no-pause": 2,
       "@typescript-eslint/no-unused-expressions": 1,
       "@typescript-eslint/no-namespace": 0

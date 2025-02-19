@@ -17,22 +17,6 @@ export const CLB_DIRECTORY = getPath();
 export const MAIN_LOAD_BALANCING_MAP_FILE_PATH = getPath("main.json");
 export const MAX_DURATIONS_ALLOWED = Number(process.env.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED || 10);
 
-function createMainDirectory() {
-  const dir = CLB_DIRECTORY;
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-    DEBUG("Created directory for `/.cypress_load_balancing");
-  }
-}
-
-function createMainLoadBalancingMap(opts: { force?: boolean } = {}) {
-  const fileName = MAIN_LOAD_BALANCING_MAP_FILE_PATH;
-  if (!fs.existsSync(fileName) || opts.force == true) {
-    fs.writeFileSync(fileName, JSON.stringify({ e2e: {}, component: {} }));
-    DEBUG("Cypress load balancing file initialized", `Force initialization?`, opts.force);
-  }
-}
-
 /**
  * Adds a new filepath entry to the load balancing map
  * @param loadBalancingMap {LoadBalancingMap}
@@ -41,7 +25,7 @@ function createMainLoadBalancingMap(opts: { force?: boolean } = {}) {
  * @param [opts={}]
  * @param [opts.force=] {boolean} If true, will re-create the entry even if one already exists
  */
-export function createNewEntry(
+function createNewEntry(
   loadBalancingMap: LoadBalancingMap,
   testingType: TestingType,
   filePath: FilePath,
@@ -57,11 +41,34 @@ export function createNewEntry(
   }
 }
 
-export function calculateAverageDuration(durations: number[]): number {
+function calculateAverageDuration(durations: number[]): number {
   return Math.ceil(durations.reduce((acc, t) => acc + Math.abs(t), 0) / (durations.length || 1));
 }
 
-export function initializeLoadBalancingFiles() {
-  createMainDirectory();
-  createMainLoadBalancingMap();
+function initializeLoadBalancingFiles(
+  opts: {
+    forceCreateMainDirectory?: boolean;
+    forceCreateMainLoadBalancingMap?: boolean;
+  } = {}
+) {
+  function createMainDirectory(opts: { force?: boolean } = {}) {
+    const dir = CLB_DIRECTORY;
+    if (!fs.existsSync(dir) || opts.force === true) {
+      fs.mkdirSync(dir);
+      DEBUG("Created directory for `/.cypress_load_balancing", `Force initialization?`, opts.force);
+    }
+  }
+
+  function createMainLoadBalancingMap(opts: { force?: boolean } = {}) {
+    const fileName = MAIN_LOAD_BALANCING_MAP_FILE_PATH;
+    if (!fs.existsSync(fileName) || opts.force === true) {
+      fs.writeFileSync(fileName, JSON.stringify({ e2e: {}, component: {} }));
+      DEBUG("Cypress load balancing file initialized", `Force initialization?`, opts.force);
+    }
+  }
+
+  createMainDirectory({ force: opts.forceCreateMainDirectory });
+  createMainLoadBalancingMap({ force: opts.forceCreateMainLoadBalancingMap });
 }
+
+export { createNewEntry, calculateAverageDuration, initializeLoadBalancingFiles };

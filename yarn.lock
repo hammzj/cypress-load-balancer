@@ -389,6 +389,34 @@
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
+"@sinonjs/commons@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@sinonjs/commons/-/commons-3.0.1.tgz#1029357e44ca901a615585f6d27738dbc89084cd"
+  integrity sha512-K3mCHKQ9sVh8o1C9cxkwxaOmXoAMlDxC1mYyHrjqOWEcBjYr76t96zL2zlj5dUGZ3HSw240X1qgH3Mjf1yJWpQ==
+  dependencies:
+    type-detect "4.0.8"
+
+"@sinonjs/fake-timers@^13.0.1", "@sinonjs/fake-timers@^13.0.2":
+  version "13.0.5"
+  resolved "https://registry.yarnpkg.com/@sinonjs/fake-timers/-/fake-timers-13.0.5.tgz#36b9dbc21ad5546486ea9173d6bea063eb1717d5"
+  integrity sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==
+  dependencies:
+    "@sinonjs/commons" "^3.0.1"
+
+"@sinonjs/samsam@^8.0.1":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@sinonjs/samsam/-/samsam-8.0.2.tgz#e4386bf668ff36c95949e55a38dc5f5892fc2689"
+  integrity sha512-v46t/fwnhejRSFTGqbpn9u+LQ9xJDse10gNnPgAcxgdoCDMXj/G2asWAC/8Qs+BAZDicX+MNZouXT1A7c83kVw==
+  dependencies:
+    "@sinonjs/commons" "^3.0.1"
+    lodash.get "^4.4.2"
+    type-detect "^4.1.0"
+
+"@sinonjs/text-encoding@^0.7.3":
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.3.tgz#282046f03e886e352b2d5f5da5eb755e01457f3f"
+  integrity sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==
+
 "@tsconfig/node10@^1.0.7":
   version "1.0.11"
   resolved "https://registry.yarnpkg.com/@tsconfig/node10/-/node10-1.0.11.tgz#6ee46400685f130e278128c7b38b7e031ff5b2f2"
@@ -408,6 +436,18 @@
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.4.tgz#0b92dcc0cc1c81f6f306a381f28e31b1a56536e9"
   integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
+
+"@types/chai@*":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-5.0.1.tgz#2c3705555cf11f5f59c836a84c44afcfe4e5689d"
+  integrity sha512-5T8ajsg3M/FOncpLYW7sdOcD6yf4+722sze/tc4KQV0P8Z2rAr3SAuHCIkYmYpt8VbcQlnz8SxlOlPQYefe4cA==
+  dependencies:
+    "@types/deep-eql" "*"
+
+"@types/deep-eql@*":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/@types/deep-eql/-/deep-eql-4.0.2.tgz#334311971d3a07121e7eb91b684a605e7eea9cbd"
+  integrity sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==
 
 "@types/estree@^1.0.6":
   version "1.0.6"
@@ -430,6 +470,26 @@
   integrity sha512-ywP2X0DYtX3y08eFVx5fNIw7/uIv8hYUKgXoK8oayJlLnKcRfEYCxWMVE1XagUdVtCJlZT1AU4LXEABW+L1Peg==
   dependencies:
     undici-types "~6.20.0"
+
+"@types/sinon-chai@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@types/sinon-chai/-/sinon-chai-4.0.0.tgz#4d0e540a1498c0e85649088a0c7ed31d7627024f"
+  integrity sha512-Uar+qk3TmeFsUWCwtqRNqNUE7vf34+MCJiQJR5M2rd4nCbhtE8RgTiHwN/mVwbfCjhmO6DiOel/MgzHkRMJJFg==
+  dependencies:
+    "@types/chai" "*"
+    "@types/sinon" "*"
+
+"@types/sinon@*", "@types/sinon@^17.0.3":
+  version "17.0.3"
+  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-17.0.3.tgz#9aa7e62f0a323b9ead177ed23a36ea757141a5fa"
+  integrity sha512-j3uovdn8ewky9kRBG19bOwaZbexJu/XjtkHyjvUgt4xfPFz18dcORIMqnYh66Fx3Powhcr85NT5+er3+oViapw==
+  dependencies:
+    "@types/sinonjs__fake-timers" "*"
+
+"@types/sinonjs__fake-timers@*":
+  version "8.1.5"
+  resolved "https://registry.yarnpkg.com/@types/sinonjs__fake-timers/-/sinonjs__fake-timers-8.1.5.tgz#5fd3592ff10c1e9695d377020c033116cc2889f2"
+  integrity sha512-mQkU2jY8jJEF7YHjHvsQO8+3ughTL1mcnn96igfhONmR+fUPSKIkefQYpSe8bsly2Ep7oQbn/6VG5/9/0qcArQ==
 
 "@types/sinonjs__fake-timers@8.1.1":
   version "8.1.1"
@@ -1281,6 +1341,11 @@ diff@^5.2.0:
   version "5.2.0"
   resolved "https://registry.npmjs.org/diff/-/diff-5.2.0.tgz"
   integrity sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==
+
+diff@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/diff/-/diff-7.0.0.tgz#3fb34d387cd76d803f6eebea67b921dab0182a9a"
+  integrity sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==
 
 dir-glob@^3.0.1:
   version "3.0.1"
@@ -2405,6 +2470,11 @@ jsprim@^2.0.2:
     json-schema "0.4.0"
     verror "1.10.0"
 
+just-extend@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/just-extend/-/just-extend-6.2.0.tgz#b816abfb3d67ee860482e7401564672558163947"
+  integrity sha512-cYofQu2Xpom82S6qD778jBDpwvvy39s1l/hrYij2u9AMdQcGRpaBu6kY4mVhuno5kJVi1DAz4aiphA2WI1/OAw==
+
 keyv@^4.5.4:
   version "4.5.4"
   resolved "https://registry.npmjs.org/keyv/-/keyv-4.5.4.tgz"
@@ -2450,6 +2520,11 @@ locate-path@^6.0.0:
   integrity sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==
   dependencies:
     p-locate "^5.0.0"
+
+lodash.get@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
+  integrity sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==
 
 lodash.merge@^4.6.2:
   version "4.6.2"
@@ -2641,6 +2716,17 @@ natural-compare@^1.4.0:
   resolved "https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz"
   integrity sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==
 
+nise@^6.1.1:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/nise/-/nise-6.1.1.tgz#78ea93cc49be122e44cb7c8fdf597b0e8778b64a"
+  integrity sha512-aMSAzLVY7LyeM60gvBS423nBmIPP+Wy7St7hsb+8/fc1HmeoHJfLO8CKse4u3BtOZvQLJghYPI2i/1WZrEj5/g==
+  dependencies:
+    "@sinonjs/commons" "^3.0.1"
+    "@sinonjs/fake-timers" "^13.0.1"
+    "@sinonjs/text-encoding" "^0.7.3"
+    just-extend "^6.2.0"
+    path-to-regexp "^8.1.0"
+
 node-source-walk@^7.0.1:
   version "7.0.1"
   resolved "https://registry.npmjs.org/node-source-walk/-/node-source-walk-7.0.1.tgz"
@@ -2781,6 +2867,11 @@ path-scurry@^1.11.1:
   dependencies:
     lru-cache "^10.2.0"
     minipass "^5.0.0 || ^6.0.2 || ^7.0.0"
+
+path-to-regexp@^8.1.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-8.2.0.tgz#73990cc29e57a3ff2a0d914095156df5db79e8b4"
+  integrity sha512-TdrF7fW9Rphjq4RjrW0Kp2AW0Ahwu9sRGTkS6bvDi0SCwZlEZYmcfDbEsTz8RVk0EHIS/Vd1bv3JhG+1xZuAyQ==
 
 path-type@^4.0.0:
   version "4.0.0"
@@ -3189,6 +3280,23 @@ simple-bin-help@^1.8.0:
   resolved "https://registry.npmjs.org/simple-bin-help/-/simple-bin-help-1.8.0.tgz"
   integrity sha512-0LxHn+P1lF5r2WwVB/za3hLRIsYoLaNq1CXqjbrs3ZvLuvlWnRKrUjEWzV7umZL7hpQ7xULiQMV+0iXdRa5iFg==
 
+sinon-chai@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/sinon-chai/-/sinon-chai-4.0.0.tgz#77d59d9f4a833f0d3a88249b4637acc72656fdfa"
+  integrity sha512-cWqO7O2I4XfJDWyWElAQ9D/dtdh5Mo0RHndsfiiYyjWnlPzBJdIvjCVURO4EjyYaC3BjV+ISNXCfTXPXTEIEWA==
+
+sinon@^19.0.2:
+  version "19.0.2"
+  resolved "https://registry.yarnpkg.com/sinon/-/sinon-19.0.2.tgz#944cf771d22236aa84fc1ab70ce5bffc3a215dad"
+  integrity sha512-euuToqM+PjO4UgXeLETsfQiuoyPXlqFezr6YZDFwHR3t4qaX0fZUe1MfPMznTL5f8BWrVS89KduLdMUsxFCO6g==
+  dependencies:
+    "@sinonjs/commons" "^3.0.1"
+    "@sinonjs/fake-timers" "^13.0.2"
+    "@sinonjs/samsam" "^8.0.1"
+    diff "^7.0.0"
+    nise "^6.1.1"
+    supports-color "^7.2.0"
+
 slash@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/slash/-/slash-3.0.0.tgz"
@@ -3336,7 +3444,7 @@ stylus-lookup@^6.1.0:
   dependencies:
     commander "^12.1.0"
 
-supports-color@^7.1.0:
+supports-color@^7.1.0, supports-color@^7.2.0:
   version "7.2.0"
   resolved "https://registry.npmjs.org/supports-color/-/supports-color-7.2.0.tgz"
   integrity sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==
@@ -3485,6 +3593,16 @@ type-check@^0.4.0, type-check@~0.4.0:
   integrity sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==
   dependencies:
     prelude-ls "^1.2.1"
+
+type-detect@4.0.8:
+  version "4.0.8"
+  resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-4.0.8.tgz#7646fb5f18871cfbb7749e69bd39a6388eb7450c"
+  integrity sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==
+
+type-detect@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-4.1.0.tgz#deb2453e8f08dcae7ae98c626b13dddb0155906c"
+  integrity sha512-Acylog8/luQ8L7il+geoSxhEkazvkslg7PSNKOX59mbB9cOveP5aq9h74Y7YU8yDpJwetzQQrfIwtf4Wp4LKcw==
 
 type-fest@^0.20.2:
   version "0.20.2"
