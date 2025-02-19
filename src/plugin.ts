@@ -3,6 +3,7 @@ import {
   calculateAverageDuration,
   createNewEntry,
   initializeLoadBalancingFiles,
+  DEBUG,
   MAIN_LOAD_BALANCING_MAP_FILE_PATH,
   MAX_DURATIONS_ALLOWED
 } from "./utils";
@@ -39,6 +40,6 @@ export default function addCypressPlugin(on: NodeEventEmitter["on"]) {
 
     //Overwrite original load balancing file
     fs.writeFileSync(MAIN_LOAD_BALANCING_MAP_FILE_PATH, JSON.stringify(loadBalancingMap));
-    console.debug("Updated load balancing map with new file averages");
+    DEBUG("Updated load balancing map with new file averages");
   });
 }

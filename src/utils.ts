@@ -2,6 +2,13 @@ import path from "path";
 import fs from "node:fs";
 import { FilePath, LoadBalancingMap, TestingType } from "./types";
 
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function DEBUG(...args: any[]) {
+  if (process.env.CYPRESS_LOAD_BALANCER_DEBUG) {
+    console.debug("cypress-load-balancer", ...args);
+  }
+}
+
 function getPath(...pathNames: string[]) {
   return path.join(process.cwd(), ".cypress_load_balancing", ...pathNames);
 }
@@ -14,7 +21,7 @@ function createMainDirectory() {
   const dir = CLB_DIRECTORY;
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
-    console.debug("Created directory for `/.cypress_load_balancing");
+    DEBUG("Created directory for `/.cypress_load_balancing");
   }
 }
 
@@ -22,7 +29,7 @@ function createMainLoadBalancingMap(opts: { force?: boolean } = {}) {
   const fileName = MAIN_LOAD_BALANCING_MAP_FILE_PATH;
   if (!fs.existsSync(fileName) || opts.force == true) {
     fs.writeFileSync(fileName, JSON.stringify({ e2e: {}, component: {} }));
-    console.debug("Cypress load balancing file initialized", `Force initialization?`, opts.force);
+    DEBUG("Cypress load balancing file initialized", `Force initialization?`, opts.force);
   }
 }
 
@@ -44,9 +51,9 @@ export function createNewEntry(
 ) {
   if (loadBalancingMap[testingType][filePath] == null || opts.force === true) {
     loadBalancingMap[testingType][filePath] = { stats: { durations: [], average: 0 } };
-    console.debug(`Added new entry for file in load balancer object for "${testingType}" type tests:`, filePath);
+    DEBUG(`Added new entry for file in load balancer object for "${testingType}" type tests:`, filePath);
   } else {
-    console.debug(`File already exists in load balancer for "${testingType}" type tests:`, filePath);
+    DEBUG(`File already exists in load balancer for "${testingType}" type tests:`, filePath);
   }
 }
 

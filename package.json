@@ -1,7 +1,16 @@
 {
   "name": "cypress-load-balancer",
   "version": "0.0.1",
+  "author": "Zachary J. Hamm",
+  "license": "MIT",
+  "keywords": [
+    "cypress",
+    "load-balancing"
+  ],
   "main": "index.js",
+  "bin": {
+    "cypress-load-balancer": "./bin/performLoadBalancing.js"
+  },
   "scripts": {
     "dev:format": "prettier --write .",
     "dev:lint": "eslint . && prettier --check .",
@@ -11,7 +20,9 @@
   },
   "dependencies": {
     "deepmerge": "^4.3.1",
-    "find-cypress-specs": "^1.47.4"
+    "find-cypress-specs": "^1.47.4",
+    "ts-node": "^10.9.2",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
@@ -29,11 +40,5 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.1"
-  },
-  "keywords": [
-    "cypress",
-    "load-balancing"
-  ],
-  "author": "Zachary J. Hamm",
-  "license": "MIT"
+  }
 }
