@@ -4,7 +4,6 @@
     "target": "ESNext",
     "module": "ESNext",
     "rootDir": "./",
-    "outDir": "./dist",
     "moduleResolution": "node10",
     "baseUrl": "./",
     "paths": {},
@@ -13,6 +12,7 @@
       "mocha",
       "node"
     ],
+    "noEmit": true,
     "resolveJsonModule": true,
     "allowJs": false,
     "checkJs": false,
@@ -28,7 +28,7 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
   },
-  "exclude": [
-    "tests"
+  "include": [
+    "tests/**/*"
   ]
 }
