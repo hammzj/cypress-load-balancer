@@ -1,34 +1,8 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    /* Visit https://aka.ms/tsconfig to read more about this file */
-    "target": "ESNext",
-    "module": "ESNext",
-    "rootDir": "./",
-    "moduleResolution": "node10",
-    "baseUrl": "./",
-    "paths": {},
-    "types": [
-      "cypress",
-      "mocha",
-      "node"
-    ],
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "allowJs": false,
-    "checkJs": false,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipDefaultLibCheck": true,
-    "skipLibCheck": true
+    "noEmit": true
   },
-  "include": [
-    "tests/**/*"
-  ]
+  "include": ["tests/**/*"],
+  "exclude": ["cypress"]
 }

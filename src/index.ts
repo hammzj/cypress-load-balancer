@@ -1,4 +1,4 @@
 import addCypressPlugin from "./plugin";
-import performLoadBalancing from "./load.balancer";
+import performLoadBalancing from "./loadBalancer.js";
 
-export {addCypressPlugin, performLoadBalancing}
+export { addCypressPlugin, performLoadBalancing };

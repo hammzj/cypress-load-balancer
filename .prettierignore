@@ -1,0 +1,11 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Test Resources
+**/cypress/fixtures
+**/tests/fixtures
+
+.cypress_load_balancing
+.idea

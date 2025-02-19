@@ -3,27 +3,37 @@
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "check:tests": "tsc -p tsconfig.test.json",
-    "build": "tsc",
-    "test": "mocha"
+    "dev:format": "prettier --write .",
+    "dev:lint": "eslint . && prettier --check .",
+    "dev:check:tests": "tsc -p tsconfig.test.json",
+    "dev:build": "tsc",
+    "test:mocha": "mocha"
   },
   "dependencies": {
     "deepmerge": "^4.3.1",
     "find-cypress-specs": "^1.47.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.20.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.4",
     "chai": "^5.2.0",
     "cypress": "^14.0.3",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-cypress": "^4.1.0",
+    "eslint-plugin-mocha": "^10.5.0",
+    "globals": "^15.15.0",
     "mocha": "^11.1.0",
+    "prettier": "^3.5.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1"
   },
   "keywords": [
     "cypress",
     "load-balancing"
   ],
-  "author": "",
+  "author": "Zachary J. Hamm",
   "license": "MIT"
 }

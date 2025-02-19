@@ -1,0 +1,32 @@
+name: TypeScript checking and linting
+on:
+  pull_request:
+
+env:
+  node-version: 18.20.x
+
+jobs:
+  tsc:
+    name: tsc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+      - run: |
+          yarn install
+          yarn run dev:check:tests
+          yarn run dev:build
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+      - run: |
+          yarn install
+          yarn run dev:lint
