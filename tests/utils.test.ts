@@ -1,6 +1,6 @@
 import sinon from "sinon";
 import fs from "node:fs";
-import * as utils from "../src/utils";
+import utils from "../src/utils";
 
 describe("Utils", function () {
   beforeEach(function () {});

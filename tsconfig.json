@@ -2,10 +2,10 @@
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
     "target": "ESNext",
-    "module": "NodeNext",
+    "module": "ESNext",
     "rootDir": "./",
     "outDir": "./dist",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "bundler",
     "baseUrl": "./",
     "paths": {},
     "types": ["cypress", "mocha", "node", "sinon", "sinon-chai"],

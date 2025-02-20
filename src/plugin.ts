@@ -1,17 +1,10 @@
 import fs from "node:fs";
-import {
-  calculateAverageDuration,
-  createNewEntry,
-  initializeLoadBalancingFiles,
-  DEBUG,
-  MAIN_LOAD_BALANCING_MAP_FILE_PATH,
-  MAX_DURATIONS_ALLOWED
-} from "./utils";
+import utils from "./utils";
 import { LoadBalancingMap, TestingType } from "./types";
 
 const shrinkToFit = (arr: number[]): number[] => {
-  if (arr.length > MAX_DURATIONS_ALLOWED) {
-    arr.splice(0, arr.length - MAX_DURATIONS_ALLOWED);
+  if (arr.length > utils.MAX_DURATIONS_ALLOWED) {
+    arr.splice(0, arr.length - utils.MAX_DURATIONS_ALLOWED);
   }
   return arr;
 };
@@ -20,26 +13,26 @@ const shrinkToFit = (arr: number[]): number[] => {
 export default function addCypressLoadBalancerPlugin(on: NodeEventEmitter["on"]) {
   on("after:run", (results) => {
     //Prep load balancing file if not existing and read it
-    initializeLoadBalancingFiles();
+    utils. initializeLoadBalancingFiles();
     const loadBalancingMap = JSON.parse(
-      fs.readFileSync(MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString()
+      fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString()
     ) as LoadBalancingMap;
 
     for (const run of results.runs) {
       const testingType = results.config.testingType as TestingType;
       const fileName = run.spec.relative;
-      createNewEntry(loadBalancingMap, testingType, fileName);
+      utils.createNewEntry(loadBalancingMap, testingType, fileName);
 
       loadBalancingMap[testingType][fileName].stats.durations.push(run.stats.duration);
       shrinkToFit(loadBalancingMap[testingType][fileName].stats.durations);
 
-      loadBalancingMap[testingType][fileName].stats.average = calculateAverageDuration(
+      loadBalancingMap[testingType][fileName].stats.average = utils.calculateAverageDuration(
         loadBalancingMap[testingType][fileName].stats.durations
       );
     }
 
     //Overwrite original load balancing file
-    fs.writeFileSync(MAIN_LOAD_BALANCING_MAP_FILE_PATH, JSON.stringify(loadBalancingMap));
-    DEBUG("Updated load balancing map with new file averages");
+    fs.writeFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH, JSON.stringify(loadBalancingMap));
+    utils.DEBUG("Updated load balancing map with new file averages");
   });
 }

@@ -1,11 +1,11 @@
 import fs from "node:fs";
-import {createNewEntry, initializeLoadBalancingFiles, MAIN_LOAD_BALANCING_MAP_FILE_PATH} from "./utils";
+import utils from "./utils";
 import {FilePath, Runners, TestingType, LoadBalancingMap} from "./types";
 
 function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePaths: Array<FilePath> = []) {
     if (filePaths.length > 0) {
-        filePaths.map((fp) => createNewEntry(loadBalancingMap, testingType, fp));
-        fs.writeFileSync(MAIN_LOAD_BALANCING_MAP_FILE_PATH, JSON.stringify(loadBalancingMap));
+        filePaths.map((fp) => utils.createNewEntry(loadBalancingMap, testingType, fp));
+        fs.writeFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH, JSON.stringify(loadBalancingMap));
     }
 }
 
@@ -20,8 +20,8 @@ export default function performLoadBalancing(
         runners[i].push(filePath);
     };
 
-    initializeLoadBalancingFiles();
-    const loadBalancingMap = JSON.parse(fs.readFileSync(MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
+    utils.initializeLoadBalancingFiles();
+    const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
     prepareFiles(loadBalancingMap, testingType, filePaths);
     filePaths
         .sort((a, b) => loadBalancingMap[testingType][a].stats.average - loadBalancingMap[testingType][b].stats.average)

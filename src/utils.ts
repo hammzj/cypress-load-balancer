@@ -71,7 +71,7 @@ function initializeLoadBalancingFiles(
     createMainLoadBalancingMap({force: opts.forceCreateMainLoadBalancingMap});
 }
 
-export {
+export default {
     CLB_DIRECTORY,
     MAIN_LOAD_BALANCING_MAP_FILE_PATH,
     MAX_DURATIONS_ALLOWED,
