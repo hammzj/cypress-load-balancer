@@ -1,6 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/mocharc.json",
-  "require": ["tsx", "./tests/support/chai.ts"],
-  "spec": "tests/**/*",
-  "extension": [".test.ts"]
+  "require": [
+    "tsx",
+    "./tests/support/chai.ts"
+  ],
+  "spec": "tests/**/*.test.ts"
 }

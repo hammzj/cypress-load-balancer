@@ -17,7 +17,7 @@ const shrinkToFit = (arr: number[]): number[] => {
 };
 
 //TODO: consider making the user specify the TestingType
-export default function addCypressPlugin(on: NodeEventEmitter["on"]) {
+export default function addCypressLoadBalancerPlugin(on: NodeEventEmitter["on"]) {
   on("after:run", (results) => {
     //Prep load balancing file if not existing and read it
     initializeLoadBalancingFiles();

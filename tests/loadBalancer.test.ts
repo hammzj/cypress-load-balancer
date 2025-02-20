@@ -1,128 +1,101 @@
 import sinon from "sinon";
-import * as utils from "../src/utils";
+import utils from '../src/utils'
 import performLoadBalancing from "../src/loadBalancer";
 import fs from "node:fs";
+import {getFixture} from "./support/utils";
 
-let initializeLoadBalancingFilesStub: sinon.SinonStub;
+
+const stubReadLoadBalancerFile = (returns: any = {
+    e2e: {},
+    component: {}
+}) => {
+    sinon.stub(fs, "readFileSync")
+        .withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH)
+        .returns(
+            JSON.stringify(returns))
+}
 
 describe("Load balancing", function () {
-  beforeEach(function () {
-    //TODO: TEMPORARY
-    sinon.stub(fs, "mkdirSync");
-    sinon.stub(fs, "writeFileSync");
-    //  initializeLoadBalancingFilesStub = sinon.stub(utils, 'initializeLoadBalancingFiles')
-  });
-  afterEach(function () {
-    sinon.restore();
-  });
-
-  context("preparation", function () {
-    it("runs initialization", function () {
-      performLoadBalancing(3, "e2e", []);
-      expect(initializeLoadBalancingFilesStub.calledOnce).to.be.true;
-    });
-
-    it("creates an empty file entry if one does not exist", function () {});
-  });
-
-  context("balancing files", function () {
     beforeEach(function () {
-      //TODO: move to a fixture file
-      this.loadBalancingMap = {
-        //SLOWEST TO FASTEST: "zoom.test.ts", "baz.test.ts", "bar.test.ts", "foo.test.ts", "wee.test.ts", "tuu.test.ts"
-        e2e: {
-          "foo.test.ts": {
-            stats: {
-              durations: [100, 200, 300],
-              average: 200
-            }
-          },
-          "bar.test.ts": {
-            stats: {
-              durations: [300],
-              average: 300
-            }
-          },
-          "baz.test.ts": {
-            stats: {
-              durations: [1000, 1000, 100, 1000],
-              average: 1000
-            }
-          },
-          "wee.test.ts": {
-            stats: {
-              durations: [25, 50, 75, 100],
-              average: 63
-            }
-          },
-          "zoom.test.ts": {
-            stats: {
-              durations: [4000, 4000, 4000],
-              average: 4000
-            }
-          },
-          "tuu.test.ts": {
-            stats: {
-              durations: [1, 1, 1, 1, 1, 1],
-              average: 1
-            }
-          }
-        },
-
-        //SLOWEST TO FASTEST: "bee.test.ts", "foo.test.ts"
-        component: {
-          "foo.test.ts": {
-            stats: {
-              durations: [50],
-              average: 50
-            },
-            "bee.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100
-              }
-            }
-          }
-        }
-      };
-
-      sinon.stub(fs, "readFileSync").returns(JSON.stringify(this.loadBalancingMap));
+        this.initializeLoadBalancingFilesStub = sinon.stub(utils, 'initializeLoadBalancingFiles')
+    });
+    afterEach(function () {
+        sinon.restore();
     });
 
-    it("can differentiate specs between e2e and component", function () {});
-
-    it("balances files per runner equally", function () {
-      const filePaths = Object.keys(this.loadBalancingMap.e2e);
-      const runners = performLoadBalancing(3, "e2e", filePaths);
-      //SLOWEST TO FASTEST: "zoom.test.ts", "baz.test.ts", "bar.test.ts", "foo.test.ts", "wee.test.ts", "tuu.test.ts"
-      expect(runners).to.have.lengthOf(3);
-      expect(runners[0]).to.deep.eq(["zoom.test.ts", "foo.test.ts"]);
-      expect(runners[1]).to.deep.eq(["baz.test.ts", "wee.test.ts"]);
-      expect(runners[2]).to.deep.eq(["bar.test.ts", "tuu.test.ts"]);
+    context("preparation", function () {
+        it("runs file initialization", function () {
+            stubReadLoadBalancerFile()
+            performLoadBalancing(3, "e2e", []);
+            expect(this.initializeLoadBalancingFilesStub.calledOnce).to.be.true;
+        });
     });
 
-    it("can handle balancing runners when files cannot be balanced equally across them", function () {
-      const filePaths = Object.keys(this.loadBalancingMap.e2e);
-      const runners = performLoadBalancing(4, "e2e", filePaths);
-      //SLOWEST TO FASTEST: "zoom.test.ts", "baz.test.ts", "bar.test.ts", "foo.test.ts", "wee.test.ts", "tuu.test.ts"
-      expect(runners[0]).to.deep.eq(["zoom.test.ts", "wee.test.ts"]);
-      expect(runners[1]).to.deep.eq(["baz.test.ts", "tuu.test.ts"]);
-      expect(runners[2]).to.deep.eq(["bar.test.ts"]);
-      expect(runners[3]).to.deep.eq(["foo.test.ts"]);
-    });
+    context("balancing files", function () {
+        beforeEach(function () {
+            //SLOWEST TO FASTEST: "zoom.test.ts", "baz.test.ts", "bar.test.ts", "foo.test.ts", "wee.test.ts", "tuu.test.ts"
+            const fixture = getFixture('load-balancing-map.json', {parseJSON: true})
+            stubReadLoadBalancerFile(fixture)
 
-    it("only includes files given to it and does not consider others in the load balancing map", function () {
-      const runners = performLoadBalancing(2, "e2e", ["zoom.test.ts", "bar.test.ts", "tuu.test.ts"]);
-      //SLOWEST TO FASTEST: "zoom.test.ts", "baz.test.ts", "bar.test.ts", "foo.test.ts", "wee.test.ts", "tuu.test.ts"
-      expect(runners[0]).to.deep.eq(["zoom.test.ts", "tuu.test.ts"]);
-      expect(runners[1]).to.deep.eq(["bar.test.ts"]);
-    });
+            this.loadBalancingMap = fixture
+        });
 
-    it("can handle less files than runners", function () {
-      const filePaths = Object.keys(this.loadBalancingMap.e2e);
-      const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths);
-      expect(runners[0]).to.have.lengthOf(1);
-      expect(runners[runners.length - 1]).to.have.lengthOf(0);
+        it("sorts files slowest to fastest", function () {
+            sinon.stub(fs, "writeFileSync")
+            const filePaths = Object.keys(this.loadBalancingMap.e2e);
+            const runners = performLoadBalancing(1, "e2e", filePaths);
+            expect(runners[0]).to.deep.eq(["zoom.test.ts", "baz.test.ts", "bar.test.ts", "foo.test.ts", "wee.test.ts", "tuu.test.ts"]);
+        });
+
+        it("balances files per runner equally", function () {
+            sinon.stub(fs, "writeFileSync")
+            const filePaths = Object.keys(this.loadBalancingMap.e2e);
+            const runners = performLoadBalancing(3, "e2e", filePaths);
+            expect(runners).to.have.lengthOf(3);
+            expect(runners[0]).to.deep.eq(["zoom.test.ts", "foo.test.ts"]);
+            expect(runners[1]).to.deep.eq(["baz.test.ts", "wee.test.ts"]);
+            expect(runners[2]).to.deep.eq(["bar.test.ts", "tuu.test.ts"]);
+        });
+
+        it("can handle balancing runners when files cannot be balanced equally across them", function () {
+            sinon.stub(fs, "writeFileSync")
+            const filePaths = Object.keys(this.loadBalancingMap.e2e);
+            const runners = performLoadBalancing(4, "e2e", filePaths);
+            expect(runners[0]).to.deep.eq(["zoom.test.ts", "wee.test.ts"]);
+            expect(runners[1]).to.deep.eq(["baz.test.ts", "tuu.test.ts"]);
+            expect(runners[2]).to.deep.eq(["bar.test.ts"]);
+            expect(runners[3]).to.deep.eq(["foo.test.ts"]);
+        });
+
+        it("only includes files given to it and does not consider others in the load balancing map", function () {
+            sinon.stub(fs, "writeFileSync")
+            const runners = performLoadBalancing(2, "e2e", ["zoom.test.ts", "bar.test.ts", "tuu.test.ts"]);
+            expect(runners[0]).to.deep.eq(["zoom.test.ts", "tuu.test.ts"]);
+            expect(runners[1]).to.deep.eq(["bar.test.ts"]);
+        });
+
+        it("can handle less files than runners", function () {
+            sinon.stub(fs, "writeFileSync")
+            const filePaths = Object.keys(this.loadBalancingMap.e2e);
+            const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths);
+            expect(runners[0]).to.have.lengthOf(1);
+            expect(runners[runners.length - 1]).to.have.lengthOf(0);
+        });
+
+        it("can differentiate specs between e2e and component", function () {
+            sinon.stub(fs, "writeFileSync")
+            const e2eRunners = performLoadBalancing(1, "e2e", ["foo.test.ts", "bar.test.ts"]);
+            const componentRunners = performLoadBalancing(1, "component", ["foo.test.ts", "bee.test.ts"]);
+            expect(e2eRunners[0]).to.deep.eq(["bar.test.ts", "foo.test.ts"]);
+            expect(componentRunners[0]).to.deep.eq(["foo.test.ts", "bee.test.ts"]);
+        });
+
+        it('can handle files that have not been run (or do not exist in map) yet', function () {
+            const stub = sinon.stub(fs, "writeFileSync").withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH)
+            const runners = performLoadBalancing(1, "e2e", ["foo.test.ts", "newFile.test.ts"]);
+            expect(runners[0]).to.deep.eq(["foo.test.ts", "newFile.test.ts"]);
+            expect(stub.calledOnce).to.be.true
+            expect(JSON.parse(stub.firstCall.args[1] as string).e2e).to.haveOwnProperty("newFile.test.ts")
+        })
     });
-  });
 });

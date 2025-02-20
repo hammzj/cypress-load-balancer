@@ -1,0 +1,85 @@
+{
+  "e2e": {
+    "foo.test.ts": {
+      "stats": {
+        "durations": [
+          100,
+          200,
+          300
+        ],
+        "average": 200
+      }
+    },
+    "bar.test.ts": {
+      "stats": {
+        "durations": [
+          300
+        ],
+        "average": 300
+      }
+    },
+    "baz.test.ts": {
+      "stats": {
+        "durations": [
+          1000,
+          1000,
+          100,
+          1000
+        ],
+        "average": 1000
+      }
+    },
+    "wee.test.ts": {
+      "stats": {
+        "durations": [
+          25,
+          50,
+          75,
+          100
+        ],
+        "average": 63
+      }
+    },
+    "zoom.test.ts": {
+      "stats": {
+        "durations": [
+          4000,
+          4000,
+          4000
+        ],
+        "average": 4000
+      }
+    },
+    "tuu.test.ts": {
+      "stats": {
+        "durations": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "average": 1
+      }
+    }
+  },
+  "component": {
+    "foo.test.ts": {
+      "stats": {
+        "durations": [
+          50
+        ],
+        "average": 50
+      },
+      "bee.test.ts": {
+        "stats": {
+          "durations": [
+            100
+          ],
+          "average": 100
+        }
+      }
+    }
+  }
+}
