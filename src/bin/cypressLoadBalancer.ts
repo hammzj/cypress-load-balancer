@@ -3,7 +3,7 @@ import "ts-node/register";
 import yargs from "yargs/yargs";
 // @ts-expect-error There are no types for this package
 import { getSpecs } from "find-cypress-specs";
-import performLoadBalancing from "../loadBalancer.js";
+import performLoadBalancing from "../loadBalancer";
 import { Runners } from "../types";
 
 //TODO: add type later

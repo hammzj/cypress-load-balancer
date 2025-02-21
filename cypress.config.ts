@@ -1,5 +1,5 @@
 import { defineConfig } from "cypress";
-import { addCypressLoadBalancerPlugin } from "./src";
+import { addCypressLoadBalancerPlugin } from "./";
 
 export default defineConfig({
   e2e: {

@@ -1,0 +1,41 @@
+name: Cypress testing
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      runners:
+        type: number
+        description: Number of runners to use for parallelization
+
+
+env:
+  runners: ${{ inputs.runners || 3}}
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+
+      - name: Download the load balancer file
+        uses: actions/download-artifact@v4
+        with:
+          name: my-artifact
+          path: .cypress_load_balancer
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+      - run: yarn build
+
+      - run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e -s))" >> $GITHUB_OUTPUT
+
+      - name: Cypress run e2e tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: electron
+          build: yarn build

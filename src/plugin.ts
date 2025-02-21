@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import utils from "./utils.js";
+import utils from "./utils";
 import { LoadBalancingMap, TestingType } from "./types";
 import CypressRunResult = CypressCommandLine.CypressRunResult;
 import CypressFailedRunResult = CypressCommandLine.CypressFailedRunResult;
