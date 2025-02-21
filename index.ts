@@ -1,3 +1,3 @@
-import {performLoadBalancing, addCypressLoadBalancerPlugin} from "./src";
+import { performLoadBalancing, addCypressLoadBalancerPlugin } from "./src";
 
-export {performLoadBalancing, addCypressLoadBalancerPlugin};
+export { performLoadBalancing, addCypressLoadBalancerPlugin };

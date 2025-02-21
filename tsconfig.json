@@ -5,7 +5,9 @@
     "module": "ESNext",
     "rootDir": "./",
     "outDir": "./dist",
-    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {},
     "types": ["cypress", "mocha", "node", "sinon", "sinon-chai"],
@@ -24,6 +26,6 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
   },
-  "include": ["bin/**/*", "src/**/*"],
-  "exclude": ["tests", "cypress", ".cypress_load_balancing"]
+  "include": ["index.ts", "bin/**/*", "src/**/*"],
+  "exclude": ["tests", "cypress", ".cypress_load_balancing", "node_modules", "dist"]
 }

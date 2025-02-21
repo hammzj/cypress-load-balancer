@@ -13,7 +13,7 @@ const shrinkToFit = (arr: number[]): number[] => {
 export default function addCypressLoadBalancerPlugin(on: NodeEventEmitter["on"]) {
   on("after:run", (results) => {
     //Prep load balancing file if not existing and read it
-    utils. initializeLoadBalancingFiles();
+    utils.initializeLoadBalancingFiles();
     const loadBalancingMap = JSON.parse(
       fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString()
     ) as LoadBalancingMap;

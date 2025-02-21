@@ -8,7 +8,14 @@
     "load-balancing"
   ],
   "type": "module",
-  "main": "index.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/mjs/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "bin": {
     "cypress-load-balancer": "./bin/performLoadBalancing.js"
   },
@@ -16,7 +23,8 @@
     "dev:format": "prettier --write .",
     "dev:lint": "eslint . && prettier --check .",
     "dev:check:tests": "tsc -p tsconfig.test.json",
-    "dev:build": "tsc",
+    "dev:check": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup",
     "test:mocha": "mocha"
   },
   "dependencies": {
@@ -40,7 +48,6 @@
     "globals": "^15.15.0",
     "mocha": "^11.1.0",
     "prettier": "^3.5.1",
-    "proxyquire": "^2.1.3",
     "sinon": "^19.0.2",
     "sinon-chai": "^4.0.0",
     "tsx": "^4.19.2",
