@@ -2,13 +2,15 @@
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
     "target": "ESNext",
-    "module": "NodeNext",
+    "module": "ESNext",
     "rootDir": "./",
     "outDir": "./dist",
-    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {},
-    "types": ["cypress", "mocha", "node"],
+    "types": ["cypress", "chai", "chai-string", "mocha", "node", "sinon", "sinon-chai"],
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": false,
@@ -24,6 +26,6 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
   },
-  "include": ["bin/**/*", "src/**/*", "lib/**/*"],
-  "exclude": ["tests", "cypress", ".cypress_load_balancing"]
+  "include": ["index.ts", "src/**/*"],
+  "exclude": ["tests", "cypress", ".cypress-load-balancer", "node_modules", "dist"]
 }

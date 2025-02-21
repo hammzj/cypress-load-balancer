@@ -1,23 +1,48 @@
 {
   "name": "cypress-load-balancer",
   "version": "0.0.1",
-  "main": "index.js",
+  "author": "Zachary J. Hamm",
+  "license": "MIT",
+  "keywords": [
+    "cypress",
+    "load-balancing"
+  ],
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/mjs/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "bin": {
+    "cypress-load-balancer": "./dist/cjs/src/bin/cypressLoadBalancer.js"
+  },
   "scripts": {
     "dev:format": "prettier --write .",
     "dev:lint": "eslint . && prettier --check .",
     "dev:check:tests": "tsc -p tsconfig.test.json",
-    "dev:build": "tsc",
+    "dev:check": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup",
     "test:mocha": "mocha"
   },
   "dependencies": {
     "deepmerge": "^4.3.1",
-    "find-cypress-specs": "^1.47.4"
+    "find-cypress-specs": "^1.47.4",
+    "ts-node": "^10.9.2",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@types/chai-string": "^1.4.5",
+    "@types/cypress": "^1.1.6",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.4",
+    "@types/sinon": "^17.0.3",
+    "@types/sinon-chai": "^4.0.0",
+    "@types/yargs": "^17.0.33",
     "chai": "^5.2.0",
+    "chai-string": "^1.5.0",
     "cypress": "^14.0.3",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.1",
@@ -26,14 +51,10 @@
     "globals": "^15.15.0",
     "mocha": "^11.1.0",
     "prettier": "^3.5.1",
+    "sinon": "^19.0.2",
+    "sinon-chai": "^4.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.1"
-  },
-  "keywords": [
-    "cypress",
-    "load-balancing"
-  ],
-  "author": "Zachary J. Hamm",
-  "license": "MIT"
+  }
 }
