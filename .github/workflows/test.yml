@@ -1,4 +1,4 @@
-name: TypeScript checking and linting
+name: Tests
 on:
   pull_request:
 
