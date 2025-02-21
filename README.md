@@ -1,4 +1,10 @@
+TODO
+
 # cypress-load-balancer
+
+Environment Variables:
+`CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
+durations once the maximum limit has been reached. **Defaulted to 10**.
 
 ## Setup
 
@@ -15,8 +21,36 @@ yarn add -D cypress-load-balancer
 Add the following to your `.gitignore` and other ignore files:
 
 ```
-.cypress-load-balancer
+.cypress_load_balancer
 ```
+
+In your Cypress configuration file, add the plugin separately to your `e2e` configuration and also `component`
+configuration, if you have one.
+This will register load balancing for separate testing types
+
+```js
+import { addCypressLoadBalancerPlugin } from "cypress-load-balancer";
+
+defineConfig({
+  e2e: {
+    setupNodeEvents(on, config) {
+      addCypressLoadBalancerPlugin(on);
+    }
+  },
+  component: {
+    setupNodeEvents(on, config) {
+      addCypressLoadBalancerPlugin(on);
+    }
+  }
+});
+```
+
+**Currently, this only supports one configuration. I am considering how to handle multiple configs later on.**
+
+Now, when you run your suite, it will calculate the average for each file based on previous durations and output it into
+`.cypress_load_balancer/main.json`. This is the load balancing map file.
+
+TODO
 
 ## Development
 
