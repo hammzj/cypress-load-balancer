@@ -1,7 +1,7 @@
-import { LoadBalancingMap } from "./types";
 import fs from "node:fs";
-import utils from "./utils";
 import merge from "deepmerge";
+import utils from "./utils.js";
+import { LoadBalancingMap } from "./types";
 
 export function mergeLoadBalancingFiles(orig: LoadBalancingMap, ...extraMaps: LoadBalancingMap[]) {
   const mergedFile = merge.all([orig, ...extraMaps]);

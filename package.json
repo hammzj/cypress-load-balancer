@@ -7,7 +7,6 @@
     "cypress",
     "load-balancing"
   ],
-  "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/mjs/index.js",
   "exports": {
@@ -17,7 +16,7 @@
     }
   },
   "bin": {
-    "cypress-load-balancer": "./bin/performLoadBalancing.js"
+    "cypress-load-balancer": "./dist/cjs/src/bin/performLoadBalancing.js"
   },
   "scripts": {
     "dev:format": "prettier --write .",
@@ -39,6 +38,7 @@
     "@types/node": "^22.13.4",
     "@types/sinon": "^17.0.3",
     "@types/sinon-chai": "^4.0.0",
+    "@types/yargs": "^17.0.33",
     "chai": "^5.2.0",
     "cypress": "^14.0.3",
     "eslint": "^9.0.0",

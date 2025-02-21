@@ -1,10 +1,14 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-require-imports */
-require("ts-node/register");
-const yargs = require("yargs/yargs");
-const { getSpecs } = require("find-cypress-specs");
-const { default: performLoadBalancing } = require("../src/loadBalancer");
-const argv = yargs(process.argv.slice(2))
+import "ts-node/register";
+import yargs from "yargs/yargs";
+// @ts-expect-error There are no types for this package
+import { getSpecs } from "find-cypress-specs";
+import performLoadBalancing from "../loadBalancer.js";
+import { Runners } from "../types";
+
+//TODO: add type later
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+const argv: any = yargs(process.argv.slice(2))
   .option("runners", {
     alias: "r",
     type: "number",
@@ -65,10 +69,10 @@ const argv = yargs(process.argv.slice(2))
   )
   .parse();
 
-let output = performLoadBalancing(argv.runners, argv.testingType, argv.filePaths);
+let output: Runners | string[] = performLoadBalancing(argv.runners, argv.testingType, argv.filePaths);
 
 //Transform output
 if (argv.specPattern) {
   output = output.map((runner) => (runner.length > 0 ? `--spec ${runner.join(",")}` : ""));
 }
-console.log(output);
+console.log(JSON.stringify(output));

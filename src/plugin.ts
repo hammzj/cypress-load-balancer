@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import utils from "./utils";
+import utils from "./utils.js";
 import { LoadBalancingMap, TestingType } from "./types";
 
 const shrinkToFit = (arr: number[]): number[] => {
