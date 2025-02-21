@@ -52,6 +52,49 @@ Now, when you run your suite, it will calculate the average for each file based 
 
 TODO
 
+## Executables
+
+### `cypress-load-balancer`
+
+This can be executed with `npx cypress-load-balancer`:
+```
+$: npx cypress-load-balancer
+
+Options:
+      --version          Show version number                           [boolean]
+  -r, --runners          The count of executable runners to use
+                                                             [number] [required]
+  -t, --testingType      The testing type to use for load balancing
+                               [string] [required] [choices: "e2e", "component"]
+  -F, --filePaths        An array of file paths relative to the current working
+                         directory to use for load balancing. Overrides finding
+                         Cypress specs by configuration file.
+                         If left empty, it will utilize a Cypress configuration
+                         file to find test files to use for load balancing.
+                         The Cypress configuration file is implied to exist at
+                         the base of the directory unless set by
+                         "process.env.CYPRESS_CONFIG_FILE" [array] [default: []]
+      --getSpecsOptions  Options to pass to getSpecs (See "find-cypress-specs"
+                         package)                                       [string]
+  -s, --specPattern      Converts the output of the load balancer to be as an
+                         array of "--spec {file}" formats              [boolean]
+  -h, --help             Show help                                     [boolean]
+
+Examples:
+  Load balancing for 6 runners against      cypressLoadBalancer -r 6 -t
+  "component" testing with implied Cypress  component
+  configuration of `./cypress.config.js`
+  Load balancing for 3 runners against      cypressLoadBalancer -r 3 -t e2e -F
+  "e2e" testing with specified file paths   cypress/e2e/foo.cy.js
+                                            cypress/e2e/bar.cy.js
+                                            cypress/e2e/wee.cy.js
+
+Missing required arguments: runners, testingType
+```
+
+
+_This probably will not work with `tsx` or `ts-node` -- I need to figure out why._
+
 ## Development
 
 ### Creating a hybrid package for ESM and CommonJS
