@@ -1,5 +1,23 @@
 # cypress-load-balancer
 
+## Setup
+
+Install the package to your project:
+
+```shell
+npm install --save-dev cypress-load-balancer
+```
+
+```shell
+yarn add -D cypress-load-balancer
+```
+
+Add the following to your `.gitignore` and other ignore files:
+
+```
+.cypress-load-balancer
+```
+
 ## Development
 
 ### Creating a hybrid package for ESM and CommonJS

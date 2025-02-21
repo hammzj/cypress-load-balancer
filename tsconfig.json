@@ -27,5 +27,5 @@
     "skipLibCheck": true
   },
   "include": ["index.ts", "src/**/*"],
-  "exclude": ["tests", "cypress", ".cypress_load_balancing", "node_modules", "dist"]
+  "exclude": ["tests", "cypress", ".cypress-load-balancer", "node_modules", "dist"]
 }

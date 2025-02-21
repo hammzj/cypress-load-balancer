@@ -1,3 +1,7 @@
+//TODO: this file is choppy. It needs to run the actual script file instead of executing npx.
+
+//Before you run this file, run an `npm run build` or `yarn build`
+
 import { expect } from "chai";
 import { execSync, exec } from "node:child_process";
 
@@ -5,7 +9,7 @@ const BASE_COMMAND = "npx cypress-load-balancer";
 describe("Executables", function () {
   this.timeout(5000);
   describe("cypress-load-balancer", function () {
-    it(`is executed with "${BASE_COMMAND}"`, async function () {
+    it(`is executed with "${BASE_COMMAND}"`, function () {
       try {
         execSync(BASE_COMMAND);
       } catch (error) {

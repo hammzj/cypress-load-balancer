@@ -16,7 +16,7 @@
     }
   },
   "bin": {
-    "cypress-load-balancer": "./dist/cjs/src/bin/performLoadBalancing.js"
+    "cypress-load-balancer": "./dist/cjs/src/bin/cypressLoadBalancer.js"
   },
   "scripts": {
     "dev:format": "prettier --write .",
