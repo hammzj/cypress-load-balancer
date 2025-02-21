@@ -45,6 +45,11 @@ function calculateAverageDuration(durations: number[]): number {
   return Math.ceil(durations.reduce((acc, t) => acc + Math.abs(t), 0) / (durations.length || 1));
 }
 
+function saveMapFile(loadBalancingMap: LoadBalancingMap, fileName?: string) {
+  const file = fileName != null ? getPath(fileName.replace(/.json/g, ``) + ".json") : MAIN_LOAD_BALANCING_MAP_FILE_PATH;
+  fs.writeFileSync(file, JSON.stringify(loadBalancingMap));
+}
+
 function initializeLoadBalancingFiles(
   opts: {
     forceCreateMainDirectory?: boolean;
@@ -60,9 +65,8 @@ function initializeLoadBalancingFiles(
   }
 
   function createMainLoadBalancingMap(opts: { force?: boolean } = {}) {
-    const fileName = MAIN_LOAD_BALANCING_MAP_FILE_PATH;
-    if (!fs.existsSync(fileName) || opts.force === true) {
-      fs.writeFileSync(fileName, JSON.stringify({ e2e: {}, component: {} }));
+    if (!fs.existsSync(MAIN_LOAD_BALANCING_MAP_FILE_PATH) || opts.force === true) {
+      saveMapFile({ e2e: {}, component: {} });
       DEBUG("Cypress load balancing file initialized", `Force initialization?`, opts.force);
     }
   }
@@ -78,5 +82,6 @@ export default {
   DEBUG,
   createNewEntry,
   calculateAverageDuration,
+  saveMapFile,
   initializeLoadBalancingFiles
 };

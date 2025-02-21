@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import sinon from "sinon";
 import fs from "node:fs";
 import utils from "../src/utils";
@@ -6,6 +7,32 @@ describe("Utils", function () {
   beforeEach(function () {});
   afterEach(function () {
     sinon.restore();
+  });
+
+  context("saveMapFile", function () {
+    it('saves map file data to default "/.cypress_load_balancing/main.json" file', function () {
+      const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
+      utils.saveMapFile({ e2e: {}, component: {} });
+      expect(writeFileSyncStub).to.have.been.calledOnce;
+      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancing/main.json");
+      expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
+    });
+
+    it("can save to another json file", function () {
+      const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
+      utils.saveMapFile({ e2e: {}, component: {} }, "alternate.json");
+      expect(writeFileSyncStub.calledOnce).to.be.true;
+      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancing/alternate.json");
+      expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
+    });
+
+    it('converts ".json.json" to ".json"', function () {
+      const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
+      utils.saveMapFile({ e2e: {}, component: {} }, "alternate.json.json");
+      expect(writeFileSyncStub.calledOnce).to.be.true;
+      expect(writeFileSyncStub.firstCall.args[0]).to.endWith(".cypress_load_balancing/alternate.json");
+      expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
+    });
   });
 
   context("initializeLoadBalancingFiles", function () {
@@ -43,7 +70,7 @@ describe("Utils", function () {
       utils.initializeLoadBalancingFiles();
       expect(writeFileSyncStub.calledOnce).to.be.true;
       expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancing/main.json");
-      expect(JSON.parse(writeFileSyncStub.firstCall.args[1])).to.deep.eq({ e2e: {}, component: {} });
+      expect(JSON.parse(writeFileSyncStub.firstCall.args[1] as string)).to.deep.eq({ e2e: {}, component: {} });
     });
 
     it("skips creating the main load balancing map file if it exists", function () {

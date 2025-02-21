@@ -23,7 +23,7 @@ const argv: any = yargs(process.argv.slice(2))
     describe: "The testing type to use for load balancing"
   })
   .option("filePaths", {
-    alias: "p",
+    alias: "F",
     type: "array",
     default: [],
     describe:
@@ -65,7 +65,7 @@ const argv: any = yargs(process.argv.slice(2))
   )
   .example(
     'Load balancing for 3 runners against "e2e" testing with specified file paths',
-    "cypressLoadBalancer -r 3 -t e2e -p cypress/e2e/foo.cy.js cypress/e2e/bar.cy.js cypress/e2e/wee.cy.js"
+    "cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js cypress/e2e/bar.cy.js cypress/e2e/wee.cy.js"
   )
   .parse();
 

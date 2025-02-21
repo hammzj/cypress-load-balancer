@@ -5,7 +5,7 @@ import { FilePath, Runners, TestingType, LoadBalancingMap } from "./types";
 function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePaths: Array<FilePath> = []) {
   if (filePaths.length > 0) {
     filePaths.map((fp) => utils.createNewEntry(loadBalancingMap, testingType, fp));
-    fs.writeFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH, JSON.stringify(loadBalancingMap));
+    utils.saveMapFile(loadBalancingMap);
   }
 }
 
