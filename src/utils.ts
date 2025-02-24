@@ -18,7 +18,7 @@ import { FilePath, LoadBalancingMap, TestingType } from "./types";
 
 class Utils {
   private getPath(...pathNames: string[]) {
-    return path.join(process.cwd(), ".cypress-load-balancer", ...pathNames);
+    return path.join(process.cwd(), ".cypress_load_balancer", ...pathNames);
   }
 
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,7 +97,7 @@ class Utils {
     if (!fs.existsSync(dir) || opts.forceCreateMainDirectory === true) {
       fs.mkdirSync(dir);
       this.DEBUG(
-        "Created directory for `/.cypress-load-balancer",
+        "Created directory for `/.cypress_load_balancer",
         `Force initialization?`,
         opts.forceCreateMainDirectory
       );

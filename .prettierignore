@@ -8,4 +8,5 @@ yarn.lock
 **/tests/fixtures
 
 .cypress-load-balancer
+.cypress_load_balancer
 .idea
