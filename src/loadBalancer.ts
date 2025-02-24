@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import utils from "./utils.js";
+import utils from "./utils";
 import { FilePath, Runners, TestingType, LoadBalancingMap } from "./types";
 
 function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePaths: Array<FilePath> = []) {

@@ -10,7 +10,7 @@ function DEBUG(...args: any[]) {
 }
 
 function getPath(...pathNames: string[]) {
-  return path.join(process.cwd(), ".cypress-load-balancer", ...pathNames);
+  return path.join(process.cwd(), ".cypress_load_balancer", ...pathNames);
 }
 
 const CLB_DIRECTORY = getPath();
@@ -60,7 +60,7 @@ function initializeLoadBalancingFiles(
     const dir = CLB_DIRECTORY;
     if (!fs.existsSync(dir) || opts.force === true) {
       fs.mkdirSync(dir);
-      DEBUG("Created directory for `/.cypress-load-balancer", `Force initialization?`, opts.force);
+      DEBUG("Created directory for `/.cypress_load_balancer", `Force initialization?`, opts.force);
     }
   }
 
@@ -75,6 +75,13 @@ function initializeLoadBalancingFiles(
   createMainLoadBalancingMap({ force: opts.forceCreateMainLoadBalancingMap });
 }
 
+function shrinkToFit(arr: number[]): number[] {
+  if (arr.length > MAX_DURATIONS_ALLOWED) {
+    arr.splice(0, arr.length - MAX_DURATIONS_ALLOWED);
+  }
+  return arr;
+};
+
 export default {
   CLB_DIRECTORY,
   MAIN_LOAD_BALANCING_MAP_FILE_PATH,
@@ -83,5 +90,6 @@ export default {
   createNewEntry,
   calculateAverageDuration,
   saveMapFile,
+  shrinkToFit,
   initializeLoadBalancingFiles
 };

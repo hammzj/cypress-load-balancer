@@ -1,0 +1,109 @@
+name: Cypress testing
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      runners:
+        type: number
+        description: Number of runners to use for parallelization
+
+env:
+  runners: ${{ inputs.runners || 3}}
+  node-version: 18.20.x
+
+jobs:
+  install:
+    runs-on: ubuntu-22.04
+    outputs:
+      specs: ${{ steps.get-specs.outputs.specs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      #TODO: figure out how to skip if not existing and use one that exists on the main branch
+      #      - name: Download the load balancer file
+      #        uses: actions/download-artifact@v4
+      #        with:
+      #          name: main.json
+      #          path: .cypress_load_balancer
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
+      - run: |
+          yarn install
+          yarn build
+
+      - name: get-specs
+        id: get-specs
+        run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
+
+  cypress-run:
+    runs-on: ubuntu-22.04
+    needs: install
+    strategy:
+      fail-fast: false
+      matrix:
+        spec: ${{ fromJson(needs.install.outputs.specs) }}
+    steps:
+      - id: generate-uuid
+        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
+      - name: Cypress run e2e tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: electron
+          build: yarn build
+          spec: ${{ matrix.spec }}
+
+      - name: Upload temp load balancer map
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{steps.generate-uuid.outputs.uuid }}-parallel-map.json
+          path: .cypress_load_balancer/main.json
+
+  merge-maps:
+    runs-on: ubuntu-22.04
+    needs: cypress-run
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
+      - run: |
+          yarn install
+          yarn build
+
+      - run: |
+          yarn install
+          yarn build
+
+      - name: Download temp maps
+        uses: actions/download-artifact@v4
+        with:
+#          TODO: can't create directories
+#          path: /temp-maps
+          pattern: "*-parallel-map.json"
+          merge-multiple: true
+
+      - name: Merge files
+        run: npx cypress-load-balancer merge -D /temp-maps
+
+      - name: Upload the merged load balancer file
+        uses: actions/upload-artifact@v4
+        with:
+          name: main.json
+          path: .cypress_load_balancer
+
+

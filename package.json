@@ -19,11 +19,13 @@
     "cypress-load-balancer": "./dist/cjs/src/bin/cypressLoadBalancer.js"
   },
   "scripts": {
-    "dev:format": "prettier --write .",
-    "dev:lint": "eslint . && prettier --check .",
-    "dev:check:tests": "tsc -p tsconfig.test.json",
-    "dev:check": "tsc -p tsconfig.json",
     "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup",
+    "cypress:open": "cypress open --e2e",
+    "cypress:run": "cypress run --e2e",
+    "dev:format": "prettier --write .",
+    "dev:check": "tsc -p tsconfig.json",
+    "dev:check:tests": "tsc -p tsconfig.test.json",
+    "dev:lint": "eslint . && prettier --check .",
     "test:mocha": "mocha"
   },
   "dependencies": {
