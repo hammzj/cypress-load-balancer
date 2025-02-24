@@ -20,6 +20,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
 #TODO: figure out how to skip if not existing and use one that exists on the main branch
 #      - name: Download the load balancer file
 #        uses: actions/download-artifact@v4
@@ -36,6 +37,7 @@ jobs:
           yarn build
 
       - name: get-specs
+        id: get-specs
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
   cypress-run:
