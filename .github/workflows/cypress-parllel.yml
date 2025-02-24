@@ -92,7 +92,8 @@ jobs:
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
-          path: /temp-maps
+#          TODO: can't create directories
+#          path: /temp-maps
           pattern: "*-parallel-map.json"
           merge-multiple: true
 
