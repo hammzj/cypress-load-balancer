@@ -57,7 +57,7 @@ jobs:
         with:
           browser: electron
           build: yarn build
-          spec: matrix.spec
+          spec: ${{ matrix.spec }}
 
       - name: Upload temp load balancer map
         uses: actions/upload-artifact@v4
