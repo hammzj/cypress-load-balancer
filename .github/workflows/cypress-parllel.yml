@@ -48,6 +48,9 @@ jobs:
       matrix:
         spec: ${{ fromJson(needs.install.outputs.specs) }}
     steps:
+      - id: generate-uuid
+        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
+
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -63,7 +66,7 @@ jobs:
       - name: Upload temp load balancer map
         uses: actions/upload-artifact@v4
         with:
-          name: $(uuidgen)-parallel-map.json
+          name: ${{steps.generate-uuid.outputs.uuid }}-parallel-map.json
           path: .cypress_load_balancer/main.json
 
   merge-maps:
