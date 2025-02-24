@@ -85,6 +85,10 @@ jobs:
           yarn install
           yarn build
 
+      - run: |
+          yarn install
+          yarn build
+
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
