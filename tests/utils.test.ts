@@ -139,8 +139,21 @@ describe("Utils", function () {
     });
   });
 
-  context("calculateAverageDuration", function () {
-    it("returns 0 if none are provided", function () {
+  context("update file stats", function () {
+    it("shrinks the durations to the maximum length", function () {
+      sinon.stub(utils, "MAX_DURATIONS_ALLOWED").get(() => 3);
+
+      const orig = {
+        e2e: {},
+        component: { "tests/foo.spec.ts": { stats: { durations: [100, 200, 300], average: 200 } } }
+      };
+
+      utils.updateFileStats(orig, "component", "tests/foo.spec.ts", 400);
+      expect(orig.component["tests/foo.spec.ts"].stats.durations).to.have.length(3);
+      expect(orig.component["tests/foo.spec.ts"].stats.durations).to.deep.eq([200, 300, 400]);
+    });
+
+    it("calculates the average duration as 0 if no durations are provided", function () {
       expect(utils.calculateAverageDuration([])).to.eq(0);
     });
 
