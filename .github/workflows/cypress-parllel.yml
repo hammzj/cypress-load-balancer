@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+#TODO: figure out how to skip if not existing and use one that exists on the main branch
 #      - name: Download the load balancer file
 #        uses: actions/download-artifact@v4
 #        with:
@@ -31,7 +31,9 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
 
-      - run: yarn build
+      - run: |
+          yarn install
+          yarn build
 
       - name: get-specs
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --ft string))" >> $GITHUB_OUTPUT
@@ -74,7 +76,9 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
 
-      - run: yarn build
+      - run: |
+          yarn install
+          yarn build
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
