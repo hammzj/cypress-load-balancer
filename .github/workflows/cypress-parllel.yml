@@ -92,12 +92,12 @@ jobs:
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
-          path: /temp
+          path: /temp-maps
           pattern: "*-parallel-map.json"
           merge-multiple: true
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -D /temp
+        run: npx cypress-load-balancer merge -D /temp-maps
 
       - name: Upload the merged load balancer file
         uses: actions/upload-artifact@v4
