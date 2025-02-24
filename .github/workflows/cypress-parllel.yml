@@ -38,12 +38,6 @@ jobs:
       - name: get-specs
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
-      - name: Cypress run e2e tests
-        uses: cypress-io/github-action@v6
-        with:
-          browser: electron
-          build: yarn build
-
   cypress-run:
     runs-on: ubuntu-22.04
     needs: install
