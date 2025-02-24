@@ -75,6 +75,13 @@ function initializeLoadBalancingFiles(
   createMainLoadBalancingMap({ force: opts.forceCreateMainLoadBalancingMap });
 }
 
+function shrinkToFit(arr: number[]): number[] {
+  if (arr.length > MAX_DURATIONS_ALLOWED) {
+    arr.splice(0, arr.length - MAX_DURATIONS_ALLOWED);
+  }
+  return arr;
+};
+
 export default {
   CLB_DIRECTORY,
   MAIN_LOAD_BALANCING_MAP_FILE_PATH,
@@ -83,5 +90,6 @@ export default {
   createNewEntry,
   calculateAverageDuration,
   saveMapFile,
+  shrinkToFit,
   initializeLoadBalancingFiles
 };

@@ -8,34 +8,88 @@ on:
         type: number
         description: Number of runners to use for parallelization
 
-
 env:
   runners: ${{ inputs.runners || 3}}
+  node-version: 18.20.x
 
 jobs:
-  cypress-run:
+  install:
     runs-on: ubuntu-22.04
-
+    outputs:
+      specs: ${{ steps.get-specs.outputs.specs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
 
       - name: Download the load balancer file
         uses: actions/download-artifact@v4
         with:
-          name: my-artifact
+          name: main.json
           path: .cypress_load_balancer
 
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.node-version }}
+
       - run: yarn build
 
-      - run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e -s))" >> $GITHUB_OUTPUT
+      - name: get-specs
+        run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --ft string))" >> $GITHUB_OUTPUT
 
       - name: Cypress run e2e tests
         uses: cypress-io/github-action@v6
         with:
           browser: electron
           build: yarn build
+
+  cypress-run:
+    runs-on: ubuntu-22.04
+    needs: install
+    strategy:
+      fail-fast: false
+      matrix:
+        spec: ${{ fromJson(needs.install.outputs.specs) }}
+    steps:
+      - name: Cypress run e2e tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: electron
+          build: yarn build
+          spec: matrix.spec
+
+      - name: Upload temp load balancer map
+        uses: actions/upload-artifact@v4
+        with:
+          name: parallel-map.json
+          path: .cypress_load_balancer/main.json
+
+  merge-maps:
+    runs-on: ubuntu-22.04
+    needs: cypress-run
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
+      - run: yarn build
+
+      - name: Download temp maps
+        uses: actions/download-artifact@v4
+        with:
+          path: /temp
+          name: parallel-map.json
+          merge-multiple: true
+
+      - name: Merge files
+        run: npx cypress-load-balancer merge -D /temp
+
+      - name: Upload the merged load balancer file
+        uses: actions/upload-artifact@v4
+        with:
+          name: main.json
+          path: .cypress_load_balancer
+
+

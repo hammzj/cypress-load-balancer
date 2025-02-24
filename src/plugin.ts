@@ -4,12 +4,7 @@ import { LoadBalancingMap, TestingType } from "./types";
 import CypressRunResult = CypressCommandLine.CypressRunResult;
 import CypressFailedRunResult = CypressCommandLine.CypressFailedRunResult;
 
-const shrinkToFit = (arr: number[]): number[] => {
-  if (arr.length > utils.MAX_DURATIONS_ALLOWED) {
-    arr.splice(0, arr.length - utils.MAX_DURATIONS_ALLOWED);
-  }
-  return arr;
-};
+
 
 export default function addCypressLoadBalancerPlugin(on: Cypress.PluginEvents, testingType?: TestingType) {
   on("after:run", (results: CypressRunResult | CypressFailedRunResult) => {
@@ -30,7 +25,7 @@ export default function addCypressLoadBalancerPlugin(on: Cypress.PluginEvents, t
         utils.createNewEntry(loadBalancingMap, testingType, fileName);
 
         loadBalancingMap[testingType][fileName].stats.durations.push(run.stats.duration || 0);
-        shrinkToFit(loadBalancingMap[testingType][fileName].stats.durations);
+        utils.shrinkToFit(loadBalancingMap[testingType][fileName].stats.durations);
 
         loadBalancingMap[testingType][fileName].stats.average = utils.calculateAverageDuration(
           loadBalancingMap[testingType][fileName].stats.durations
