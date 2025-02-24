@@ -48,6 +48,11 @@ jobs:
       matrix:
         spec: ${{ fromJson(needs.install.outputs.specs) }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
       - name: Cypress run e2e tests
         uses: cypress-io/github-action@v6
         with:
