@@ -36,7 +36,7 @@ jobs:
           yarn build
 
       - name: get-specs
-        run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --ft string))" >> $GITHUB_OUTPUT
+        run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
       - name: Cypress run e2e tests
         uses: cypress-io/github-action@v6
