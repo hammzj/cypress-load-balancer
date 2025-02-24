@@ -63,12 +63,13 @@ jobs:
       - name: Upload temp load balancer map
         uses: actions/upload-artifact@v4
         with:
-          name: parallel-map.json
+          name: parallel-map-${{ github.job }}.json
           path: .cypress_load_balancer/main.json
 
   merge-maps:
     runs-on: ubuntu-22.04
     needs: cypress-run
+    if: always()
     steps:
       - name: Checkout
         uses: actions/checkout@v4
