@@ -21,12 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-#TODO: figure out how to skip if not existing and use one that exists on the main branch
-#      - name: Download the load balancer file
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: main.json
-#          path: .cypress_load_balancer
+      #TODO: figure out how to skip if not existing and use one that exists on the main branch
+      #      - name: Download the load balancer file
+      #        uses: actions/download-artifact@v4
+      #        with:
+      #          name: main.json
+      #          path: .cypress_load_balancer
 
       - uses: actions/setup-node@v4
         with:
@@ -63,7 +63,7 @@ jobs:
       - name: Upload temp load balancer map
         uses: actions/upload-artifact@v4
         with:
-          name: parallel-map-${{ github.job }}.json
+          name: ${{uuidgen}}-parallel-map.json
           path: .cypress_load_balancer/main.json
 
   merge-maps:
@@ -86,7 +86,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /temp
-          name: parallel-map.json
+          pattern: "*-parallel-map.json"
           merge-multiple: true
 
       - name: Merge files
