@@ -63,7 +63,7 @@ jobs:
       - name: Upload temp load balancer map
         uses: actions/upload-artifact@v4
         with:
-          name: ${{uuidgen}}-parallel-map.json
+          name: $(uuidgen)-parallel-map.json
           path: .cypress_load_balancer/main.json
 
   merge-maps:
