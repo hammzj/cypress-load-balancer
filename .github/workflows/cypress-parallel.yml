@@ -43,9 +43,9 @@ jobs:
 
             #TODO: this is ugly
       - run: npx cypress-load-balancer initialize
-        if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit != 'true' }}
+        if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit == 'true' }}
       - name: Save initial map if not existing
-        if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit != 'true' }}
+        if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit == 'true' }}
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/main.json
