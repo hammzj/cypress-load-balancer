@@ -79,6 +79,7 @@ jobs:
 
       - name: "E2E: cypress-load-balancer"
         if: ${{ env.run_e2e == 'true' }}
+        id: e2e-cypress-load-balancer
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
       - name: "Component: cypress-load-balancer"

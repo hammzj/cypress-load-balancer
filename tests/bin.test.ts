@@ -14,30 +14,30 @@ import utils from "../src/utils";
 
 const sandbox = sinon.createSandbox();
 
-describe("Executables", function () {
+describe("Executables", function() {
   this.timeout(5000);
-  describe("cypress-load-balancer", function () {
-    afterEach(function () {
+  describe("cypress-load-balancer", function() {
+    afterEach(function() {
       sandbox.restore();
     });
 
-    context("client", function () {
-      context("commands", function () {
-        describe("balance", function () {
-          beforeEach(function () {
+    context("client", function() {
+      context("commands", function() {
+        describe("balance", function() {
+          beforeEach(function() {
             sandbox.stub(fs, "writeFileSync");
           });
 
           const requiredArgs = ["runners", "testing-type"];
           requiredArgs.map((a) => {
-            it(`requires ${a} as an argument`, async function () {
+            it(`requires ${a} as an argument`, async function() {
               const [_err, _argv, output] = await runCmd(cli, ``);
               const required = output.split("\n").find((e) => e.match(/^Missing required arguments/));
               expect(required).to.include(a);
             });
           });
 
-          it("runs load balancing", async function () {
+          it("runs load balancing", async function() {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
               component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } } }
@@ -46,7 +46,7 @@ describe("Executables", function () {
             expect(JSON.parse(argv.output)).to.deep.eq([["foo.test.ts"], [], []]);
           });
 
-          it("can format the output as a comma-delimited string", async function () {
+          it("can format the output as a comma-delimited string", async function() {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
               component: {
@@ -62,7 +62,7 @@ describe("Executables", function () {
             expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts,baz.test.ts", "bar.test.ts"]);
           });
 
-          it("can format the output in spec format", async function () {
+          it("can format the output in spec format", async function() {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
               component: {
@@ -78,7 +78,7 @@ describe("Executables", function () {
             expect(JSON.parse(argv.output)).to.deep.eq(["--spec foo.test.ts,baz.test.ts", "--spec bar.test.ts"]);
           });
 
-          it("can format the output as a newline-delimited string", async function () {
+          it("can format the output as a newline-delimited string", async function() {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
               component: {
@@ -94,8 +94,9 @@ describe("Executables", function () {
             expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts\nbaz.test.ts", "bar.test.ts"]);
           });
 
-          it("uses getSpecs if no files are provided", async function () {
+          it("uses getSpecs if no files are provided", async function() {
             const stub = sandbox.stub(findCypressSpecs, "getSpecs").returns(["foo.test.ts"]);
+            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             //Call stub when not files are not provided
             await runCmd(cli, `-r 2 -t component`);
             //Should not be called when files are provided
@@ -103,24 +104,24 @@ describe("Executables", function () {
             expect(stub).to.have.been.calledOnce;
           });
 
-          context("setting GitHub Actions outputs", function () {
+          context("setting GitHub Actions outputs", function() {
             let output: string, write;
             //eslint-disable-next-line prefer-const
             write = process.stdout.write;
 
-            beforeEach(function () {
+            beforeEach(function() {
               output = "";
               //@ts-expect-error Ignore
-              process.stdout.write = function (str) {
+              process.stdout.write = function(str) {
                 output += str;
               };
             });
 
-            afterEach(function () {
+            afterEach(function() {
               process.stdout.write = write;
             });
 
-            it("can set the Github Actions output", async function () {
+            it("can set the Github Actions output", async function() {
               stubReadLoadBalancerFile(sandbox, {
                 e2e: {},
                 component: {
@@ -144,28 +145,28 @@ describe("Executables", function () {
           });
         });
 
-        describe("merge", function () {
-          beforeEach(function () {
+        describe("merge", function() {
+          beforeEach(function() {
             this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
           });
 
-          it("requires either a glob pattern or a list of files", async function () {
+          it("requires either a glob pattern or a list of files", async function() {
             const [err] = await runCmd(cli, `merge`);
             expect(err.message).to.contain("At least one file path or a glob pattern must be provided.");
           });
 
-          it(`defaults the original to the "./cypress_load_balancer/main.json"`, async function () {
+          it(`defaults the original to the "./cypress_load_balancer/main.json"`, async function() {
             const [_err, argv] = await runCmd(cli, `merge -G **/files/*.json`);
             expect(argv.original).to.eq(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
           });
 
-          it("can have a different original file specified", async function () {
+          it("can have a different original file specified", async function() {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             const [_err, argv] = await runCmd(cli, `merge -F fake1.json --og foo.json`);
             expect(argv.original).to.eq("foo.json");
           });
 
-          it("can merge load balancing maps back to the original", async function () {
+          it("can merge load balancing maps back to the original", async function() {
             sandbox
               .stub(fs, "readFileSync")
               .returns(JSON.stringify({ e2e: {}, component: {} }))
@@ -186,7 +187,7 @@ describe("Executables", function () {
             );
           });
 
-          it("defaults to overwrite the original file", async function () {
+          it("defaults to overwrite the original file", async function() {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             await runCmd(cli, `merge -F fake1.json`);
             expect(this.writeFileSyncStub).to.have.been.calledWithMatch(
@@ -195,14 +196,14 @@ describe("Executables", function () {
             );
           });
 
-          it("can have a different output file specified for saving", async function () {
+          it("can have a different output file specified for saving", async function() {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
             await runCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
             expect(saveMapFileStub).to.have.been.calledWithMatch(sandbox.match.any, `/files/alternate.json`);
           });
 
-          it("can have input files specified for merging", async function () {
+          it("can have input files specified for merging", async function() {
             const readFileSyncStub = sandbox.stub(fs, "readFileSync").returns(
               JSON.stringify({
                 e2e: {},
@@ -216,21 +217,21 @@ describe("Executables", function () {
             expect(saveMapFileStub).to.have.been.calledOnce;
           });
 
-          it("can use a glob pattern to find input files", async function () {
+          it("can use a glob pattern to find input files", async function() {
             const stub = sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             await runCmd(cli, `merge -G tests/fixtures/*.json`);
             expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/load-balancing-map.json"))).to.be.true;
           });
 
-          it("skips merging if no files are found", async function () {
+          it("skips merging if no files are found", async function() {
             const stub = sandbox.stub(utils, "saveMapFile");
             await runCmd(cli, `merge -G fakeDir/**.json`);
             expect(stub).to.not.have.been.called;
           });
         });
 
-        describe("initialize", function () {
-          it("can initialize the file", async function () {
+        describe("initialize", function() {
+          it("can initialize the file", async function() {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
             await runCmd(cli, `initialize`);
             expect(stub).to.have.been.calledWith({
@@ -239,7 +240,7 @@ describe("Executables", function () {
             });
           });
 
-          it("can force re-create the directory", async function () {
+          it("can force re-create the directory", async function() {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
             await runCmd(cli, `initialize --force-dir`);
             expect(stub).to.have.been.calledWith({
@@ -248,7 +249,7 @@ describe("Executables", function () {
             });
           });
 
-          it("can force re-create the file", async function () {
+          it("can force re-create the file", async function() {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
             await runCmd(cli, `initialize --force`);
             expect(stub).to.have.been.calledWith({
@@ -260,7 +261,7 @@ describe("Executables", function () {
       });
     });
 
-    it(`can be executed with "npx"`, function () {
+    it(`can be executed with "npx"`, function() {
       try {
         execSync("npx cypress-load-balancer");
       } catch (error) {
