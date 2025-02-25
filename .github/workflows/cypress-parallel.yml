@@ -17,7 +17,8 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       specs: ${{ steps.get-specs.outputs.specs }}
-      load-balancing-map-cache-primary-key: ${{  steps.cache-load-balancing-map-restore.outputs.cache-primary-key}}
+      #TODO: figure out how to make this exist on the main branch
+      load-balancing-map-cache-primary-key: load-balancing-map
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,7 +57,7 @@ jobs:
         with:
           path: main.json
           #TODO: figure out how to make this exist on the main branch
-          key: ${{ steps.cache-restore-load-balancing-map.outputs.load-balancing-map-cache-primary-key }}
+          key: load-balancing-map
 
       - name: get-specs
         id: get-specs
