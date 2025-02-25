@@ -38,27 +38,19 @@ jobs:
           fail-on-cache-miss: false
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
+          key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: load-balancer-map-
 
-      #      # TODO: figure out how to skip if not existing and use one that exists on the main branch
-      #      - name: Download the load balancer file
-      #        uses: actions/download-artifact@v4
-      #        with:
-      #          name: main.json
-      #          path: .cypress_load_balancer
-      #
             #TODO: this is ugly
       - run: npx cypress-load-balancer initialize
         if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit != 'true' }}
-
       - name: Save initial map if not existing
         if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
+          key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: get-specs
         id: get-specs
@@ -99,6 +91,7 @@ jobs:
   merge-maps:
     runs-on: ubuntu-22.04
     needs: [cypress-run, install]
+    if: always()
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -118,7 +111,7 @@ jobs:
           fail-on-cache-miss: true
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
+          key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: load-balancer-map-
 
       - name: Download temp maps
@@ -132,17 +125,12 @@ jobs:
       - name: Merge files
         run: npx cypress-load-balancer merge -G "*-parallel-map.json"
 
-      #      - name: Upload the merged load balancer file
-      #        uses: actions/upload-artifact@v4
-      #        with:
-      #          name: main.json
-      #          path: .cypress_load_balancer/main.json
-      #
-      #
       - name: Save overwritten cached load-balancing map
         id: cache-save-load-balancing-map
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
+          #This saves to the workflow run. To save to the trunk, this needs to be uploaded on merge
+          key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
+
