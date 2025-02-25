@@ -38,7 +38,8 @@ jobs:
           fail-on-cache-miss: false
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancing-map
+          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
+          restore-keys: load-balancer-map-
 
       #      # TODO: figure out how to skip if not existing and use one that exists on the main branch
       #      - name: Download the load balancer file
@@ -57,7 +58,7 @@ jobs:
         with:
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancing-map
+          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
 
       - name: get-specs
         id: get-specs
@@ -117,7 +118,8 @@ jobs:
           fail-on-cache-miss: true
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
+          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
+          restore-keys: load-balancer-map-
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
@@ -143,4 +145,4 @@ jobs:
         with:
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
+          key: load-balancer-map-${{hashFiles('**/.cypress_load_balancer/main.json')}}
