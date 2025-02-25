@@ -56,7 +56,8 @@ jobs:
         id: get-specs
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
-      - run: echo ${{ steps.get-specs.outputs.specs }}
+      - name: Output load balancing file contents
+        run: cat .cypress_load_balancer/main.json
 
   cypress-run:
     runs-on: ubuntu-22.04
