@@ -40,8 +40,9 @@ jobs:
           #TODO: figure out how to make this exist on the main branch
           key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            load-balancer-map-${{github.ref}}-${{ github.run_id }}
             load-balancer-map-base-${{github.ref}}
-            load-balancer-map-
+            # TODO: trunk branch should have one
 
             #TODO: this is ugly
       - run: npx cypress-load-balancer initialize
