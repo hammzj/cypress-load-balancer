@@ -21,13 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      #TODO: figure out how to skip if not existing and use one that exists on the main branch
-      #      - name: Download the load balancer file
-      #        uses: actions/download-artifact@v4
-      #        with:
-      #          name: main.json
-      #          path: .cypress_load_balancer
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.node-version }}
@@ -35,6 +28,23 @@ jobs:
       - run: |
           yarn install
           yarn build
+
+      # TODO: figure out how to skip if not existing and use one that exists on the main branch
+      - name: Download the load balancer file
+        uses: actions/download-artifact@v4
+        with:
+          name: main.json
+          path: .cypress_load_balancer
+
+      #TODO: this is ugly
+      - run: npx cypress-load-balancer initialize
+        if: failure()
+      - name: Create initial map if not existing
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main.json
+          path: .cypress_load_balancer
 
       - name: get-specs
         id: get-specs
@@ -66,6 +76,7 @@ jobs:
           spec: ${{ matrix.spec }}
 
       - name: Upload temp load balancer map
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{steps.generate-uuid.outputs.uuid }}-parallel-map.json
@@ -81,10 +92,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.node-version }}
-
-      - run: |
-          yarn install
-          yarn build
 
       - run: |
           yarn install

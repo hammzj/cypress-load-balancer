@@ -228,6 +228,35 @@ describe("Executables", function () {
             expect(stub).to.not.have.been.called;
           });
         });
+
+        describe("initialize", function () {
+          it("can initialize the file", async function () {
+            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
+            await runCmd(cli, `initialize`);
+            expect(stub).to.have.been.calledWith({
+              forceCreateMainDirectory: false,
+              forceCreateMainLoadBalancingMap: false
+            });
+          });
+
+          it("can force re-create the directory", async function () {
+            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
+            await runCmd(cli, `initialize --force-dir`);
+            expect(stub).to.have.been.calledWith({
+              forceCreateMainDirectory: true,
+              forceCreateMainLoadBalancingMap: false
+            });
+          });
+
+          it("can force re-create the file", async function () {
+            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
+            await runCmd(cli, `initialize --force`);
+            expect(stub).to.have.been.calledWith({
+              forceCreateMainDirectory: false,
+              forceCreateMainLoadBalancingMap: true
+            });
+          });
+        });
       });
     });
 

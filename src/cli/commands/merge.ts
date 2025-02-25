@@ -39,7 +39,8 @@ export default {
         })
         .option("output", {
           alias: "o",
-          description: "An output file path to which to save. If not provided, uses the original file path"
+          description: "An output file path to which to save. If not provided, uses the original file path",
+          type: "string"
         })
 
         //@ts-expect-error Need to fix type
