@@ -105,8 +105,6 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
 
-      - run: chown -R 1001:1001 /github/home/.cache
-
       - name: Get cached load-balancing map
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
@@ -123,7 +121,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: "*-parallel-map.json"
-          path: "/temp"
+          path: ./temp
           merge-multiple: true
 
       - run: |
