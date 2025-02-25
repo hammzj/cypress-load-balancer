@@ -64,9 +64,11 @@ jobs:
 
       #TODO: this is ugly and incorrect. It should do this if base file does not exist
       - run: npx cypress-load-balancer initialize
+        id: initialize-map
         if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
+
       - name: Cache initial map if not existing
-        if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
+        if: ${{ steps.initialize-map.outcome == 'success' }}
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/main.json
@@ -74,15 +76,15 @@ jobs:
           key: cypress-load-balancer-map-base-${{github.ref}}
 
       - name: "DEBUG: Output load balancing file contents"
-        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != false }}
+        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != 'false' }}
         run: cat .cypress_load_balancer/main.json
 
       - name: "E2E: cypress-load-balancer"
-        if: ${{ env.run_e2e == true }}
+        if: ${{ env.run_e2e == 'true' }}
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
       - name: "Component: cypress-load-balancer"
-        if: ${{ env.run_component == true }}
+        if: ${{ env.run_component == 'true' }}
         id: component-cypress-load-balancer
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t component --fm string))" >> $GITHUB_OUTPUT
 
