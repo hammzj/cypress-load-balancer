@@ -112,7 +112,7 @@ jobs:
         id: cache-load-balancing-map-restore
         uses: actions/cache/restore@v4
         with:
-          fail-on-cache-miss: false
+          fail-on-cache-miss: true
           path: main.json
           #TODO: figure out how to make this exist on the main branch
           key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
