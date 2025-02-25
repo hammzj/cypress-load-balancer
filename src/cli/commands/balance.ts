@@ -3,6 +3,7 @@
 
 // @ts-expect-error There are no types for this package
 import { getSpecs } from "find-cypress-specs";
+import core from "@actions/core";
 import performLoadBalancing from "../../loadBalancer";
 import { Runners, TestingType } from "../../types";
 
@@ -65,6 +66,11 @@ export default {
             `\n"--transform string": Spec files per runner are joined with a comma; example: "tests/spec.a.ts,tests/spec.b.ts"` +
             `\n"--transform newline": Spec files per runner are joined with a newline; example: \n\t"tests/spec.a.ts\ntests/spec.b.ts"`
         })
+        .option("setGitHubActionsOutput", {
+          alias: "gha",
+          type: "boolean",
+          describe: `Sets the output to the GitHub Actions step output as "cypressLoadBalancerSpecs"`
+        })
         //TODO: allow using other file names. This is useful when multiple cypress configurations exist
         // .option('loadBalancingMapFileName', {
         //     alias: 'M',
@@ -101,6 +107,11 @@ export default {
       argv.files as string[]
     );
     argv.output = JSON.stringify(formatOutput(output, argv.format));
+
+    if (argv.setGitHubActionsOutput) {
+      core.setOutput("cypressLoadBalancerSpecs", argv.output);
+    }
+
     console.log(argv.output);
   }
 };

@@ -29,6 +29,7 @@
     "test:mocha": "mocha"
   },
   "dependencies": {
+    "@actions/core": "^1.11.1",
     "deepmerge": "^4.3.1",
     "find-cypress-specs": "^1.47.4",
     "glob": "10.4.5",
