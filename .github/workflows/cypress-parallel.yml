@@ -44,7 +44,7 @@ jobs:
             load-balancer-map-base-${{github.ref}}
             # TODO: trunk branch should have one
 
-            #TODO: this is ugly
+       #TODO: this is ugly and incorrect. It should do this if base file does not exist
       - run: npx cypress-load-balancer initialize
         if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit == 'true' }}
       - name: Save initial map if not existing
@@ -104,6 +104,8 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
 
+      - run: chown -R 1001:1001 /github/home/.cache
+
       - name: Get cached load-balancing map
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
@@ -132,7 +134,7 @@ jobs:
 
       - name: DEBUG Output load balancing file contents
         run: cat .cypress_load_balancer/main.json
-      - run: ls -al
+      - run: ls -R
 
       - name: DEBUG Output load balancing file contents
         run: cat .cypress_load_balancer/main.json
