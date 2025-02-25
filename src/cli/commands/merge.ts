@@ -13,25 +13,28 @@ export default {
         .option("original", {
           alias: "og",
           description:
-            "The JSON file path of the original load balancing map into which to merge other files. Defaulted to `main.json`",
+            `The JSON file path of the original load balancing map into which to merge other files.\n` +
+            `Defaulted to exist within the current working directory at "./cypress_load_balancer/main.json"`,
           type: "string",
           default: utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH
         })
         // .option("json", {
         //   alias: "j",
         //   description: "Provide JSONs as strings to merge. Must match the type for LoadBalancerMap",
-        //   type: "array"
+        //   type: "array",
+        //   default: []
         // })
         .option("files", {
           alias: "F",
           description: "A list of other files to load and merge back to the original",
-          default: [],
-          type: "array"
+          type: "array",
+          default: []
         })
         .option("glob", {
           alias: "G",
           description:
-            "A glob pattern to match for load balancing maps to merge. Make sure to wrap in quotes for the glob to work correctly",
+            "A glob pattern to match for load balancing maps to merge." +
+            "Make sure to wrap in quotes for the glob to work correctly",
           type: "string"
         })
         .option("output", {
@@ -60,17 +63,10 @@ export default {
         others.push(data);
       }
     }
-
-    // for (const obj of argv.json) {
-    //   const data = JSON.parse(obj.toString());
-    //   others.push(data);
-    // }
-
     for (const f of argv.files) {
       const data = JSON.parse(fs.readFileSync(f).toString());
       others.push(data);
     }
-
     if (others.length > 0) {
       const merged = mergeLoadBalancingMapFiles(orig, others);
       utils.saveMapFile(merged, argv.output);
