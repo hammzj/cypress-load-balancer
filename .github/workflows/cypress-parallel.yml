@@ -31,7 +31,7 @@ jobs:
           yarn build
 
       - name: Get cached load-balancing map
-        id: cache-load-balancing-map-restore
+        id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: false
@@ -46,16 +46,17 @@ jobs:
       #          name: main.json
       #          path: .cypress_load_balancer
       #
-      #      #TODO: this is ugly
-      #      - run: npx cypress-load-balancer initialize
-      #        if: failure()
-      #      - name: Create initial map if not existing
-      #        if: failure()
-      #        uses: actions/upload-artifact@v4
-      #        with:
-      #          name: main.json
-      #          path: .cypress_load_balancer/main.json
-      #          if-no-files-found: error
+            #TODO: this is ugly
+      - run: npx cypress-load-balancer initialize
+        if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit != 'true' }}
+
+      - name: Save initial map if not existing
+        if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: main.json
+          #TODO: figure out how to make this exist on the main branch
+          key: ${{ steps.cache-restore-load-balancing-map.outputs.load-balancing-map-cache-primary-key }}
 
       - name: get-specs
         id: get-specs
@@ -109,10 +110,10 @@ jobs:
           yarn build
 
       - name: Get cached load-balancing map
-        id: cache-load-balancing-map-restore
+        id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
         with:
-          fail-on-cache-miss: false
+          fail-on-cache-miss: true
           path: main.json
           #TODO: figure out how to make this exist on the main branch
           key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
@@ -136,7 +137,7 @@ jobs:
       #
       #
       - name: Save overwritten cached load-balancing map
-        id: save-cached-load-balancing-map
+        id: cache-save-load-balancing-map
         uses: actions/cache/save@v4
         with:
           path: main.json
