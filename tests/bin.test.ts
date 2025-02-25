@@ -6,10 +6,11 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import { expect } from "chai";
 import sinon from "sinon";
-import { stubReadLoadBalancerFile, runCmd } from "./support/utils";
-import cli from "../src/cli";
 //@ts-expect-error No types exist
 import findCypressSpecs from "find-cypress-specs";
+import { stubReadLoadBalancerFile, runCmd } from "./support/utils";
+import cli from "../src/cli";
+import utils from "../src/utils";
 
 const sandbox = sinon.createSandbox();
 
@@ -54,10 +55,7 @@ describe("Executables", function() {
                 ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
               }
             });
-            const [_err, argv] = await runCmd(
-              cli,
-              `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`
-            );
+            const [_err, argv] = await runCmd(cli, `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`);
             expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts,baz.test.ts", "bar.test.ts"]);
           });
 
@@ -86,10 +84,7 @@ describe("Executables", function() {
                 ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
               }
             });
-            const [_err, argv, _output] = await runCmd(
-              cli,
-              `-r 2 -t component --fm newline -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`
-            );
+            const [_err, argv, _output] = await runCmd(cli, `-r 2 -t component --fm newline -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`);
             expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts\nbaz.test.ts", "bar.test.ts"]);
           });
 
@@ -144,36 +139,83 @@ describe("Executables", function() {
         });
 
         describe("merge", function() {
-          it(`defaults the original to the "./cypress_load_balancer/main.json"`, function() {
-
+          beforeEach(function() {
+            this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
           });
 
-          it("can have a different original file specified", function() {
-
+          it("requires either a glob pattern or a list of files", async function() {
+            const [err] = await runCmd(cli, `merge`);
+            expect(err.message).to.contain("At least one file path or a glob pattern must be provided.");
           });
 
-          it("can merge load balancing maps back to the original", function() {
-
+          it(`defaults the original to the "./cypress_load_balancer/main.json"`, async function() {
+            const [_err, argv] = await runCmd(cli, `merge -G **/files/*.json`);
+            expect(argv.original).to.eq(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
           });
 
-          it("defaults to overwrite the original file", function() {
 
+          it("can have a different original file specified", async function() {
+            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            const [_err, argv] = await runCmd(cli, `merge -F fake1.json --og foo.json`);
+            expect(argv.original).to.eq("foo.json");
           });
 
-          it("can have a different output file specified for saving", function() {
-
+          it("can merge load balancing maps back to the original", async function() {
+            sandbox.stub(fs, "readFileSync")
+              .returns(JSON.stringify({ e2e: {}, component: {} }))
+              .withArgs("fake1.json")
+              .returns(JSON.stringify({ e2e: { "foo.test.ts": { stats: { durations: [100, 200], average: 150 } } } }))
+              .withArgs("/files/fake2.json")
+              .returns(JSON.stringify({ e2e: { "bar.test.ts": { stats: { durations: [100], average: 100 } } } }))
+            ;
+            const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
+            const [_err, argv] = await runCmd(cli, `merge -F fake1.json -F /files/fake2.json`);
+            expect(saveMapFileStub).to.have.been.calledOnce.and.calledWithMatch(
+              {
+                e2e: {
+                  "foo.test.ts": { stats: { durations: [100, 200], average: 150 } },
+                  "bar.test.ts": { stats: { durations: [100], average: 100 } }
+                }
+              },
+              argv.output
+            );
           });
 
-          it("can have input files specified for merging", function() {
-
+          it("defaults to overwrite the original file", async function() {
+            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            await runCmd(cli, `merge -F fake1.json`);
+            expect(this.writeFileSyncStub).to.have.been.calledWithMatch(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH, sinon.match.any);
           });
 
-          it("can use a glob pattern to find input files", function() {
-
+          it("can have a different output file specified for saving", async function() {
+            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
+            await runCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
+            expect(saveMapFileStub).to.have.been.calledWithMatch(sandbox.match.any, `/files/alternate.json`);
           });
 
-          it("skips merging if no files are provided", function() {
+          it("can have input files specified for merging", async function() {
+            const readFileSyncStub = sandbox.stub(fs, "readFileSync").returns(JSON.stringify({
+              e2e: {},
+              component: {}
+            }));
+            const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
+            await runCmd(cli, `merge -F fake1.json -F /files/fake2.json`);
+            expect(readFileSyncStub.args.some((a: any[]) => a[0].includes("fake1.json"))).to.be.true;
+            expect(readFileSyncStub.args.some((a: any[]) => a[0].includes("/files/fake2.json"))).to.be.true;
+            expect(saveMapFileStub).to.have.been.calledOnce;
+          });
 
+          it("can use a glob pattern to find input files", async function() {
+            const stub = sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            await runCmd(cli, `merge -G tests/fixtures/*.json`);
+            expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/load-balancing-map.json"))).to.be.true;
+          });
+
+          it("skips merging if no files are found", async function() {
+            const stub = sandbox.stub(utils, "saveMapFile");
+            await runCmd(cli, `merge -G fakeDir/**.json`);
+            expect(stub).to.not.have.been.called;
           });
         });
       });
