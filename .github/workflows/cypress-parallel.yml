@@ -133,6 +133,9 @@ jobs:
         run: cat .cypress_load_balancer/main.json
       - run:  for i in *-parallel-map.json; do [ -f "$i" ] && cat $i; done
 
+      - name: DEBUG Output load balancing file contents
+        run: cat .cypress_load_balancer/main.json
+
       - name: Save overwritten cached load-balancing map
         id: cache-save-load-balancing-map
         uses: actions/cache/save@v4
