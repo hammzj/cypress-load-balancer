@@ -36,7 +36,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: false
-          path: ./cypress_load_balancer/main.json
+          path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
           key: load-balancing-map
 
@@ -55,7 +55,7 @@ jobs:
         if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
-          path: ./cypress_load_balancer/main.json
+          path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
           key: load-balancing-map
 
@@ -115,7 +115,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: true
-          path: ./cypress_load_balancer/main.json
+          path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
           key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
 
@@ -141,6 +141,6 @@ jobs:
         id: cache-save-load-balancing-map
         uses: actions/cache/save@v4
         with:
-          path: ./cypress_load_balancer/main.json
+          path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
           key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
