@@ -42,7 +42,6 @@ jobs:
 
       - run: echo ${{ steps.get-specs.outputs.specs }}
 
-
   cypress-run:
     runs-on: ubuntu-22.04
     needs: install
@@ -94,8 +93,8 @@ jobs:
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
-#          TODO: can't create directories
-#          path: /temp-maps
+          #          TODO: can't create directories
+          #          path: /temp-maps
           pattern: "*-parallel-map.json"
           merge-multiple: true
 
@@ -107,5 +106,3 @@ jobs:
         with:
           name: main.json
           path: .cypress_load_balancer
-
-

@@ -57,6 +57,7 @@ TODO
 ### `cypress-load-balancer`
 
 This can be executed with `npx cypress-load-balancer`:
+
 ```
 $: npx cypress-load-balancer
 
@@ -91,7 +92,6 @@ Examples:
 
 Missing required arguments: runners, testingType
 ```
-
 
 _This probably will not work with `tsx` or `ts-node` -- I need to figure out why._
 
