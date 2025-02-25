@@ -84,6 +84,7 @@ jobs:
           browser: electron
           build: yarn build
           spec: ${{ matrix.spec }}
+          config: videosFolder=/tmp/cypress-videos        # <-- Fix for https://github.com/cypress-io/github-action/issues/480
 
       - name: Upload temp load balancer map
         if: always()
