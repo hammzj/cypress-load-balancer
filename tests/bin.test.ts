@@ -156,6 +156,7 @@ describe("Executables", function () {
           });
 
           it(`defaults the original to the "./cypress_load_balancer/main.json"`, async function () {
+            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             const [_err, argv] = await runCmd(cli, `merge -G **/files/*.json`);
             expect(argv.original).to.eq(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
           });

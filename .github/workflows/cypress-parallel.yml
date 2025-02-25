@@ -86,7 +86,7 @@ jobs:
   cypress_run_e2e:
     runs-on: ubuntu-22.04
     needs: install_and_get_specs
-    if: ${{env.run_e2e == 'true'}}
+    #if: ${{env.run_e2e == 'true'}}
     strategy:
       fail-fast: false
       matrix:
