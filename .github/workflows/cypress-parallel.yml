@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       specs: ${{ steps.get-specs.outputs.specs }}
+      load-balancing-map-cache-primary-key: ${{  steps.cache-load-balancing-map-restore.outputs.cache-primary-key}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,23 +30,32 @@ jobs:
           yarn install
           yarn build
 
-      # TODO: figure out how to skip if not existing and use one that exists on the main branch
-      - name: Download the load balancer file
-        uses: actions/download-artifact@v4
+      - name: Get cached load-balancing map
+        id: cache-load-balancing-map-restore
+        uses: actions/cache/restore@v4
         with:
-          name: main.json
-          path: .cypress_load_balancer
+          fail-on-cache-miss: false
+          path: main.json
+          #TODO: figure out how to make this exist on the main branch
+          key: load-balancing-map
 
-      #TODO: this is ugly
-      - run: npx cypress-load-balancer initialize
-        if: failure()
-      - name: Create initial map if not existing
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: main.json
-          path: .cypress_load_balancer/main.json
-          if-no-files-found: error
+      #      # TODO: figure out how to skip if not existing and use one that exists on the main branch
+      #      - name: Download the load balancer file
+      #        uses: actions/download-artifact@v4
+      #        with:
+      #          name: main.json
+      #          path: .cypress_load_balancer
+      #
+      #      #TODO: this is ugly
+      #      - run: npx cypress-load-balancer initialize
+      #        if: failure()
+      #      - name: Create initial map if not existing
+      #        if: failure()
+      #        uses: actions/upload-artifact@v4
+      #        with:
+      #          name: main.json
+      #          path: .cypress_load_balancer/main.json
+      #          if-no-files-found: error
 
       - name: get-specs
         id: get-specs
@@ -85,7 +95,7 @@ jobs:
 
   merge-maps:
     runs-on: ubuntu-22.04
-    needs: cypress-run
+    needs: [cypress-run, install]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -98,6 +108,15 @@ jobs:
           yarn install
           yarn build
 
+      - name: Get cached load-balancing map
+        id: cache-load-balancing-map-restore
+        uses: actions/cache/restore@v4
+        with:
+          fail-on-cache-miss: false
+          path: main.json
+          #TODO: figure out how to make this exist on the main branch
+          key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
+
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
@@ -109,8 +128,17 @@ jobs:
       - name: Merge files
         run: npx cypress-load-balancer merge -G "*-parallel-map.json"
 
-      - name: Upload the merged load balancer file
-        uses: actions/upload-artifact@v4
+      #      - name: Upload the merged load balancer file
+      #        uses: actions/upload-artifact@v4
+      #        with:
+      #          name: main.json
+      #          path: .cypress_load_balancer/main.json
+      #
+      #
+      - name: Save overwritten cached load-balancing map
+        id: save-cached-load-balancing-map
+        uses: actions/cache/save@v4
         with:
-          name: main.json
-          path: .cypress_load_balancer/main.json
+          path: main.json
+          #TODO: figure out how to make this exist on the main branch
+          key: ${{ needs.install.outputs.load-balancing-map-cache-primary-key }}
