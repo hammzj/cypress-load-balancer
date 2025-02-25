@@ -139,7 +139,7 @@ describe("Utils", function () {
     });
   });
 
-  context("update file stats", function () {
+  context("updateFileStats", function () {
     it("shrinks the durations to the maximum length", function () {
       sinon.stub(utils, "MAX_DURATIONS_ALLOWED").get(() => 3);
 
@@ -164,4 +164,23 @@ describe("Utils", function () {
       expect(utils.calculateAverageDuration([3, 4])).to.eq(4);
     });
   });
+
+  // context.skip("isValidLoadBalancerMap", function() {
+  //   it("returns true for correct load balancer maps", function() {
+  //     const fixture = getFixture<LoadBalancingMap>("load-balancing-map.json", { parseJSON: true });
+  //     expect(utils.isValidLoadBalancerMap(fixture)).to.eq(true)
+  //   });
+  //
+  //   it("Example 1: return false", function() {
+  //
+  //   });
+  //
+  //   it("Example 2: return false", function() {
+  //
+  //   });
+  //
+  //   it("Example 3: return false", function() {
+  //
+  //   });
+  // });
 });

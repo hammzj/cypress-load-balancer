@@ -133,19 +133,30 @@ class Utils {
       loadBalancingMap[testingType][fileName].stats.durations
     );
   }
+
+  // isValidLoadBalancerMap(obj: any): boolean {
+  //   // let isValid = true;
+  //    if (typeof obj !== "object") return false;
+  //
+  //   //Validate top-level keys are only TESTING_TYPES
+  //   if ((Object.keys(obj).length !== this.TESTING_TYPES.length)) {
+  //     return false;
+  //   }
+  //   for (const type of this.TESTING_TYPES) {
+  //     if (!Object.keys(obj).includes(type)) return false;
+  //     //Validate file contents
+  //     for (const [fileName, v] of Object.entries(obj[type])) {
+  //       if (typeof fileName !== "string") return false;
+  //       const fileNameKeys = Object.keys(v);
+  //       //Check interior keys
+  //       if (fileNameKeys.length !== 1) return false;
+  //       if (!Object.keys(v).includes("stats")) {
+  //         return false;
+  //       }
+  //     }
+  //   }
+  //   return true;
+  // }
 }
 
 export default new Utils();
-
-// export default {
-//   CLB_DIRECTORY,
-//   MAIN_LOAD_BALANCING_MAP_FILE_PATH,
-//   MAX_DURATIONS_ALLOWED,
-//   TESTING_TYPES,
-//   DEBUG,
-//   createNewEntry,
-//   calculateAverageDuration,
-//   saveMapFile,
-//   initializeLoadBalancingFiles,
-//   updateFileStats
-// };

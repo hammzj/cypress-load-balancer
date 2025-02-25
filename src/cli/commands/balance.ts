@@ -3,7 +3,7 @@
 
 // @ts-expect-error There are no types for this package
 import { getSpecs } from "find-cypress-specs";
-import core from "@actions/core";
+import { setOutput } from "@actions/core";
 import performLoadBalancing from "../../loadBalancer";
 import { Runners, TestingType } from "../../types";
 
@@ -26,7 +26,7 @@ export default {
   command: "$0",
   description: "Performs load balancing against a set of runners and Cypress specs",
   //@ts-expect-error Figuring out the type later
-  builder: function(yargs) {
+  builder: function (yargs) {
     return (
       yargs
         .option("runners", {
@@ -35,7 +35,7 @@ export default {
           demandOption: true,
           describe: "The count of executable runners to use"
         })
-        .option("testingType", {
+        .option("testing-type", {
           alias: "t",
           type: "string",
           choices: ["e2e", "component"],
@@ -49,13 +49,7 @@ export default {
           describe:
             "An array of file paths relative to the current working directory to use for load balancing. Overrides finding Cypress specs by configuration file." +
             "\nIf left empty, it will utilize a Cypress configuration file to find test files to use for load balancing." +
-            "\nThe Cypress configuration file is implied to exist at the base of the directory unless set by \"process.env.CYPRESS_CONFIG_FILE\""
-        })
-        .option("getSpecsOptions", {
-          type: "string",
-          coerce: JSON.parse,
-          implies: ["findCypressSpecs"],
-          describe: "Options to pass to getSpecs (See \"find-cypress-specs\" package)"
+            '\nThe Cypress configuration file is implied to exist at the base of the directory unless set by "process.env.CYPRESS_CONFIG_FILE"'
         })
         .option("format", {
           alias: "fm",
@@ -66,7 +60,7 @@ export default {
             `\n"--transform string": Spec files per runner are joined with a comma; example: "tests/spec.a.ts,tests/spec.b.ts"` +
             `\n"--transform newline": Spec files per runner are joined with a newline; example: \n\t"tests/spec.a.ts\ntests/spec.b.ts"`
         })
-        .option("setGitHubActionsOutput", {
+        .option("set-gha-output", {
           alias: "gha",
           type: "boolean",
           describe: `Sets the output to the GitHub Actions step output as "cypressLoadBalancerSpecs"`
@@ -81,37 +75,32 @@ export default {
         //         process.env.CYPRESS_LOAD_BALANCING_MAP_FILE_NAME = opt
         //     }
         // })
-        //@ts-expect-error Figuring out the type later
-        .middleware((argv) => {
-          if (argv.files.length === 0) {
-            argv.files = getSpecs(argv.getSpecsOptions, argv.testingType);
-          }
-        })
         .help()
         .alias("help", "h")
         .example(
-          "Load balancing for 6 runners against \"component\" testing with implied Cypress configuration of `./cypress.config.js`",
+          'Load balancing for 6 runners against "component" testing with implied Cypress configuration of `./cypress.config.js`',
           "cypressLoadBalancer -r 6 -t component"
         )
         .example(
-          "Load balancing for 3 runners against \"e2e\" testing with specified file paths",
+          'Load balancing for 3 runners against "e2e" testing with specified file paths',
           "cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js cypress/e2e/bar.cy.js cypress/e2e/wee.cy.js"
         )
     );
   },
   //@ts-expect-error Figuring out the type later
-  handler: function(argv) {
+  handler: function (argv) {
+    const files = argv.files.length > 0 ? argv.files : getSpecs(undefined, argv[`testing-type`]);
     const output: Runners | string[] = performLoadBalancing(
       argv.runners,
-      argv.testingType as TestingType,
-      argv.files as string[]
+      argv["testing-type"] as TestingType,
+      files as string[]
     );
     argv.output = JSON.stringify(formatOutput(output, argv.format));
 
-    if (argv.setGitHubActionsOutput) {
-      core.setOutput("cypressLoadBalancerSpecs", argv.output);
+    if (argv[`set-gha-output`]) {
+      setOutput("cypressLoadBalancerSpecs", argv.output);
     }
-
+    if (!process.env.CYPRESS_LOAD_BALANCER_DEBUG) console.clear();
     console.log(argv.output);
   }
 };
