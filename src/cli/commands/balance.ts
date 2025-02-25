@@ -22,7 +22,7 @@ const formatOutput = (output: Runners, type?: FormatOutputOption) => {
 };
 
 export default {
-  command: "balance",
+  command: "$0",
   description: "Performs load balancing against a set of runners and Cypress specs",
   //@ts-expect-error Figuring out the type later
   builder: function(yargs) {

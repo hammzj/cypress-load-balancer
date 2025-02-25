@@ -25,7 +25,7 @@ describe("Executables", function() {
           requiredArgs.map((a) => {
             it(`requires ${a} as an argument`, async function() {
               const output = await new Promise((resolve) => {
-                argv.parse(`balance "`, (_err, _argv, output) => {
+                argv.parse(``, (_err, _argv, output) => {
                   resolve(output);
                 });
               });
@@ -42,7 +42,7 @@ describe("Executables", function() {
             sandbox.stub(fs, "writeFileSync");
 
             const argvOutput = await new Promise((resolve) => {
-              argv.parse(`balance -r 3 -t component -F "foo.test.ts"`, (_err, argv, _output) => {
+              argv.parse(`-r 3 -t component -F "foo.test.ts"`, (_err, argv, _output) => {
                 resolve(argv);
               });
             });
