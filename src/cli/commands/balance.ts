@@ -110,7 +110,7 @@ export default {
     if (argv[`set-gha-output`]) {
       setOutput("cypressLoadBalancerSpecs", argv.output);
     }
-    if (!process.env.CYPRESS_LOAD_BALANCER_DEBUG) console.clear();
+    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG !== "true") console.clear();
     console.log(argv.output);
   }
 };

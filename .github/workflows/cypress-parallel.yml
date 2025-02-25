@@ -155,7 +155,7 @@ jobs:
         run: npx cypress-load-balancer merge -G "./cypress_load_balancer_temp/**/main.json"
 
       - name: "DEBUG: Output load balancing file contents"
-        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != false }}
+        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != 'false' }}
         run: cat .cypress_load_balancer/main.json
 
       - name: Save overwritten cached load-balancing map

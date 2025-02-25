@@ -23,7 +23,7 @@ class Utils {
 
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   DEBUG(...args: any[]) {
-    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG) {
+    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG == "true") {
       console.debug("cypress-load-balancer", ...args);
     }
   }
