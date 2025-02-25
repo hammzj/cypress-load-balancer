@@ -25,7 +25,7 @@ export default {
   command: "balance",
   description: "Performs load balancing against a set of runners and Cypress specs",
   //@ts-expect-error Figuring out the type later
-  builder: function (yargs) {
+  builder: function(yargs) {
     return (
       yargs
         .option("runners", {
@@ -48,13 +48,13 @@ export default {
           describe:
             "An array of file paths relative to the current working directory to use for load balancing. Overrides finding Cypress specs by configuration file." +
             "\nIf left empty, it will utilize a Cypress configuration file to find test files to use for load balancing." +
-            '\nThe Cypress configuration file is implied to exist at the base of the directory unless set by "process.env.CYPRESS_CONFIG_FILE"'
+            "\nThe Cypress configuration file is implied to exist at the base of the directory unless set by \"process.env.CYPRESS_CONFIG_FILE\""
         })
         .option("getSpecsOptions", {
           type: "string",
           coerce: JSON.parse,
           implies: ["findCypressSpecs"],
-          describe: 'Options to pass to getSpecs (See "find-cypress-specs" package)'
+          describe: "Options to pass to getSpecs (See \"find-cypress-specs\" package)"
         })
         .option("format", {
           alias: "fm",
@@ -84,22 +84,25 @@ export default {
         .help()
         .alias("help", "h")
         .example(
-          'Load balancing for 6 runners against "component" testing with implied Cypress configuration of `./cypress.config.js`',
+          "Load balancing for 6 runners against \"component\" testing with implied Cypress configuration of `./cypress.config.js`",
           "cypressLoadBalancer -r 6 -t component"
         )
         .example(
-          'Load balancing for 3 runners against "e2e" testing with specified file paths',
+          "Load balancing for 3 runners against \"e2e\" testing with specified file paths",
           "cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js cypress/e2e/bar.cy.js cypress/e2e/wee.cy.js"
         )
     );
   },
   //@ts-expect-error Figuring out the type later
-  handler: function (argv) {
+  handler: function(argv) {
     const output: Runners | string[] = performLoadBalancing(
       argv.runners,
       argv.testingType as TestingType,
       argv.files as string[]
     );
+
+
     console.log(JSON.stringify(formatOutput(output, argv.format)));
+    return argv.output = JSON.stringify(formatOutput(output, argv.format))
   }
 };
