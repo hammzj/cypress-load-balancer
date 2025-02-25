@@ -121,7 +121,8 @@ jobs:
   merge_maps:
     runs-on: ubuntu-22.04
     needs: [install_and_get_specs, cypress_run]
-    if: ${{ jobs.install_and_get_specs.result  == 'success' }}
+    #TODO: this should only run on success of install_and_get_specs
+    if: always()
     steps:
       - name: Checkout
         uses: actions/checkout@v4
