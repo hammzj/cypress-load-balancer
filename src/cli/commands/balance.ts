@@ -89,7 +89,17 @@ export default {
   },
   //@ts-expect-error Figuring out the type later
   handler: function (argv) {
-    const files = argv.files.length > 0 ? argv.files : getSpecs(undefined, argv[`testing-type`]);
+    let files = argv.files;
+    try {
+      if (files.length === 0) {
+        files = getSpecs(undefined, argv[`testing-type`]);
+      }
+    } catch (e) {
+      console.error(
+        "Could not run `getSpecs` most likely do to an incorrect Cypress configuration or missing testing type",
+        argv[`testing-type`]
+      );
+    }
     const output: Runners | string[] = performLoadBalancing(
       argv.runners,
       argv["testing-type"] as TestingType,
