@@ -60,7 +60,7 @@ jobs:
             cypress-load-balancer-map-${{github.ref}}
             cypress-load-balancer-map-${{github.base_ref}}
 
-      #TODO: this is ugly and incorrect. It should do this if base file does not exist
+        #TODO: this is ugly
       - run: npx cypress-load-balancer initialize
         id: initialize-map
         if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
@@ -72,10 +72,6 @@ jobs:
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
           key: cypress-load-balancer-map-${{github.ref}}
-
-      - name: "DEBUG: Output load balancing file contents"
-        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != 'false' }}
-        run: cat .cypress_load_balancer/main.json
 
       - name: "E2E: cypress-load-balancer"
         if: ${{ env.run_e2e == 'true' }}
@@ -90,6 +86,7 @@ jobs:
   cypress_run_e2e:
     runs-on: ubuntu-22.04
     needs: install_and_get_specs
+    if: ${{env.run_e2e == 'true'}}
     strategy:
       fail-fast: false
       matrix:
