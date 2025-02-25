@@ -104,10 +104,6 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
 
-      - run: |
-          yarn install
-          yarn build
-
       - name: Get cached load-balancing map
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
@@ -124,14 +120,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: "*-parallel-map.json"
+          path: "/temp"
           merge-multiple: true
+
+      - run: |
+          yarn install
+          yarn build
 
       - name: Merge files
         run: npx cypress-load-balancer merge -G "**/*-parallel-map.json"
 
       - name: DEBUG Output load balancing file contents
         run: cat .cypress_load_balancer/main.json
-      - run:  for i in *-parallel-map.json; do [ -f "$i" ] && cat $i; done
+      - run: ls -al
 
       - name: DEBUG Output load balancing file contents
         run: cat .cypress_load_balancer/main.json
