@@ -90,7 +90,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{steps.generate-uuid.outputs.uuid }}-parallel-map.json
+          name: ${{steps.generate-uuid.outputs.uuid }}-parallel-map
           path: .cypress_load_balancer/main.json
 
   merge-maps:
@@ -120,16 +120,16 @@ jobs:
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
-          pattern: "*-parallel-map.json"
+          pattern: "*-parallel-map"
           path: ./temp
-          merge-multiple: true
+          merge-multiple: false
 
       - run: |
           yarn install
           yarn build
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -G "**/*-parallel-map.json"
+        run: npx cypress-load-balancer merge -G "temp/**/*-main.json"
 
       - name: DEBUG Output load balancing file contents
         run: cat .cypress_load_balancer/main.json
