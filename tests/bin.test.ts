@@ -24,7 +24,8 @@ describe("Executables", function() {
           const requiredArgs = ["runners", "testingType"];
           requiredArgs.map((a) => {
             it(`requires ${a} as an argument`, async function() {
-              const output = await new Promise((resolve) => {
+              const output: string = await new Promise((resolve) => {
+                //@ts-expect-error ignore
                 argv.parse(``, (_err, _argv, output) => {
                   resolve(output);
                 });
@@ -41,13 +42,74 @@ describe("Executables", function() {
             });
             sandbox.stub(fs, "writeFileSync");
 
-            const argvOutput = await new Promise((resolve) => {
+            const argvOutput: string = await new Promise((resolve) => {
+              //@ts-expect-error ignore
               argv.parse(`-r 3 -t component -F "foo.test.ts"`, (_err, argv, _output) => {
-                resolve(argv);
+                resolve(argv.output);
               });
             });
-            expect(JSON.parse(argvOutput.output)).to.deep.eq([["foo.test.ts"], [], []]);
+            expect(JSON.parse(argvOutput)).to.deep.eq([["foo.test.ts"], [], []]);
           });
+
+          it("can format the output as a comma-delimited string", async function() {
+            stubReadLoadBalancerFile(sandbox, {
+              e2e: {},
+              component: {
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } },
+                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000 } },
+                ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
+              }
+            });
+            sandbox.stub(fs, "writeFileSync");
+
+            const argvOutput: string = await new Promise((resolve) => {
+              //@ts-expect-error ignore
+              argv.parse(`-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`, (_err, argv, _output) => {
+                resolve(argv.output);
+              });
+            });
+            expect(JSON.parse(argvOutput)).to.deep.eq(["foo.test.ts,baz.test.ts", "bar.test.ts"]);
+          });
+
+          it("can format the output in spec format", async function() {
+            stubReadLoadBalancerFile(sandbox, {
+              e2e: {},
+              component: {
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } },
+                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000 } },
+                ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
+              }
+            });
+            sandbox.stub(fs, "writeFileSync");
+
+            const argvOutput: string = await new Promise((resolve) => {
+              //@ts-expect-error ignore
+              argv.parse(`-r 2 -t component --fm spec -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`, (_err, argv, _output) => {
+                resolve(argv.output);
+              });
+            });
+            expect(JSON.parse(argvOutput)).to.deep.eq(["--spec foo.test.ts,baz.test.ts", "--spec bar.test.ts"]);
+          });
+        });
+
+        it("can format the output as a newline-delimited string", async function() {
+          stubReadLoadBalancerFile(sandbox, {
+            e2e: {},
+            component: {
+              ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } },
+              ["bar.test.ts"]: { stats: { durations: [2000], average: 2000 } },
+              ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
+            }
+          });
+          sandbox.stub(fs, "writeFileSync");
+
+          const argvOutput: string = await new Promise((resolve) => {
+            //@ts-expect-error ignore
+            argv.parse(`-r 2 -t component --fm newline -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`, (_err, argv, _output) => {
+              resolve(argv.output);
+            });
+          });
+          expect(JSON.parse(argvOutput)).to.deep.eq(["foo.test.ts\nbaz.test.ts", "bar.test.ts"]);
         });
 
         describe("merge", function() {
