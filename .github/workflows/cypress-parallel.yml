@@ -1,24 +1,37 @@
-name: Cypress testing
+name: Testing load balancing Cypress E2E tests
 
 on:
   pull_request:
   workflow_dispatch:
     inputs:
+      run_component:
+        type: boolean
+        description: Get specs for component tests?
+        default: true
+      run_e2e:
+        type: boolean
+        description: Get specs for e2e tests?
+        default: true
       runners:
         type: number
         description: Number of runners to use for parallelization
+      debug:
+        type: boolean
+        description: Enables debugging on the cypress-load-balancer script
 
 env:
   runners: ${{ inputs.runners || 3}}
   node-version: 18.20.x
+  CYPRESS_LOAD_BALANCER_DEBUG: ${{ inputs.debug || false }}
+  run_component: ${{inputs.run_component || secrets.CYPRESS_LOAD_BALANCER_RUN_COMPONENT}}
+  run_e2e: ${{inputs.run_e2e || secrets.CYPRESS_LOAD_BALANCER_RUN_E2E || true}}
 
 jobs:
   install:
     runs-on: ubuntu-22.04
     outputs:
-      specs: ${{ steps.get-specs.outputs.specs }}
-      #TODO: figure out how to make this exist on the main branch
-      load-balancing-map-cache-primary-key: load-balancing-map
+      e2e-specs: ${{ steps.e2e-cypress-load-balancer.outputs.specs }}
+      component-specs: ${{ steps.component-cypress-load-balancer.outputs.specs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,13 +51,18 @@ jobs:
           fail-on-cache-miss: false
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: cypress-load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
+          #TODO: trunk branch should have its own restore key
+          # Restore keys:
+          ## 1. Same key from previous workflow run
+          ## 2. Key from pull request base branch
+          ## 3. Create new base map if not existing on workflow
           restore-keys: |
-            load-balancer-map-${{github.ref}}-
-            load-balancer-map-base-${{github.ref}}
-            # TODO: trunk branch should have one
+            cypress-load-balancer-map-${{github.ref}}-
+            cypress-load-balancer-map-${{github.base_ref}}-
+            cypress-load-balancer-map-base-${{github.ref}}
 
-       #TODO: this is ugly and incorrect. It should do this if base file does not exist
+      #TODO: this is ugly and incorrect. It should do this if base file does not exist
       - run: npx cypress-load-balancer initialize
         if: ${{ steps.cache-restore-load-balancing-map.outputs.cache-hit == 'true' }}
       - name: Save initial map if not existing
@@ -53,14 +71,20 @@ jobs:
         with:
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: load-balancer-map-base-${{github.ref}}
+          key: cypress-load-balancer-map-base-${{github.ref}}
 
-      - name: get-specs
-        id: get-specs
+      - name: "DEBUG: Output load balancing file contents"
+        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != false }}
+        run: cat .cypress_load_balancer/main.json
+
+      - name: "E2E: cypress-load-balancer"
+        if: ${{ env.run_e2e == true }}
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
-      - name: DEBUG Output load balancing file contents
-        run: cat .cypress_load_balancer/main.json
+      - name: "Component: cypress-load-balancer"
+        if: ${{ env.run_component == true }}
+        id: component-cypress-load-balancer
+        run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t component --fm string))" >> $GITHUB_OUTPUT
 
   cypress-run:
     runs-on: ubuntu-22.04
@@ -84,13 +108,14 @@ jobs:
           browser: electron
           build: yarn build
           spec: ${{ matrix.spec }}
-          config: videosFolder=/tmp/cypress-videos        # <-- Fix for https://github.com/cypress-io/github-action/issues/480
+          # Fix for https://github.com/cypress-io/github-action/issues/480
+          config: videosFolder=/tmp/cypress-videos
 
       - name: Upload temp load balancer map
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{steps.generate-uuid.outputs.uuid }}-parallel-map
+          name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancing-maps-from-parallel-jobs
           path: .cypress_load_balancer/main.json
 
   merge-maps:
@@ -111,31 +136,28 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: .cypress_load_balancer/main.json
-          #TODO: figure out how to make this exist on the main branch
-          key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: cypress-load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            load-balancer-map-${{github.ref}}-
-            load-balancer-map-base-${{github.ref}}
+            cypress-load-balancer-map-${{github.ref}}-
+            cypress-load-balancer-map-base-${{github.ref}}
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
-          pattern: "*-parallel-map"
-          path: ./temp
+          pattern: "*-cypress-load-balancing-maps-from-parallel-jobs"
+          path: ./cypress_load_balancer_temp
           merge-multiple: false
 
+      # TEMPORARY FOR THIS JOB
       - run: |
           yarn install
           yarn build
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -G "temp/**/main.json"
+        run: npx cypress-load-balancer merge -G "./cypress_load_balancer_temp/**/main.json"
 
-      - name: DEBUG Output load balancing file contents
-        run: cat .cypress_load_balancer/main.json
-      - run: ls -R
-
-      - name: DEBUG Output load balancing file contents
+      - name: "DEBUG: Output load balancing file contents"
+        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != false }}
         run: cat .cypress_load_balancer/main.json
 
       - name: Save overwritten cached load-balancing map
@@ -143,7 +165,5 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/main.json
-          #TODO: figure out how to make this exist on the main branch
           #This saves to the workflow run. To save to the trunk, this needs to be uploaded on merge
-          key: load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
-
+          key: cypress-load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
