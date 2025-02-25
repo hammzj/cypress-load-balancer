@@ -78,7 +78,7 @@ class Utils {
         ? this.getPath(fileName.replace(/.json/g, ``) + ".json")
         : this.MAIN_LOAD_BALANCING_MAP_FILE_PATH;
     fs.writeFileSync(file, JSON.stringify(loadBalancingMap));
-    console.debug("Saved load balancing map file");
+    this.DEBUG("Saved load balancing map file");
   }
 
   shrinkToFit(arr: number[]): number[] {

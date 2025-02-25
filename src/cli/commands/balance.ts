@@ -100,7 +100,7 @@ export default {
       argv.testingType as TestingType,
       argv.files as string[]
     );
-    argv.output = JSON.stringify(formatOutput(output, argv.format))
-    console.log( argv.output);
+    argv.output = JSON.stringify(formatOutput(output, argv.format));
+    console.log(argv.output);
   }
 };
