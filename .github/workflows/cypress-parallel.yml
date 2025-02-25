@@ -56,11 +56,9 @@ jobs:
           # Restore keys:
           ## 1. Same key from previous workflow run
           ## 2. Key from pull request base branch
-          ## 3. Create new base map if not existing on workflow
           restore-keys: |
-            cypress-load-balancer-map-${{github.ref}}-
-            cypress-load-balancer-map-${{github.base_ref}}-
-            cypress-load-balancer-map-base-${{github.ref}}
+            cypress-load-balancer-map-${{github.ref}}
+            cypress-load-balancer-map-${{github.base_ref}}
 
       #TODO: this is ugly and incorrect. It should do this if base file does not exist
       - run: npx cypress-load-balancer initialize
@@ -73,7 +71,7 @@ jobs:
         with:
           path: .cypress_load_balancer/main.json
           #TODO: figure out how to make this exist on the main branch
-          key: cypress-load-balancer-map-base-${{github.ref}}
+          key: cypress-load-balancer-map-${{github.ref}}
 
       - name: "DEBUG: Output load balancing file contents"
         if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != 'false' }}
@@ -141,8 +139,7 @@ jobs:
           path: .cypress_load_balancer/main.json
           key: cypress-load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            cypress-load-balancer-map-${{github.ref}}-
-            cypress-load-balancer-map-base-${{github.ref}}
+            cypress-load-balancer-map-${{github.ref}}
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
