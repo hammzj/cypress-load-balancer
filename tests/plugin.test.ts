@@ -76,6 +76,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     it("saves the file when complete", function () {
+      stubInitializeLoadBalancingFiles();
       const handler = getHandler();
       stubReadLoadBalancerFile(sandbox);
       const stub = sandbox.stub(utils, "saveMapFile");

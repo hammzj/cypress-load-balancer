@@ -4,8 +4,6 @@ import { LoadBalancingMap, TestingType } from "./types";
 import CypressRunResult = CypressCommandLine.CypressRunResult;
 import CypressFailedRunResult = CypressCommandLine.CypressFailedRunResult;
 
-
-
 export default function addCypressLoadBalancerPlugin(on: Cypress.PluginEvents, testingType?: TestingType) {
   on("after:run", (results: CypressRunResult | CypressFailedRunResult) => {
     if ((results as CypressFailedRunResult).status === "failed") {
@@ -23,13 +21,7 @@ export default function addCypressLoadBalancerPlugin(on: Cypress.PluginEvents, t
         testingType = (cypressRunResult.config?.testingType || testingType) as TestingType;
         const fileName = run.spec.relative;
         utils.createNewEntry(loadBalancingMap, testingType, fileName);
-
-        loadBalancingMap[testingType][fileName].stats.durations.push(run.stats.duration || 0);
-        utils.shrinkToFit(loadBalancingMap[testingType][fileName].stats.durations);
-
-        loadBalancingMap[testingType][fileName].stats.average = utils.calculateAverageDuration(
-          loadBalancingMap[testingType][fileName].stats.durations
-        );
+        utils.updateFileStats(loadBalancingMap, testingType, fileName, run.stats.duration);
       }
       //Overwrite original load balancing file
       utils.saveMapFile(loadBalancingMap);
