@@ -129,7 +129,7 @@ jobs:
           yarn build
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -G "temp/**/*-main.json"
+        run: npx cypress-load-balancer merge -G "temp/**/main.json"
 
       - name: DEBUG Output load balancing file contents
         run: cat .cypress_load_balancer/main.json
