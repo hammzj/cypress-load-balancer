@@ -59,7 +59,7 @@ jobs:
         id: get-specs
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
-      - name: Output load balancing file contents
+      - name: DEBUG Output load balancing file contents
         run: cat .cypress_load_balancer/main.json
 
   cypress-run:
@@ -128,6 +128,9 @@ jobs:
 
       - name: Merge files
         run: npx cypress-load-balancer merge -G "*-parallel-map.json"
+
+      - name: DEBUG Output load balancing file contents
+        run: cat .cypress_load_balancer/main.json
 
       - name: Save overwritten cached load-balancing map
         id: cache-save-load-balancing-map
