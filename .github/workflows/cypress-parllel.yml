@@ -98,7 +98,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -D /temp-maps
+        run: npx cypress-load-balancer merge -G "*-parallel-map.json"
 
       - name: Upload the merged load balancer file
         uses: actions/upload-artifact@v4
