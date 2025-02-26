@@ -96,7 +96,7 @@ jobs:
 
   merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
-    needs: [ get_specs, cypress_run-e2e ]
+    needs: [get_specs, cypress_run-e2e]
     if: ${{ needs.get_specs.result == 'success' }}
     steps:
       - name: Checkout
@@ -109,8 +109,6 @@ jobs:
       - run: |
           yarn install
           yarn build
-
-
 
       - name: Get cached load-balancing map
         id: cache-restore-load-balancing-map
