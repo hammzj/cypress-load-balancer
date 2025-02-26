@@ -1,0 +1,82 @@
+name: "cypress-load-balancer/get-specs"
+description: "A simple load balancer for Cypress tests. Gets spec patterns for a set of runners and files names based on the cypress configuration"
+author: Zachary J. Hamm
+branding:
+  icon: "cpu"
+  color: "green"
+
+inputs:
+  image:
+    description: The image to use for running the action
+    default: ubuntu-22.04
+  node-version:
+    description: The node version to use for JS actions
+  runners:
+    description: Number of runners to use for parallelization (Defaults to `1` or a value in `secrets.CYPRESS_LOAD_BALANCER_RUNNERS`)
+    required: false
+    default: ${{secrets.CYPRESS_LOAD_BALANCER_RUNNERS || 1}}
+  testing-type:
+    description: Testing type for which to get specs ("component" or "e2e")
+    required: true
+  format:
+    description: The formatter to use for outputting the specs
+    default: string
+  help:
+    description: Output help command of cypress-load-balancer script?
+    default: "false"
+
+outputs:
+  specs:
+    description: "Spec file names balanced per each runner in the format of a comma-delimited string."
+    value: ${{ steps.cypress-load-balancer.outputs.specs }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - run: |
+        yarn install
+        yarn build
+      shell: bash
+
+    - name: Run help command
+      if: ${{ inputs.help == 'true' }}
+      run: echo $(npx cypress-load-balancer --help)
+      shell: bash
+
+    - name: Get cached load-balancing map
+      id: cache-restore-load-balancing-map
+      uses: actions/cache/restore@v4
+      with:
+        fail-on-cache-miss: false
+        path: .cypress_load_balancer/main.json
+        key: cypress-load-balancer-map-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+        # Restore keys:
+        ## 1. Same key from previous workflow run
+        ## 2. Key from pull request base branch
+        restore-keys: |
+          cypress-load-balancer-map-${{github.ref}}
+          cypress-load-balancer-map-${{github.base_ref}}
+
+    - run: npx cypress-load-balancer initialize
+      id: initialize-map
+      if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
+      shell: bash
+
+    - name: Cache initial map if not existing
+      if: ${{ steps.initialize-map.outcome == 'success' }}
+      uses: actions/cache/save@v4
+      with:
+        path: .cypress_load_balancer/main.json
+        key: cypress-load-balancer-map-${{  github.ref }}
+
+    - name: cypress-load-balancer
+      id: cypress-load-balancer
+      run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ inputs.runners }} -t ${{ inputs.testing-type }} --fm ${{ inputs.format }}))" >> $GITHUB_OUTPUT
+      shell: bash

@@ -1,0 +1,37 @@
+name: "cypress-load-balancer/save"
+description: "A simple load balancer for Cypress tests. Saves the load balancing map on pull request merges to the base branch."
+author: Zachary J. Hamm
+branding:
+  icon: "cpu"
+  color: "green"
+
+inputs:
+  image:
+    description: The image to use for running the action
+    default: ubuntu-22.04
+  node-version:
+    description: The node version to use for JS actions
+
+runs:
+  using: composite
+  steps:
+    - name: Get cached load-balancing map
+      id: cache-restore-load-balancing-map
+      uses: actions/cache/restore@v4
+      with:
+        fail-on-cache-miss: true
+        path: .cypress_load_balancer/main.json
+        key: cypress-load-balancer-map-${{github.base_ref}}-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+        # Restore keys:
+        ## 1. Same key from previous workflow run
+        ## 2. Key from pull request base branch
+        restore-keys: |
+          cypress-load-balancer-map-${{github.ref}}
+          cypress-load-balancer-map-${{github.base_ref}}
+
+    - name: Save cached load-balancing map
+      id: cache-restore-load-balancing-map
+      uses: actions/cache/save@v4
+      with:
+        path: .cypress_load_balancer/main.json
+        key: cypress-load-balancer-map-${{github.base_ref}}-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}

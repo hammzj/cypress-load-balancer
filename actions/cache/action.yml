@@ -1,0 +1,51 @@
+name: "cypress-load-balancer/cache"
+description: "A simple load balancer for Cypress tests. Caches the load balancing map for the job run."
+author: Zachary J. Hamm
+branding:
+  icon: "cpu"
+  color: "green"
+
+inputs:
+  image:
+    description: The image to use for running the action
+    default: ubuntu-22.04
+  node-version:
+    description: The node version to use for JS actions
+
+outputs:
+  artifact-id:
+    description: "Artifact ID of the load balancing map artifact"
+    value: ${{ steps.upload-artifact.outputs.artifact-id }}
+  artifact-url:
+    description: "Artifact URL of the load balancing map artifact"
+    value: ${{ steps.upload-artifact.outputs.artifact-url }}
+  artifact-digest:
+    description: "Artifact digest of the load balancing map artifact"
+    value: ${{ steps.upload-artifact.outputs.artifact-digest}}
+
+runs:
+  using: composite
+  steps:
+    - id: generate-uuid
+      run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - run: |
+        yarn install
+        yarn build
+      shell: bash
+
+    - name: Upload load balancer map
+      id: upload-artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-file
+        path: .cypress_load_balancer/main.json
+
