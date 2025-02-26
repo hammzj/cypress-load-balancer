@@ -4,8 +4,9 @@ pnpm-lock.yaml
 yarn.lock
 
 # Test Resources
-**/cypress/fixtures
+cypress
 **/tests/fixtures
 
 .cypress-load-balancer
+.cypress_load_balancer
 .idea

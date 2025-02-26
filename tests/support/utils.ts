@@ -22,3 +22,14 @@ export function stubReadLoadBalancerFile(
     .withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH)
     .returns(JSON.stringify(returns));
 }
+
+//@ts-expect-error ignore
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function runCmd(argv: any, command: string): [Error, any, string] {
+  return await new Promise((resolve) => {
+    //@ts-expect-error ignore
+    argv.parse(command, (err, argv, output) => {
+      resolve([err, argv, output]);
+    });
+  });
+}

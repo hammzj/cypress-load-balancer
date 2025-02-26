@@ -10,43 +10,51 @@ describe("Utils", function () {
   });
 
   context("saveMapFile", function () {
-    it('saves map file data to default "/.cypress-load-balancer/main.json" file', function () {
+    it('saves map file data to default "/.cypress_load_balancer/main.json" file', function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} });
-      expect(writeFileSyncStub).to.have.been.calledOnce;
-      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress-load-balancer/main.json");
-      expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
+      expect(writeFileSyncStub).to.have.been.calledOnce.and.calledWithMatch(
+        ".cypress_load_balancer/main.json",
+        JSON.stringify({
+          e2e: {},
+          component: {}
+        })
+      );
     });
 
     it("can save to another json file", function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} }, "alternate.json");
-      expect(writeFileSyncStub.calledOnce).to.be.true;
-      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress-load-balancer/alternate.json");
-      expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
+      expect(writeFileSyncStub).to.have.been.calledOnce.and.calledWithMatch(
+        ".cypress_load_balancer/alternate.json",
+        JSON.stringify({
+          e2e: {},
+          component: {}
+        })
+      );
     });
 
     it('converts ".json.json" to ".json"', function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} }, "alternate.json.json");
-      expect(writeFileSyncStub.calledOnce).to.be.true;
-      expect(writeFileSyncStub.firstCall.args[0]).to.endWith(".cypress-load-balancer/alternate.json");
+      expect(writeFileSyncStub).to.have.been.calledOnce;
+      expect(writeFileSyncStub.firstCall.args[0]).to.endWith(".cypress_load_balancer/alternate.json");
       expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
     });
   });
 
   context("initializeLoadBalancingFiles", function () {
-    it('creates the ".cypress-load-balancer" directory if it does not exist', function () {
+    it('creates the ".cypress_load_balancer" directory if it does not exist', function () {
       sinon.stub(fs, "existsSync").returns(false);
       const mkdirSyncStub = sinon.stub(fs, "mkdirSync");
       sinon.stub(fs, "writeFileSync");
 
       utils.initializeLoadBalancingFiles();
       expect(mkdirSyncStub.calledOnce).to.be.true;
-      expect(mkdirSyncStub.calledWithMatch(".cypress-load-balancer")).to.be.true;
+      expect(mkdirSyncStub.calledWithMatch(".cypress_load_balancer")).to.be.true;
     });
 
-    it('skips creating the ".cypress-load-balancer" directory if it exists', function () {
+    it('skips creating the ".cypress_load_balancer" directory if it exists', function () {
       sinon.stub(fs, "existsSync").returns(true);
       const mkdirSyncStub = sinon.stub(fs, "mkdirSync");
 
@@ -54,7 +62,7 @@ describe("Utils", function () {
       expect(mkdirSyncStub.calledOnce).to.be.false;
     });
 
-    it('can force re-create the ".cypress-load-balancer" directory', function () {
+    it('can force re-create the ".cypress_load_balancer" directory', function () {
       sinon.stub(fs, "existsSync").returns(true);
       const mkdirSyncStub = sinon.stub(fs, "mkdirSync");
 
@@ -69,7 +77,7 @@ describe("Utils", function () {
 
       utils.initializeLoadBalancingFiles();
       expect(writeFileSyncStub.calledOnce).to.be.true;
-      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress-load-balancer/main.json");
+      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancer/main.json");
       expect(JSON.parse(writeFileSyncStub.firstCall.args[1] as string)).to.deep.eq({ e2e: {}, component: {} });
     });
 
@@ -139,8 +147,21 @@ describe("Utils", function () {
     });
   });
 
-  context("calculateAverageDuration", function () {
-    it("returns 0 if none are provided", function () {
+  context("updateFileStats", function () {
+    it("shrinks the durations to the maximum length", function () {
+      sinon.stub(utils, "MAX_DURATIONS_ALLOWED").get(() => 3);
+
+      const orig = {
+        e2e: {},
+        component: { "tests/foo.spec.ts": { stats: { durations: [100, 200, 300], average: 200 } } }
+      };
+
+      utils.updateFileStats(orig, "component", "tests/foo.spec.ts", 400);
+      expect(orig.component["tests/foo.spec.ts"].stats.durations).to.have.length(3);
+      expect(orig.component["tests/foo.spec.ts"].stats.durations).to.deep.eq([200, 300, 400]);
+    });
+
+    it("calculates the average duration as 0 if no durations are provided", function () {
       expect(utils.calculateAverageDuration([])).to.eq(0);
     });
 
@@ -151,4 +172,23 @@ describe("Utils", function () {
       expect(utils.calculateAverageDuration([3, 4])).to.eq(4);
     });
   });
+
+  // context.skip("isValidLoadBalancerMap", function() {
+  //   it("returns true for correct load balancer maps", function() {
+  //     const fixture = getFixture<LoadBalancingMap>("load-balancing-map.json", { parseJSON: true });
+  //     expect(utils.isValidLoadBalancerMap(fixture)).to.eq(true)
+  //   });
+  //
+  //   it("Example 1: return false", function() {
+  //
+  //   });
+  //
+  //   it("Example 2: return false", function() {
+  //
+  //   });
+  //
+  //   it("Example 3: return false", function() {
+  //
+  //   });
+  // });
 });
