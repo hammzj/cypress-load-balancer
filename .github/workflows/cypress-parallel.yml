@@ -70,6 +70,9 @@ jobs:
         id: e2e-cypress-load-balancer
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
+      - name: "DEBUG: read cached file"
+        run: cat .cypress_load_balancer/main.json
+
   cypress_run-e2e:
     runs-on: ubuntu-22.04
     needs: get_specs
@@ -78,7 +81,8 @@ jobs:
       matrix:
         spec: ${{ fromJson(needs.get_specs.outputs.e2e_specs) }}
     steps:
-      - id: generate-uuid
+      - name: Generate uuid to use uploading a unique load balancer map artifact
+        id: generate-uuid
         run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v4
@@ -101,6 +105,7 @@ jobs:
         with:
           name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-temp-from-parallel-job
           path: .cypress_load_balancer/main.json
+
 
   merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
@@ -145,3 +150,6 @@ jobs:
           path: .cypress_load_balancer/main.json
           #This saves to the workflow run. To save to the trunk, this needs to be uploaded on merge
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: "DEBUG: read merged file"
+        run: cat .cypress_load_balancer/main.json

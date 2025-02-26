@@ -7,7 +7,7 @@ export default {
   command: "merge",
   description: "Merges load balancing map files together back to an original map.",
   //@ts-expect-error Need to fix type
-  builder: function (yargs) {
+  builder: function(yargs) {
     return (
       yargs
         .option("original", {
@@ -44,7 +44,7 @@ export default {
         })
 
         //@ts-expect-error Need to fix type
-        .check(function (argv) {
+        .check(function(argv) {
           if (argv.files.length === 0 && !argv.glob) {
             throw Error("At least one file path or a glob pattern must be provided.");
           }
@@ -53,7 +53,7 @@ export default {
     );
   },
   //@ts-expect-error Need to fix type
-  handler: function (argv) {
+  handler: function(argv) {
     const orig = JSON.parse(fs.readFileSync(argv.original).toString());
     const others = [];
 
@@ -62,15 +62,18 @@ export default {
       for (const f of files) {
         const data = JSON.parse(fs.readFileSync(f).toString());
         others.push(data);
+        utils.DEBUG("Glob results:", argv.f);
       }
     }
     for (const f of argv.files) {
+      utils.DEBUG("Files:", argv.f);
       const data = JSON.parse(fs.readFileSync(f).toString());
       others.push(data);
     }
     if (others.length > 0) {
       const merged = mergeLoadBalancingMapFiles(orig, others);
       utils.saveMapFile(merged, argv.output);
+      console.log("cypress load balancer map merge complete");
     } else {
       console.warn("No input files found, so skipping merging");
     }
