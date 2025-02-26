@@ -151,6 +151,7 @@ describe("Executables", function () {
           });
 
           it("requires either a glob pattern or a list of files", async function () {
+            stubReadLoadBalancerFile(sandbox);
             const [err] = await runCmd(cli, `merge`);
             expect(err.message).to.contain("At least one file path or a glob pattern must be provided.");
           });
@@ -188,13 +189,14 @@ describe("Executables", function () {
             );
           });
 
-          it("defaults to overwrite the original file", async function () {
+          it("defaults to overwrite the original file", function (done) {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            await runCmd(cli, `merge -F fake1.json`);
+            runCmd(cli, `merge -F fake1.json`);
             expect(this.writeFileSyncStub).to.have.been.calledWithMatch(
               utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH,
               sinon.match.any
             );
+            done();
           });
 
           it("can have a different output file specified for saving", async function () {

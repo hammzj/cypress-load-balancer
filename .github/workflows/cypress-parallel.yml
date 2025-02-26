@@ -106,7 +106,6 @@ jobs:
           name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-temp-from-parallel-job
           path: .cypress_load_balancer/main.json
 
-
   merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
     needs: [get_specs, cypress_run-e2e]
