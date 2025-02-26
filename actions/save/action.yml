@@ -15,6 +15,7 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: actions/checkout@v4
     - name: Get cached load-balancing map
       id: cache-restore-load-balancing-map
       uses: actions/cache/restore@v4

@@ -30,8 +30,7 @@ runs:
       run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: Checkout
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - uses: actions/setup-node@v4
       with:

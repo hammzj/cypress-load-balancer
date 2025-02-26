@@ -23,12 +23,16 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
+
+    - run: |
+        yarn install
+        yarn build
+      shell: bash
 
     - name: Get cached load-balancing map
       id: cache-restore-load-balancing-map
@@ -47,10 +51,7 @@ runs:
         path: "./cypress_load_balancer_temp"
         merge-multiple: false
 
-    - run: |
-        yarn install
-        yarn build
-      shell: bash
+
 
     - name: Merge files
       run: npx cypress-load-balancer merge -G "./cypress_load_balancer_temp/**/main.json"
