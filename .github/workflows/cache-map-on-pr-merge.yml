@@ -1,14 +1,13 @@
 name: Cache load balancing map on base branch
 on:
   pull_request:
-    types: [closed]
 
 env:
   node-version: 20.18.x
 
 jobs:
   cache_cypress_load_balancing_map:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
