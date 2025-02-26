@@ -2,7 +2,7 @@
 name: Cache load balancing map on base branch
 on:
   pull_request:
-    types: [closed]
+#    types: [closed]
 
 env:
   node-version: 20.18.x
@@ -10,7 +10,7 @@ env:
 jobs:
   cache_cypress_load_balancing_map:
     # this job will only run if the PR has been merged
-    if: github.event.pull_request.merged == true
+#    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - run: |
