@@ -1,13 +1,16 @@
-
 # cypress-load-balancer
 
+A simple load balancer for Cypress tests.
 
+Use this for parallelizing jobs across CI/CD solutions, or locally if set up.
+
+_Note: Requires extra setup on your own CI/CD environment to function correctly!_
 
 ## Environment Variables:
 
-* `CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
+- `CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
   durations once the maximum limit has been reached. **Defaulted to 10**.
-* `CYPRESS_LOAD_BALANCER_DEBUG`: Enables debugging output. Does not clear the console, so the output may be unusable.
+- `CYPRESS_LOAD_BALANCER_DEBUG`: Enables debugging output. Does not clear the console, so the output may be unusable.
 
 ## Setup
 

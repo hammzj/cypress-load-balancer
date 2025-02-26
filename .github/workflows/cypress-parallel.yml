@@ -64,7 +64,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/main.json
-          key: cypress-load-balancer-map-${{github.ref}}
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}
 
       - name: "E2E: cypress-load-balancer"
         id: e2e-cypress-load-balancer
