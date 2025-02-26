@@ -7,6 +7,9 @@ env:
   node-version: 20.18.x
 
 jobs:
+  what_is_this:
+    - run: echo Merged? ${{github.event.pull_request.merged}}
+
   cache_cypress_load_balancing_map:
     if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-latest
