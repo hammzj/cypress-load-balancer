@@ -53,8 +53,6 @@ defineConfig({
 Now, when you run your suite, it will calculate the average for each file based on previous durations and output it into
 `.cypress_load_balancer/main.json`. This is the load balancing map file.
 
-TODO
-
 ## Executables
 
 ### `cypress-load-balancer`
