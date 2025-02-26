@@ -15,19 +15,29 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Get cached load-balancing map
+    - name: Get cached load-balancing map for current branch
       id: cache-restore-load-balancing-map
       uses: actions/cache/restore@v4
       with:
         fail-on-cache-miss: true
         path: .cypress_load_balancer/main.json
-        key: cypress-load-balancer-map-${{github.base_ref}}-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
-        # Restore keys:
-        ## 1. Same key from previous workflow run
-        ## 2. Key from pull request base branch
+        key: cypress-load-balancer-map--${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
           cypress-load-balancer-map-${{github.ref}}
-          cypress-load-balancer-map-${{github.base_ref}}
+
+    - name: Get cached load-balancing map for base branch, if existing
+      id: cache-restore-load-balancing-map
+      uses: actions/cache/restore@v4
+      with:
+        fail-on-cache-miss: false
+        path: .cypress_load_balancer_temp/base/main.json
+        key: cypress-load-balancer-map--${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          cypress-load-balancer-map-${{github.base_ref}}    
+
+    - name: Merge load balancing map files
+      run: npx cypress-load-balancer merge -G "./cypress_load_balancer_temp/base/main.json"
+      shell: bash
 
     - name: Save cached load-balancing map
       id: cache-restore-load-balancing-map

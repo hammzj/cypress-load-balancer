@@ -49,8 +49,6 @@ runs:
         path: "./cypress_load_balancer_temp"
         merge-multiple: false
 
-
-
     - name: Merge files
       run: npx cypress-load-balancer merge -G "./cypress_load_balancer_temp/**/main.json"
       shell: bash
