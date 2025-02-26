@@ -140,7 +140,6 @@ jobs:
             cypress-load-balancer-map-${{ github.base_ref }}-
             cypress-load-balancer-map-${{ github.base_ref }}
 
-
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:

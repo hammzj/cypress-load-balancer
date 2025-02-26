@@ -2,7 +2,7 @@
 //TODO: this file is choppy. It needs to run the actual script file instead of executing npx.
 
 //Before you run this file, run an `npm run build` or `yarn build`
-import { execSync } from "node:child_process";
+import { exec } from "node:child_process";
 import fs from "node:fs";
 import { expect } from "chai";
 import sinon from "sinon";
@@ -199,11 +199,12 @@ describe("Executables", function () {
             done();
           });
 
-          it("can have a different output file specified for saving", async function () {
+          it("can have a different output file specified for saving", function (done) {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
-            await runCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
+            runCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
             expect(saveMapFileStub).to.have.been.calledWithMatch(sandbox.match.any, `/files/alternate.json`);
+            done();
           });
 
           it("can have input files specified for merging", async function () {
@@ -226,50 +227,55 @@ describe("Executables", function () {
             expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/load-balancing-map.json"))).to.be.true;
           });
 
-          it("skips merging if no files are found", async function () {
+          it("skips merging if no files are found", function (done) {
             const stub = sandbox.stub(utils, "saveMapFile");
-            await runCmd(cli, `merge -G fakeDir/**.json`);
+            runCmd(cli, `merge -G fakeDir/**.json`);
             expect(stub).to.not.have.been.called;
+            done();
           });
         });
 
         describe("initialize", function () {
-          it("can initialize the file", async function () {
+          it("can initialize the file", function (done) {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
-            await runCmd(cli, `initialize`);
+            runCmd(cli, `initialize`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: false,
               forceCreateMainLoadBalancingMap: false
             });
+            done();
           });
 
-          it("can force re-create the directory", async function () {
+          it("can force re-create the directory", function (done) {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
-            await runCmd(cli, `initialize --force-dir`);
+            runCmd(cli, `initialize --force-dir`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: true,
               forceCreateMainLoadBalancingMap: false
             });
+            done();
           });
 
-          it("can force re-create the file", async function () {
+          it("can force re-create the file", function (done) {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
-            await runCmd(cli, `initialize --force`);
+            runCmd(cli, `initialize --force`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: false,
               forceCreateMainLoadBalancingMap: true
             });
+            done();
           });
         });
       });
     });
 
-    it(`can be executed with "npx"`, function () {
-      try {
-        execSync("npx cypress-load-balancer");
-      } catch (error) {
-        expect(error).to.exist;
-      }
+    it(`can be executed with "npx"`, function (done) {
+      exec("npx cypress-load-balancer", (err) => {
+        expect((err as Error).message)
+          .to.contain(`cypress-load-balancer`)
+          .and.contain(`Performs load balancing against a set of runners and Cypress specs`);
+        done();
+      });
     });
   });
 });
