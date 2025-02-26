@@ -126,9 +126,9 @@ jobs:
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
 
-        # If no map exists for either the base branch or the current branch, initialize one
-      - run: npx cypress-load-balancer initialize
+      - name: If no map exists for either the base branch or the current branch, then initialize one
         id: initialize-map
+        run: npx cypress-load-balancer initialize
         if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
 
       - name: Download temp maps
