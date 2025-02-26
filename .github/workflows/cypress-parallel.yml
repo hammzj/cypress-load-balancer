@@ -51,6 +51,8 @@ jobs:
           ## 1. Same key from previous workflow run
           ## 2. Key from pull request base branch most recent workflow. Used for the "base" map, if one exists
           restore-keys: |
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
 
@@ -121,6 +123,8 @@ jobs:
           ## 1. Same key from previous workflow run
           ## 2. Key from pull request base branch most recent workflow
           restore-keys: |
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
 
