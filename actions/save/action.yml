@@ -45,3 +45,7 @@ runs:
       with:
         path: .cypress_load_balancer/main.json
         key: cypress-load-balancer-map-${{github.base_ref}}-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+    - name: DEBUG
+      run: cat .cypress_load_balancer/main.json
+      shell: bash
