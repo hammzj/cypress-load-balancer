@@ -49,12 +49,13 @@ jobs:
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           # Restore keys:
           ## 1. Same key from previous workflow run
-          ## 2. Key from pull request base branch most recent workflow
+          ## 2. Key from pull request base branch most recent workflow. Used for the "base" map, if one exists
           restore-keys: |
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
 
         #this is ugly
+        # If no map exists on the base branch or the current branch, initialize one
       - run: npx cypress-load-balancer initialize
         id: initialize-map
         if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
@@ -118,6 +119,10 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
 
+      - run: |
+          yarn install
+          yarn build      
+
       - name: Get cached load-balancing map
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
@@ -138,10 +143,6 @@ jobs:
           pattern: "*-cypress-load-balancer-map-temp-from-parallel-job"
           path: ./cypress_load_balancer/temp
           merge-multiple: false
-
-      - run: |
-          yarn install
-          yarn build
 
       - name: Merge files
         run: npx cypress-load-balancer merge -G "./cypress_load_balancer/temp/**/main.json"
