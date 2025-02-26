@@ -30,7 +30,7 @@ jobs:
         id: cache-restore-load-balancing-map-head-branch
         uses: actions/cache/restore@v4
         with:
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
           path: .cypress_load_balancer/main.json
           key: cypress-load-balancer-map-${{ github.head_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
