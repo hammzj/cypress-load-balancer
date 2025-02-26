@@ -81,6 +81,9 @@ jobs:
       matrix:
         spec: ${{ fromJson(needs.install_and_get_specs.outputs.e2e_specs) }}
     steps:
+      - id: generate-uuid
+        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
+
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -99,8 +102,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          # name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancing-maps-from-parallel-jobs
-          name: ${{ matrix.spec }}-cypress-load-balancing-maps-from-parallel-jobs
+          name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancing-maps-from-parallel-jobs
           path: .cypress_load_balancer/main.json
 
   merge_cypress_load_balancing_maps:
