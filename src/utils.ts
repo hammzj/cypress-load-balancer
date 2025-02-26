@@ -2,20 +2,6 @@ import path from "path";
 import fs from "node:fs";
 import { FilePath, LoadBalancingMap, TestingType } from "./types";
 
-//
-//
-// const CLB_DIRECTORY = getPath();
-// const MAIN_LOAD_BALANCING_MAP_FILE_PATH = getPath("main.json");
-// const MAX_DURATIONS_ALLOWED = Number(process.env.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED || 10);
-// const TESTING_TYPES: TestingType[] = ["e2e", "component"];
-//
-// function shrinkToFit(arr: number[]): number[] {
-//   if (arr.length > MAX_DURATIONS_ALLOWED) {
-//     arr.splice(0, arr.length - MAX_DURATIONS_ALLOWED);
-//   }
-//   return arr;
-// }
-
 class Utils {
   private getPath(...pathNames: string[]) {
     return path.join(process.cwd(), ".cypress_load_balancer", ...pathNames);
@@ -23,7 +9,7 @@ class Utils {
 
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   DEBUG(...args: any[]) {
-    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG) {
+    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG == "true") {
       console.debug("cypress-load-balancer", ...args);
     }
   }
@@ -37,7 +23,7 @@ class Utils {
   }
 
   get MAX_DURATIONS_ALLOWED() {
-    return Number(Number(process.env.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED || 10));
+    return Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
   }
 
   get TESTING_TYPES(): TestingType[] {
@@ -78,7 +64,7 @@ class Utils {
         ? this.getPath(fileName.replace(/.json/g, ``) + ".json")
         : this.MAIN_LOAD_BALANCING_MAP_FILE_PATH;
     fs.writeFileSync(file, JSON.stringify(loadBalancingMap));
-    console.debug("Saved load balancing map file");
+    this.DEBUG("Saved load balancing map file");
   }
 
   shrinkToFit(arr: number[]): number[] {

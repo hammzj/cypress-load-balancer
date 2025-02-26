@@ -1,7 +1,7 @@
-import utils from "../../utils";
-import mergeLoadBalancingMapFiles from "../../merge";
 import fs from "node:fs";
 import { globSync } from "glob";
+import utils from "../../utils";
+import mergeLoadBalancingMapFiles from "../../merge";
 
 export default {
   command: "merge",
@@ -39,13 +39,14 @@ export default {
         })
         .option("output", {
           alias: "o",
-          description: "An output file path to which to save. If not provided, uses the original file path"
+          description: "An output file path to which to save. If not provided, uses the original file path",
+          type: "string"
         })
 
         //@ts-expect-error Need to fix type
         .check(function (argv) {
           if (argv.files.length === 0 && !argv.glob) {
-            throw Error("At least one file path or glob pattern must be provided.");
+            throw Error("At least one file path or a glob pattern must be provided.");
           }
           return true;
         })
@@ -61,15 +62,18 @@ export default {
       for (const f of files) {
         const data = JSON.parse(fs.readFileSync(f).toString());
         others.push(data);
+        utils.DEBUG("Glob results:", argv.f);
       }
     }
     for (const f of argv.files) {
+      utils.DEBUG("Files:", argv.f);
       const data = JSON.parse(fs.readFileSync(f).toString());
       others.push(data);
     }
     if (others.length > 0) {
       const merged = mergeLoadBalancingMapFiles(orig, others);
       utils.saveMapFile(merged, argv.output);
+      console.log("cypress load balancer map merge complete");
     } else {
       console.warn("No input files found, so skipping merging");
     }

@@ -28,5 +28,4 @@ dist-ssr
 **/cypress/downloads
 **/cypress/screenshots
 **/cypress/videos
-.cypress-load-balancer
 .cypress_load_balancer
