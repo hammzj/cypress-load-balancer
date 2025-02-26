@@ -3,7 +3,7 @@ import { addCypressLoadBalancerPlugin } from "./";
 
 export default defineConfig({
   e2e: {
-    specPattern: "e2e/**/*.cy.ts",
+    specPattern: "cypress/e2e/**/*.cy.{js,ts}",
     video: false,
     setupNodeEvents(on) {
       addCypressLoadBalancerPlugin(on);
