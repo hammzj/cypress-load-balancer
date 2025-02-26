@@ -29,6 +29,8 @@ jobs:
     outputs:
       specs: ${{ steps.cypress-load-balancer-get-specs-e2e.outputs.specs }}
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./actions/get_specs
         id: cypress-load-balancer-get-specs-e2e
         with:
@@ -67,6 +69,7 @@ jobs:
     needs: [get_specs_e2e, cypress_run_e2e]
     if: ${{ needs.get_specs_e2e.result == 'success' }}
     steps:
+      - uses: actions/checkout@v4
       - uses: ./actions/merge
         with:
           node-version: ${{ env.node-version }}
