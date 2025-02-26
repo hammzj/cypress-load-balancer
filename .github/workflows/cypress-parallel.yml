@@ -121,7 +121,7 @@ jobs:
 
       - run: |
           yarn install
-          yarn build      
+          yarn build
 
       - name: Get cached load-balancing map
         id: cache-restore-load-balancing-map
