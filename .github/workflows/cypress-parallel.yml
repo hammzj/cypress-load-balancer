@@ -75,15 +75,12 @@ jobs:
   cypress_run_e2e:
     runs-on: ubuntu-22.04
     needs: install_and_get_specs
-    if: ${{ env.run_e2e == 'true' }}
+    #if: ${{ env.run_e2e == 'true' }}
     strategy:
       fail-fast: false
       matrix:
         spec: ${{ fromJson(needs.install_and_get_specs.outputs.e2e_specs) }}
     steps:
-      #      - id: generate-uuid
-      #        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
-
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
