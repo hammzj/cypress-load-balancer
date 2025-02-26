@@ -30,8 +30,6 @@ runs:
       run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
       shell: bash
 
-    - uses: actions/checkout@v4
-
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
