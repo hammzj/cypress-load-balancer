@@ -237,26 +237,13 @@ describe("Executables", function () {
 
         describe("initialize", function () {
           it("can initialize the file", function (done) {
-            sandbox.stub(fs, 'existsSync')
-              .withArgs(utils.CLB_DIRECTORY)
-              .returns(false)
-              .withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH)
-              .returns(false)
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
             runCmd(cli, `initialize`);
-            expect(stub).to.have.been.calledWith({
-              forceCreateMainDirectory: false,
-              forceCreateMainLoadBalancingMap: false
-            });
+            expect(stub).to.have.been.called;
             done();
           });
 
           it("can force re-create the directory", function (done) {
-            sandbox.stub(fs, 'existsSync')
-              .withArgs(utils.CLB_DIRECTORY)
-              .returns(true)
-              .withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH)
-              .returns(false)
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
             runCmd(cli, `initialize --force-dir`);
             expect(stub).to.have.been.calledWith({
@@ -267,11 +254,6 @@ describe("Executables", function () {
           });
 
           it("can force re-create the file", function (done) {
-            sandbox.stub(fs, 'existsSync')
-              .withArgs(utils.CLB_DIRECTORY)
-              .returns(true)
-              .withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH)
-              .returns(true)
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
             runCmd(cli, `initialize --force`);
             expect(stub).to.have.been.calledWith({

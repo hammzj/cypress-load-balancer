@@ -49,14 +49,10 @@ jobs:
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           # Restore keys:
           ## 1. Same key from previous workflow run
-          ## 2. Base map on head branch
-          ## 3. Key from pull request base branch most recent workflow
-          ## 4. Key from pull request base branch
+          ## 2. Key from pull request base branch most recent workflow
           restore-keys: |
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}
             cypress-load-balancer-map-${{ github.base_ref }}-
-            cypress-load-balancer-map-${{ github.base_ref }}
 
         #this is ugly
       - run: npx cypress-load-balancer initialize
@@ -131,9 +127,7 @@ jobs:
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           # Restore keys:
           ## 1. Same key from previous workflow run
-          ## 2. Base map on head branch
-          ## 3. Key from pull request base branch most recent workflow
-          ## 4. Key from pull request base branch
+          ## 2. Key from pull request base branch most recent workflow
           restore-keys: |
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
