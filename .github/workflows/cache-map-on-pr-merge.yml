@@ -1,19 +1,21 @@
+# See https://github.com/brennerm/github-actions-pr-close-showcase/
 name: Cache load balancing map on base branch
 on:
   pull_request:
-    types:
-      - closed
+    types: [ closed ]
+
 env:
   node-version: 20.18.x
 
 jobs:
-  what_is_this:
-    - run: echo Merged? ${{github.event.pull_request.merged}}
-
   cache_cypress_load_balancing_map:
-    if: github.event.pull_request.merged == 'true'
+    # this job will only run if the PR has been merged
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
+      - run: |
+          echo PR #${{ github.event.number }} has been merged
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
