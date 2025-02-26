@@ -3,7 +3,7 @@ on:
   pull_request:
 
 env:
-  node-version: 18.20.x
+  node-version: 20.18.x
 
 jobs:
   mocha:
