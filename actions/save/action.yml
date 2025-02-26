@@ -1,4 +1,4 @@
-name: "cypress-load-balancer/save"
+name: "cypress-load-balancer/save-on-pull-request"
 description: "A simple load balancer for Cypress tests. Saves the load balancing map on pull request merges to the base branch."
 author: Zachary J. Hamm
 branding:
@@ -21,9 +21,9 @@ runs:
       with:
         fail-on-cache-miss: true
         path: .cypress_load_balancer/main.json
-        key: cypress-load-balancer-map--${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+        key: cypress-load-balancer-map--${{ github.head_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          cypress-load-balancer-map-${{github.ref}}
+          cypress-load-balancer-map-${{ github.head_ref }}
 
     - name: Get cached load-balancing map for base branch, if existing
       id: cache-restore-load-balancing-map
@@ -33,7 +33,7 @@ runs:
         path: .cypress_load_balancer_temp/base/main.json
         key: cypress-load-balancer-map--${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          cypress-load-balancer-map-${{github.base_ref}}    
+          cypress-load-balancer-map-${{ github.base_ref }}
 
     - name: Merge load balancing map files
       run: npx cypress-load-balancer merge -G "./cypress_load_balancer_temp/base/main.json"
@@ -44,7 +44,7 @@ runs:
       uses: actions/cache/save@v4
       with:
         path: .cypress_load_balancer/main.json
-        key: cypress-load-balancer-map-${{github.base_ref}}-${{ github.ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+        key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.head_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
 
     - name: DEBUG
       run: cat .cypress_load_balancer/main.json

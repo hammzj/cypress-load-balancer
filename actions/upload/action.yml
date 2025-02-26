@@ -45,4 +45,3 @@ runs:
       with:
         name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-file
         path: .cypress_load_balancer/main.json
-

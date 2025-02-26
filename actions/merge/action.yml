@@ -13,7 +13,7 @@ inputs:
     description: The node version to use for JS actions
   cache-primary-key:
     description: "Cache primary key for the merged load balancer map"
-    default: cypress-load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
+    default: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
 outputs:
   cache-primary-key:
@@ -38,9 +38,9 @@ runs:
       with:
         fail-on-cache-miss: true
         path: .cypress_load_balancer/main.json
-        key: cypress-load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
+        key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          cypress-load-balancer-map-${{github.ref}}
+          cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}
 
     - name: Download temp maps
       uses: actions/download-artifact@v4

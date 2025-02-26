@@ -97,7 +97,9 @@ export default {
     } catch (e) {
       console.error(
         "Could not run `getSpecs` most likely do to an incorrect Cypress configuration or missing testing type",
-        argv[`testing-type`]
+        argv[`testing-type`],
+        "Original error",
+        e
       );
     }
     const output: Runners | string[] = performLoadBalancing(
