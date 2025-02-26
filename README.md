@@ -129,11 +129,17 @@ their results can be merged back to the main file, which can be consumed on the 
 
 1. **Install and configure the plugin.** When Cypress runs, it will be able to locally save the results of the spec
    executions per each runner.
-2. **Execute the load balancer against a number of runners.** The output is able to be used for all parallelized jobs to
+2. **Initialize the load balancer main map file in a persisted location that can be easily restored from cache.** This
+   means the main file needs to be in a place outside of the parallelized jobs to can be referenced _by_ the
+   parallelized jobs in order to save new results.
+3. **Execute the load balancer against a number of runners.** The output is able to be used for all parallelized jobs to
    instruct them which specs to execute.
-3. **Run each parallelized job that will execute the Cypress testrunner with the spec output per each runner.**
-4. **Collect and save the output of the load balancing files from each job in a temporary location.**
-5. **After all parallelized test jobs complete, merge their load balancing map results back to the persisted map file**.
+4. **Run each parallelized job that will execute the Cypress testrunner with the spec output per each runner.**
+5. **Collect and save the output of the load balancing files from each job in a temporary location.**
+6. **After all parallelized test jobs complete, merge their load balancing map results back to the persisted map file
+   and cached for later usage.**
+   In a GitHub Actions run, this means on pull request merge, the load balancing files from the base branch and the head
+   branch need to be merged, then cached down to the base branch.
 
 ### GitHub Actions
 
