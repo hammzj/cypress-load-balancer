@@ -4,7 +4,7 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      run_e2e:
+      run-e2e:
         type: boolean
         description: Get specs for e2e tests?
         default: true
@@ -18,8 +18,8 @@ on:
         description: Enables debugging on the cypress-load-balancer script
 
 env:
-  node_version: 18.20.x
-  run_e2e: ${{ inputs.run_e2e || true }}
+  node-version: 18.20.x
+  run-e2e: ${{ inputs.run-e2e || true }}
   runners: ${{ inputs.runners || secrets.CYPRESS_LOAD_BALANCER_RUNNERS  || 3}}
   CYPRESS_LOAD_BALANCER_DEBUG: ${{ inputs.debug || false }}
   CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED: ${{ secrets.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED }}
@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node_version }}
+          node-version: ${{ env.node-version }}
 
       - run: |
           yarn install
@@ -68,14 +68,14 @@ jobs:
           key: cypress-load-balancer-map-${{github.ref}}
 
       - name: "E2E: cypress-load-balancer"
-        if: ${{ env.run_e2e == 'true' }}
+        if: ${{ env.run-e2e == 'true' }}
         id: e2e-cypress-load-balancer
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
 
-  cypress_run_e2e:
+  cypress_run-e2e:
     runs-on: ubuntu-22.04
     needs: install_and_get_specs
-    #if: ${{ env.run_e2e == 'true' }}
+    #if: ${{ env.run-e2e == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node_version }}
+          node-version: ${{ env.node-version }}
 
       - name: Cypress run e2e tests
         uses: cypress-io/github-action@v6
@@ -102,12 +102,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancing-maps-from-parallel-jobs
+          name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-file
           path: .cypress_load_balancer/main.json
 
   merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
-    needs: [install_and_get_specs, cypress_run_e2e]
+    needs: [install_and_get_specs, cypress_run-e2e]
     if: ${{ needs.install_and_get_specs.result == 'success' }}
     steps:
       - name: Checkout
@@ -115,7 +115,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node_version }}
+          node-version: ${{ env.node-version }}
 
       - name: Get cached load-balancing map
         id: cache-restore-load-balancing-map
@@ -130,7 +130,7 @@ jobs:
       - name: Download temp maps
         uses: actions/download-artifact@v4
         with:
-          pattern: "*-cypress-load-balancing-maps-from-parallel-jobs"
+          pattern: "*-cypress-load-balancer-map-file"
           path: ./cypress_load_balancer_temp
           merge-multiple: false
 
