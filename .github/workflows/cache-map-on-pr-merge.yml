@@ -1,7 +1,8 @@
 name: Cache load balancing map on base branch
 on:
   pull_request:
-
+    types:
+      - closed
 env:
   node-version: 20.18.x
 
