@@ -1,10 +1,13 @@
-TODO
 
 # cypress-load-balancer
 
-Environment Variables:
-`CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
-durations once the maximum limit has been reached. **Defaulted to 10**.
+
+
+## Environment Variables:
+
+* `CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
+  durations once the maximum limit has been reached. **Defaulted to 10**.
+* `CYPRESS_LOAD_BALANCER_DEBUG`: Enables debugging output. Does not clear the console, so the output may be unusable.
 
 ## Setup
 
@@ -12,9 +15,6 @@ Install the package to your project:
 
 ```shell
 npm install --save-dev cypress-load-balancer
-```
-
-```shell
 yarn add -D cypress-load-balancer
 ```
 
@@ -59,27 +59,52 @@ TODO
 This can be executed with `npx cypress-load-balancer`:
 
 ```
-$: npx cypress-load-balancer
+$: npx cypress-load-balancer --help
+cypress-load-balancer
+
+Performs load balancing against a set of runners and Cypress specs
+
+Commands:
+  cypress-load-balancer             Performs load balancing against a set of
+                                    runners and Cypress specs          [default]
+  cypress-load-balancer initialize  Initializes the load balancing map file and
+                                    directory.
+  cypress-load-balancer merge       Merges load balancing map files together
+                                    back to an original map.
 
 Options:
-      --version          Show version number                           [boolean]
-  -r, --runners          The count of executable runners to use
+      --version                Show version number                     [boolean]
+  -r, --runners                The count of executable runners to use
                                                              [number] [required]
-  -t, --testingType      The testing type to use for load balancing
+  -t, --testing-type           The testing type to use for load balancing
                                [string] [required] [choices: "e2e", "component"]
-  -F, --filePaths        An array of file paths relative to the current working
-                         directory to use for load balancing. Overrides finding
-                         Cypress specs by configuration file.
-                         If left empty, it will utilize a Cypress configuration
-                         file to find test files to use for load balancing.
-                         The Cypress configuration file is implied to exist at
-                         the base of the directory unless set by
-                         "process.env.CYPRESS_CONFIG_FILE" [array] [default: []]
-      --getSpecsOptions  Options to pass to getSpecs (See "find-cypress-specs"
-                         package)                                       [string]
-  -s, --specPattern      Converts the output of the load balancer to be as an
-                         array of "--spec {file}" formats              [boolean]
-  -h, --help             Show help                                     [boolean]
+  -F, --files                  An array of file paths relative to the current
+                               working directory to use for load balancing.
+                               Overrides finding Cypress specs by configuration
+                               file.
+                               If left empty, it will utilize a Cypress
+                               configuration file to find test files to use for
+                               load balancing.
+                               The Cypress configuration file is implied to
+                               exist at the base of the directory unless set by
+                               "process.env.CYPRESS_CONFIG_FILE"
+                                                           [array] [default: []]
+      --format, --fm           Transforms the output of the runner jobs into
+                               various formats.
+                               "--transform spec": Converts the output of the
+                               load balancer to be as an array of "--spec
+                               {file}" formats
+                               "--transform string": Spec files per runner are
+                               joined with a comma; example:
+                               "tests/spec.a.ts,tests/spec.b.ts"
+                               "--transform newline": Spec files per runner are
+                               joined with a newline; example:
+                                "tests/spec.a.ts
+                               tests/spec.b.ts"
+                                          [choices: "spec", "string", "newline"]
+      --set-gha-output, --gha  Sets the output to the GitHub Actions step output
+                               as "cypressLoadBalancerSpecs"           [boolean]
+  -h, --help                   Show help                               [boolean]
 
 Examples:
   Load balancing for 6 runners against      cypressLoadBalancer -r 6 -t
@@ -89,11 +114,40 @@ Examples:
   "e2e" testing with specified file paths   cypress/e2e/foo.cy.js
                                             cypress/e2e/bar.cy.js
                                             cypress/e2e/wee.cy.js
-
-Missing required arguments: runners, testingType
 ```
 
 _This probably will not work with `tsx` or `ts-node` -- I need to figure out why._
+
+## Configuring for CI/CD
+
+### General instructions
+
+This is the basic idea of steps that need to occur in order to use load balancing properly. The load balancing map file
+needs to saved and persisted throughout all runs in a stable, base location. After all parallel test runs complete,
+their results can be merged back to the main file, which can be consumed on the next test runs, and so on.
+
+1. **Install and configure the plugin.** When Cypress runs, it will be able to locally save the results of the spec
+   executions per each runner.
+2. **Execute the load balancer against a number of runners.** The output is able to be used for all parallelized jobs to
+   instruct them which specs to execute.
+3. **Run each parallelized job that will execute the Cypress testrunner with the spec output per each runner.**
+4. **Collect and save the output of the load balancing files from each job in a temporary location.**
+5. **After all parallelized test jobs complete, merge their load balancing map results back to the persisted map file**.
+
+### GitHub Actions
+
+There is an example workflow in `.github/workflows/cypress-parallel.yml`. It demonstrates (with some extra steps) how to
+perform load balancing.
+
+When pull requests are merged, the latest load balancing map file is saved to the base branch so it can be used again.
+This allows the map to be saved on a trunk branch, so workflows can reuse and overwrite it when there are new pull
+requests with updated test results.
+
+I'd love to add actual GitHub Actions for this project.
+
+### Docker and Docker Compose
+
+Someone please help me here :simple_smile:
 
 ## Development
 

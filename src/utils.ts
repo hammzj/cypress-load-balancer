@@ -23,7 +23,7 @@ class Utils {
   }
 
   get MAX_DURATIONS_ALLOWED() {
-    return Number(Number(process.env.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED || 10));
+    return Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
   }
 
   get TESTING_TYPES(): TestingType[] {
