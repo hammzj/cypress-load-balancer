@@ -54,20 +54,6 @@ jobs:
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
 
-        #this is ugly
-        # If no map exists on the base branch or the current branch, initialize one
-      - run: npx cypress-load-balancer initialize
-        id: initialize-map
-        if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
-
-      - name: Cache initial map if not existing
-        if: ${{ steps.initialize-map.outcome == 'success' }}
-        uses: actions/cache/save@v4
-        with:
-          path: .cypress_load_balancer/main.json
-          # Cache for this branch and this workflow's run attempt -- it can then be reused
-          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-
       - name: "E2E: cypress-load-balancer"
         id: e2e-cypress-load-balancer
         run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
@@ -128,7 +114,7 @@ jobs:
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
         with:
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
           path: .cypress_load_balancer/main.json
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           # Restore keys:
@@ -137,6 +123,11 @@ jobs:
           restore-keys: |
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
+
+      - name: If no map exists for either the base branch or the current branch, then initialize one
+        id: initialize-map
+        run: npx cypress-load-balancer initialize
+        if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
