@@ -136,9 +136,7 @@ jobs:
           ## 4. Key from pull request base branch
           restore-keys: |
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}
             cypress-load-balancer-map-${{ github.base_ref }}-
-            cypress-load-balancer-map-${{ github.base_ref }}
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
