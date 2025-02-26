@@ -1,5 +1,5 @@
-name: "cypress-load-balancer/cache"
-description: "A simple load balancer for Cypress tests. Caches the load balancing map for the job run."
+name: "cypress-load-balancer/upload"
+description: "A simple load balancer for Cypress tests. Uploads the load balancing map for the job run."
 author: Zachary J. Hamm
 branding:
   icon: "cpu"

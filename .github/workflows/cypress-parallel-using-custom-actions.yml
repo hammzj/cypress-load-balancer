@@ -60,7 +60,7 @@ jobs:
           # Fix for https://github.com/cypress-io/github-action/issues/480
           config: videosFolder=/tmp/cypress-videos
 
-      - uses: ./actions/cache
+      - uses: ./actions/upload
         with:
           node-version: ${{ env.node-version }}
 

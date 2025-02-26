@@ -60,3 +60,7 @@ runs:
         path: .cypress_load_balancer/main.json
         #This saves to the workflow run. To save to the trunk, this needs to be uploaded on pull_request merge
         key: ${{ inputs.cache-primary-key }}
+
+    - name: DEBUG
+      run: cat .cypress_load_balancer/main.json
+      shell: bash

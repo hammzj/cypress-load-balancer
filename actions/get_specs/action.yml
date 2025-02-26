@@ -58,8 +58,8 @@ runs:
         ## 1. Same key from previous workflow run
         ## 2. Key from pull request base branch
         restore-keys: |
-          cypress-load-balancer-map-${{github.ref}}
-          cypress-load-balancer-map-${{github.base_ref}}
+          cypress-load-balancer-map-${{github.ref}}-
+          cypress-load-balancer-map-${{github.base_ref}}-
 
     - run: npx cypress-load-balancer initialize
       id: initialize-map
