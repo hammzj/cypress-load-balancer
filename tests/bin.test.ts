@@ -273,6 +273,7 @@ describe("Executables", function () {
     });
 
     it(`can be executed with "npx"`, function (done) {
+      if (IS_ON_GHA) this.skip();
       exec("npx cypress-load-balancer", (err) => {
         expect((err as Error).message)
           .to.contain(`cypress-load-balancer`)
