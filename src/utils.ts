@@ -2,20 +2,6 @@ import path from "path";
 import fs from "node:fs";
 import { FilePath, LoadBalancingMap, TestingType } from "./types";
 
-//
-//
-// const CLB_DIRECTORY = getPath();
-// const MAIN_LOAD_BALANCING_MAP_FILE_PATH = getPath("main.json");
-// const MAX_DURATIONS_ALLOWED = Number(process.env.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED || 10);
-// const TESTING_TYPES: TestingType[] = ["e2e", "component"];
-//
-// function shrinkToFit(arr: number[]): number[] {
-//   if (arr.length > MAX_DURATIONS_ALLOWED) {
-//     arr.splice(0, arr.length - MAX_DURATIONS_ALLOWED);
-//   }
-//   return arr;
-// }
-
 class Utils {
   private getPath(...pathNames: string[]) {
     return path.join(process.cwd(), ".cypress_load_balancer", ...pathNames);

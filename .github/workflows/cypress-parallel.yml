@@ -1,13 +1,8 @@
 name: Testing load balancing Cypress E2E tests
 
 on:
-  pull_request:
   workflow_dispatch:
     inputs:
-      run_component:
-        type: boolean
-        description: Get specs for component tests?
-        default: true
       run_e2e:
         type: boolean
         description: Get specs for e2e tests?
@@ -15,16 +10,18 @@ on:
       runners:
         type: number
         description: Number of runners to use for parallelization
+        required: false
+        default: 3
       debug:
         type: boolean
         description: Enables debugging on the cypress-load-balancer script
 
 env:
-  runners: ${{ inputs.runners || 3}}
   node-version: 18.20.x
+  run_e2e: ${{inputs.run_e2e || false}}
+  runners: ${{ inputs.runners || secrets.CYPRESS_LOAD_BALANCER_RUNNERS }}
   CYPRESS_LOAD_BALANCER_DEBUG: ${{ inputs.debug || false }}
-  run_component: ${{inputs.run_component || secrets.CYPRESS_LOAD_BALANCER_RUN_COMPONENT}}
-  run_e2e: ${{inputs.run_e2e || secrets.CYPRESS_LOAD_BALANCER_RUN_E2E || true}}
+  CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED: ${{ secrets.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED }}
 
 jobs:
   install_and_get_specs:
@@ -50,9 +47,7 @@ jobs:
         with:
           fail-on-cache-miss: false
           path: .cypress_load_balancer/main.json
-          #TODO: figure out how to make this exist on the main branch
           key: cypress-load-balancer-map-${{github.ref}}-${{ github.run_id }}-${{ github.run_attempt }}
-          #TODO: trunk branch should have its own restore key
           # Restore keys:
           ## 1. Same key from previous workflow run
           ## 2. Key from pull request base branch
@@ -70,7 +65,6 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/main.json
-          #TODO: figure out how to make this exist on the main branch
           key: cypress-load-balancer-map-${{github.ref}}
 
       - name: "E2E: cypress-load-balancer"
@@ -86,14 +80,14 @@ jobs:
   cypress_run_e2e:
     runs-on: ubuntu-22.04
     needs: install_and_get_specs
-    #if: ${{env.run_e2e == 'true'}}
+    if: ${{env.run_e2e == 'true'}}
     strategy:
       fail-fast: false
       matrix:
         spec: ${{ fromJson(needs.install_and_get_specs.outputs.e2e_specs) }}
     steps:
-      - id: generate-uuid
-        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
+      #      - id: generate-uuid
+      #        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -113,14 +107,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancing-maps-from-parallel-jobs
+          # name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancing-maps-from-parallel-jobs
+          name: ${{matrix.spec }}-cypress-load-balancing-maps-from-parallel-jobs
           path: .cypress_load_balancer/main.json
 
-  merge_maps:
+  merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
     needs: [install_and_get_specs, cypress_run_e2e]
-    #TODO: this should only run on success of install_and_get_specs
-    if: always()
+    if: ${{ needs.install_and_get_specs.result == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -153,10 +147,6 @@ jobs:
 
       - name: Merge files
         run: npx cypress-load-balancer merge -G "./cypress_load_balancer_temp/**/main.json"
-
-      - name: "DEBUG: Output load balancing file contents"
-        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG != 'false' }}
-        run: cat .cypress_load_balancer/main.json
 
       - name: Save overwritten cached load-balancing map
         id: cache-save-load-balancing-map
