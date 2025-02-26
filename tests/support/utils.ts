@@ -25,7 +25,7 @@ export function stubReadLoadBalancerFile(
 
 //@ts-expect-error ignore
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function runCmd(argv: any, command: string): [string, any, string] {
+export async function runCmd(argv: any, command: string): [Error, any, string] {
   return await new Promise((resolve) => {
     //@ts-expect-error ignore
     argv.parse(command, (err, argv, output) => {

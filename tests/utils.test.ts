@@ -13,23 +13,31 @@ describe("Utils", function () {
     it('saves map file data to default "/.cypress_load_balancer/main.json" file', function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} });
-      expect(writeFileSyncStub).to.have.been.calledOnce;
-      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancer/main.json");
-      expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
+      expect(writeFileSyncStub).to.have.been.calledOnce.and.calledWithMatch(
+        ".cypress_load_balancer/main.json",
+        JSON.stringify({
+          e2e: {},
+          component: {}
+        })
+      );
     });
 
     it("can save to another json file", function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} }, "alternate.json");
-      expect(writeFileSyncStub.calledOnce).to.be.true;
-      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancer/alternate.json");
-      expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
+      expect(writeFileSyncStub).to.have.been.calledOnce.and.calledWithMatch(
+        ".cypress_load_balancer/alternate.json",
+        JSON.stringify({
+          e2e: {},
+          component: {}
+        })
+      );
     });
 
     it('converts ".json.json" to ".json"', function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} }, "alternate.json.json");
-      expect(writeFileSyncStub.calledOnce).to.be.true;
+      expect(writeFileSyncStub).to.have.been.calledOnce;
       expect(writeFileSyncStub.firstCall.args[0]).to.endWith(".cypress_load_balancer/alternate.json");
       expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
     });
