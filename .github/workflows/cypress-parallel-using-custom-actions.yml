@@ -41,6 +41,7 @@ jobs:
         with:
           testing-type: e2e
           node-version: ${{ env.node-version }}
+          runners: ${{ env.runners }}
 
   cypress_run_e2e:
     runs-on: ubuntu-22.04
