@@ -1,0 +1,160 @@
+name: Testing load balancing Cypress E2E tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run-e2e:
+        type: boolean
+        description: Get specs for e2e tests?
+        default: true
+      runners:
+        type: number
+        description: Number of runners to use for parallelization
+        required: false
+        default: 3
+      debug:
+        type: boolean
+        description: Enables debugging on the cypress-load-balancer script
+
+env:
+  node-version: 20.18.x
+  runners: ${{ inputs.runners || secrets.CYPRESS_LOAD_BALANCER_RUNNERS || 3}}
+  CYPRESS_LOAD_BALANCER_DEBUG: ${{ inputs.debug || false }}
+  CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED: ${{ secrets.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED }}
+
+jobs:
+  get_specs:
+    runs-on: ubuntu-22.04
+    outputs:
+      e2e_specs: ${{ steps.e2e-cypress-load-balancer.outputs.specs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
+      - run: |
+          yarn install
+          yarn build
+
+      - name: Get cached load-balancing map
+        id: cache-restore-load-balancing-map
+        uses: actions/cache/restore@v4
+        with:
+          fail-on-cache-miss: false
+          path: .cypress_load_balancer/main.json
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # Restore keys:
+          ## 1. Same key from previous workflow run
+          ## 2. Key from pull request base branch most recent workflow. Used for the "base" map, if one exists
+          restore-keys: |
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
+            cypress-load-balancer-map-${{ github.base_ref }}-
+
+        #this is ugly
+        # If no map exists on the base branch or the current branch, initialize one
+      - run: npx cypress-load-balancer initialize
+        id: initialize-map
+        if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
+
+      - name: Cache initial map if not existing
+        if: ${{ steps.initialize-map.outcome == 'success' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .cypress_load_balancer/main.json
+          # Cache for this branch and this workflow's run attempt -- it can then be reused
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: "E2E: cypress-load-balancer"
+        id: e2e-cypress-load-balancer
+        run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
+
+      - name: "DEBUG: read cached file"
+        run: cat .cypress_load_balancer/main.json
+
+  cypress_run-e2e:
+    runs-on: ubuntu-22.04
+    needs: get_specs
+    strategy:
+      fail-fast: false
+      matrix:
+        spec: ${{ fromJson(needs.get_specs.outputs.e2e_specs) }}
+    steps:
+      - name: Generate uuid to use uploading a unique load balancer map artifact
+        id: generate-uuid
+        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
+      - name: Cypress run e2e tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: electron
+          build: yarn build
+          spec: ${{ matrix.spec }}
+          # Fix for https://github.com/cypress-io/github-action/issues/480
+          config: videosFolder=/tmp/cypress-videos
+
+      - name: Upload temp load balancer map
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-temp-from-parallel-job
+          path: .cypress_load_balancer/main.json
+
+  merge_cypress_load_balancing_maps:
+    runs-on: ubuntu-22.04
+    needs: [get_specs, cypress_run-e2e]
+    if: ${{ needs.get_specs.result == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+
+      - run: |
+          yarn install
+          yarn build
+
+      - name: Get cached load-balancing map
+        id: cache-restore-load-balancing-map
+        uses: actions/cache/restore@v4
+        with:
+          fail-on-cache-miss: true
+          path: .cypress_load_balancer/main.json
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # Restore keys:
+          ## 1. Same key from previous workflow run
+          ## 2. Key from pull request base branch most recent workflow
+          restore-keys: |
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
+            cypress-load-balancer-map-${{ github.base_ref }}-
+
+      - name: Download temp maps
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-cypress-load-balancer-map-temp-from-parallel-job"
+          path: ./cypress_load_balancer/temp
+          merge-multiple: false
+
+      - name: Merge files
+        run: npx cypress-load-balancer merge -G "./cypress_load_balancer/temp/**/main.json"
+
+      - name: Save overwritten cached load-balancing map
+        id: cache-save-load-balancing-map
+        uses: actions/cache/save@v4
+        with:
+          path: .cypress_load_balancer/main.json
+          #This saves to the workflow run. To save to the trunk, this needs to be uploaded on merge
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: "DEBUG: read merged file"
+        run: cat .cypress_load_balancer/main.json

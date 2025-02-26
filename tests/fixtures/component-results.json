@@ -1,0 +1,200 @@
+{
+  "browserName": "electron",
+  "browserPath": "",
+  "browserVersion": "118.0.5993.159",
+  "config": {
+    "retries": {
+      "runMode": 1,
+      "openMode": 0
+    },
+    "devServer": {
+      "framework": "vue",
+      "bundler": "vite"
+    },
+    "specPattern": [
+      "**/*.cy.{js,jsx,ts,tsx}"
+    ],
+    "defaultCommandTimeout": 2000,
+    "viewportHeight": 768,
+    "viewportWidth": 1366,
+    "projectRoot": "/Users/hammzj/Documents/GitHub/test-repo",
+    "projectName": "test-repo",
+    "configFile": "cypress.config.ts",
+    "isTextTerminal": true,
+    "animationDistanceThreshold": 5,
+    "arch": "arm64",
+    "baseUrl": "http://localhost:8080",
+    "blockHosts": null,
+    "chromeWebSecurity": true,
+    "clientCertificates": [],
+    "defaultBrowser": null,
+    "downloadsFolder": "/Users/hammzj/Documents/GitHub/test-repo/cypress/downloads",
+    "env": {},
+    "execTimeout": 60000,
+    "experimentalCspAllowList": false,
+    "experimentalFetchPolyfill": false,
+    "experimentalInteractiveRunEvents": false,
+    "experimentalRunAllSpecs": false,
+    "experimentalMemoryManagement": false,
+    "experimentalModifyObstructiveThirdPartyCode": false,
+    "experimentalSkipDomainInjection": null,
+    "experimentalJustInTimeCompile": false,
+    "experimentalOriginDependencies": false,
+    "experimentalSourceRewriting": false,
+    "experimentalSingleTabRunMode": false,
+    "experimentalStudio": false,
+    "experimentalWebKitSupport": false,
+    "fileServerFolder": "/Users/hammzj/Documents/GitHub/test-repo",
+    "fixturesFolder": "/Users/hammzj/Documents/GitHub/test-repo/cypress/fixtures",
+    "excludeSpecPattern": [
+      "**/__snapshots__/*",
+      "**/__image_snapshots__/*"
+    ],
+    "includeShadowDom": false,
+    "keystrokeDelay": 0,
+    "modifyObstructiveCode": true,
+    "numTestsKeptInMemory": 0,
+    "platform": "darwin",
+    "pageLoadTimeout": 60000,
+    "port": 55374,
+    "projectId": null,
+    "redirectionLimit": 20,
+    "reporter": "spec",
+    "reporterOptions": null,
+    "requestTimeout": 5000,
+    "resolvedNodePath": "/Users/hammzj/.nvm/versions/node/v18.15.0/bin/node",
+    "resolvedNodeVersion": "18.15.0",
+    "responseTimeout": 30000,
+    "screenshotOnRunFailure": true,
+    "screenshotsFolder": "/Users/hammzj/Documents/GitHub/test-repo/cypress/screenshots",
+    "slowTestThreshold": 250,
+    "scrollBehavior": "top",
+    "supportFile": "/Users/hammzj/Documents/GitHub/test-repo/cypress/support/component.ts",
+    "taskTimeout": 60000,
+    "testIsolation": true,
+    "trashAssetsBeforeRuns": true,
+    "userAgent": null,
+    "video": false,
+    "videoCompression": false,
+    "videosFolder": "/Users/hammzj/Documents/GitHub/test-repo/cypress/videos",
+    "waitForAnimations": true,
+    "watchForFileChanges": false,
+    "browsers": [
+      {
+        "channel": "stable",
+        "displayName": "Chrome",
+        "family": "chromium",
+        "majorVersion": "133",
+        "name": "chrome",
+        "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "version": "133.0.6943.100"
+      },
+      {
+        "channel": "stable",
+        "displayName": "Firefox",
+        "family": "firefox",
+        "majorVersion": "127",
+        "name": "firefox",
+        "path": "/Applications/Firefox.app/Contents/MacOS/firefox",
+        "version": "127.0.2"
+      },
+      {
+        "channel": "stable",
+        "displayName": "Electron",
+        "family": "chromium",
+        "majorVersion": 118,
+        "name": "electron",
+        "path": "",
+        "version": "118.0.5993.159"
+      }
+    ],
+    "cypressBinaryRoot": "/Users/hammzj/Library/Caches/Cypress/13.17.0/Cypress.app/Contents/Resources/app",
+    "hosts": null,
+    "isInteractive": true,
+    "version": "13.17.0",
+    "indexHtmlFile": "cypress/support/component-index.html",
+    "testingType": "component",
+    "browser": null,
+    "cypressInternalEnv": "production"
+  },
+  "cypressVersion": "13.17.0",
+  "endedTestsAt": "2025-02-20T14:01:53.861Z",
+  "osName": "darwin",
+  "osVersion": "24.3.0",
+  "runs": [
+    {
+      "error": null,
+      "reporter": "spec",
+      "reporterStats": {
+        "suites": 2,
+        "tests": 2,
+        "passes": 2,
+        "pending": 0,
+        "failures": 0,
+        "start": "2025-02-20T14:01:53.861Z",
+        "end": "2025-02-20T14:01:50.315Z",
+        "duration": 3546
+      },
+      "screenshots": [],
+      "spec": {
+        "absolute": "/Users/hammzj/Documents/GitHub/test-repo/cypress/tests/TestFunction.cy.ts",
+        "fileExtension": ".ts",
+        "fileName": "TestFunction",
+        "name": "TestFunction.cy.ts",
+        "relative": "cypress/tests/TestFunction.cy.ts"
+      },
+      "stats": {
+        "duration": 3546,
+        "endedAt": "2025-02-20T14:01:53.861Z",
+        "failures": 0,
+        "passes": 2,
+        "pending": 0,
+        "skipped": 0,
+        "startedAt": "2025-02-20T14:01:50.315Z",
+        "suites": 2,
+        "tests": 2
+      },
+      "tests": [
+        {
+          "attempts": [
+            {
+              "state": "passed"
+            }
+          ],
+          "displayError": null,
+          "duration": 1131,
+          "state": "passed",
+          "title": [
+            "TestFunction",
+            "context",
+            "test 2"
+          ]
+        },
+        {
+          "attempts": [
+            {
+              "state": "passed"
+            }
+          ],
+          "displayError": null,
+          "duration": 2415,
+          "state": "passed",
+          "title": [
+            "TestFunction",
+            "context",
+            "test 3"
+          ]
+        }
+      ],
+      "video": null
+    }
+  ],
+  "startedTestsAt": "2025-02-20T14:01:50.315Z",
+  "totalDuration": 3546,
+  "totalFailed": 0,
+  "totalPassed": 2,
+  "totalPending": 0,
+  "totalSkipped": 0,
+  "totalSuites": 2,
+  "totalTests": 2
+}

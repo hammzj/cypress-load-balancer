@@ -1,18 +1,64 @@
 {
   "name": "cypress-load-balancer",
   "version": "0.0.1",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "typescript": "^5.7.3"
-  },
-  "devDependencies": {},
+  "author": "Zachary J. Hamm",
+  "license": "MIT",
   "keywords": [
     "cypress",
     "load-balancing"
   ],
-  "author": "",
-  "license": "MIT"
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/mjs/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "bin": {
+    "cypress-load-balancer": "./dist/cjs/src/bin/cypressLoadBalancer.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup",
+    "cypress:open": "cypress open --e2e",
+    "cypress:run": "cypress run --e2e",
+    "dev:check": "tsc -p tsconfig.json",
+    "dev:check:tests": "tsc -p tsconfig.test.json",
+    "dev:format": "prettier --write . && prettier --write \".github/**/*.yml\"",
+    "dev:lint": "eslint . && prettier --check . && prettier --check \".github/**/*.yml\"",
+    "test:mocha": "mocha"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "deepmerge": "^4.3.1",
+    "find-cypress-specs": "^1.47.4",
+    "glob": "10.4.5",
+    "ts-node": "^10.9.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@types/chai-string": "^1.4.5",
+    "@types/cypress": "^1.1.6",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.13.4",
+    "@types/sinon": "^17.0.3",
+    "@types/sinon-chai": "^4.0.0",
+    "@types/yargs": "^17.0.33",
+    "chai": "^5.2.0",
+    "chai-string": "^1.5.0",
+    "cypress": "^14.0.3",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-cypress": "^4.1.0",
+    "eslint-plugin-mocha": "^10.5.0",
+    "globals": "^15.15.0",
+    "mocha": "^11.1.0",
+    "prettier": "^3.5.1",
+    "sinon": "^19.0.2",
+    "sinon-chai": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1"
+  }
 }
