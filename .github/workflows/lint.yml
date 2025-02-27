@@ -2,9 +2,6 @@ name: TypeScript checking and linting
 on:
   pull_request:
 
-env:
-  node-version: 20.18.x
-
 jobs:
   tsc:
     name: TypeScript Checking
@@ -13,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
       - run: |
           yarn install
           yarn run dev:check
@@ -26,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
       - run: |
           yarn install
           yarn run dev:lint

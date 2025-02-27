@@ -3,19 +3,17 @@ on:
   pull_request:
     types:
       - closed
-env:
-  node-version: 20.18.x
-
+      -
 jobs:
   cache_cypress_load_balancing_map:
-    if: github.event.pull_request.merged == 'true'
+    if: github.event.pull_request.merged == 'true' || env.ACTIONS_RUNNER_DEBUG == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
 
       - run: |
           yarn install

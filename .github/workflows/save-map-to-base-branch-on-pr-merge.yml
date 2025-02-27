@@ -4,13 +4,10 @@ on:
   pull_request:
     types: [closed]
 
-env:
-  node-version: 20.18.x
-
 jobs:
   cache_cypress_load_balancing_map:
     # this job will only run if the PR has been merged
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || env.ACTIONS_RUNNER_DEBUG == 'true'
     runs-on: ubuntu-latest
     steps:
       - run: |
@@ -20,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
 
       - run: |
           yarn install
