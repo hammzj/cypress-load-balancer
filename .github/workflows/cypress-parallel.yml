@@ -51,22 +51,10 @@ jobs:
           ## 1. Same key from previous workflow run
           ## 2. Key from pull request base branch most recent workflow. Used for the "base" map, if one exists
           restore-keys: |
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
-
-        #this is ugly
-        # If no map exists on the base branch or the current branch, initialize one
-      - run: npx cypress-load-balancer initialize
-        id: initialize-map
-        if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
-
-      - name: Cache initial map if not existing
-        if: ${{ steps.initialize-map.outcome == 'success' }}
-        uses: actions/cache/save@v4
-        with:
-          path: .cypress_load_balancer/main.json
-          # Cache for this branch and this workflow's run attempt -- it can then be reused
-          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: "E2E: cypress-load-balancer"
         id: e2e-cypress-load-balancer
@@ -128,15 +116,22 @@ jobs:
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
         with:
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
           path: .cypress_load_balancer/main.json
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           # Restore keys:
           ## 1. Same key from previous workflow run
           ## 2. Key from pull request base branch most recent workflow
           restore-keys: |
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
+
+      - name: If no map exists for either the base branch or the current branch, then initialize one
+        id: initialize-map
+        run: npx cypress-load-balancer initialize
+        if: ${{ hashFiles('.cypress_load_balancer/main.json') == '' }}
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
@@ -155,6 +150,16 @@ jobs:
           path: .cypress_load_balancer/main.json
           #This saves to the workflow run. To save to the trunk, this needs to be uploaded on merge
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # This is to get around the issue of not being able to access cache on the base_ref for a PR.
+      # We can use this to download it in another workflow run: https://github.com/dawidd6/action-download-artifact
+      # That way, we can merge the source (head) branch's load balancer map to the target (base) branch.
+      - name: Upload main load balancer map
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-load-balancer-map
+          path: .cypress_load_balancer/main.json
 
       - name: "DEBUG: read merged file"
         run: cat .cypress_load_balancer/main.json
