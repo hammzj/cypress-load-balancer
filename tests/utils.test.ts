@@ -10,11 +10,11 @@ describe("Utils", function () {
   });
 
   context("saveMapFile", function () {
-    it('saves map file data to default "/.cypress_load_balancer/main.json" file', function () {
+    it('saves map file data to default "/.cypress_load_balancer/spec-map.json" file', function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} });
       expect(writeFileSyncStub).to.have.been.calledOnce.and.calledWithMatch(
-        ".cypress_load_balancer/main.json",
+        ".cypress_load_balancer/spec-map.json",
         JSON.stringify({
           e2e: {},
           component: {}
@@ -77,7 +77,7 @@ describe("Utils", function () {
 
       utils.initializeLoadBalancingFiles();
       expect(writeFileSyncStub.calledOnce).to.be.true;
-      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancer/main.json");
+      expect(writeFileSyncStub.firstCall.args[0]).to.include(".cypress_load_balancer/spec-map.json");
       expect(JSON.parse(writeFileSyncStub.firstCall.args[1] as string)).to.deep.eq({ e2e: {}, component: {} });
     });
 

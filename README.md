@@ -51,7 +51,7 @@ defineConfig({
 **Currently, this only supports one configuration. I am considering how to handle multiple configs later on.**
 
 Now, when you run your suite, it will calculate the average for each file based on previous durations and output it into
-`.cypress_load_balancer/main.json`. This is the load balancing map file.
+`.cypress_load_balancer/spec-map.json`. This is the load balancing map file.
 
 ## Executables
 

@@ -158,7 +158,7 @@ describe("Executables", function () {
             expect(err.message).to.contain("At least one file path or a glob pattern must be provided.");
           });
 
-          it(`defaults the original to the "./cypress_load_balancer/main.json"`, async function () {
+          it(`defaults the original to the "./cypress_load_balancer/spec-map.json"`, async function () {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             const [_err, argv] = await runCmd(cli, `merge -G **/files/*.json`);
             expect(argv.original).to.eq(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
@@ -237,7 +237,7 @@ describe("Executables", function () {
           });
         });
 
-        //TODO: failing on CI/CD
+        //TODO: failing
         describe("initialize", function () {
           it("can initialize the file", function (done) {
             if (IS_ON_GHA) this.skip();
