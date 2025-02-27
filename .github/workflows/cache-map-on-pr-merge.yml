@@ -8,7 +8,7 @@ env:
 
 jobs:
   cache_cypress_load_balancing_map:
-    if: github.event.pull_request.merged == 'true'
+    if: github.event.pull_request.merged == 'true' || env.ACTIONS_RUNNER_DEBUG == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
