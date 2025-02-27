@@ -2,7 +2,7 @@ name: Publish Package to registries
 on:
   workflow_dispatch:
   release:
-    types: [ published ]
+    types: [published]
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
@@ -11,9 +11,9 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v3
         with:
-          node-version: '20.18.x'
-          registry-url: 'https://registry.npmjs.org'
-          scope: '@hammzj'
+          node-version: "20.18.x"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@hammzj"
       - run: yarn
       - run: yarn dev:build
       - run: yarn publish
@@ -27,9 +27,9 @@ jobs:
       # Setup .npmrc file to publish to npm on GitHub
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@hammzj'
+          node-version: "18.x"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@hammzj"
       - run: yarn
       - run: yarn dev:build
       - run: yarn publish
