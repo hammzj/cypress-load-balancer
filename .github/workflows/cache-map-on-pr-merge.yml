@@ -3,10 +3,10 @@ on:
   pull_request:
     types:
       - closed
-      -
+
 jobs:
   cache_cypress_load_balancing_map:
-    if: github.event.pull_request.merged == 'true' || env.ACTIONS_RUNNER_DEBUG == 'true'
+    if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
