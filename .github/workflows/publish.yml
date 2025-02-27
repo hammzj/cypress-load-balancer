@@ -4,8 +4,6 @@ on:
   release:
     types: [published]
 
-env:
-  node-version: 20.18.x
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
@@ -14,7 +12,7 @@ jobs:
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
           scope: "@hammzj"
       - run: yarn
@@ -30,7 +28,7 @@ jobs:
       # Setup .npmrc file to publish to npm on GitHub
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://npm.pkg.github.com"
           scope: "@hammzj"
       - run: yarn
