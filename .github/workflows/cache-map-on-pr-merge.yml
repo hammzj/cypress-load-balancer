@@ -47,7 +47,7 @@ jobs:
           # Optional, will get head commit SHA
           pr: ${{ github.event.pull_request.number }}
           name: cypress-load-balancer-map
-          #path: ./cypress_load_balancer
+          path: ./cypress_load_balancer
 
       - name: Restore cached load-balancing map on base branch
         id: cache-restore-load-balancing-map-base-branch
