@@ -1,5 +1,5 @@
 {
-  "name": "cypress-load-balancer",
+  "name": "@hammzj/cypress-load-balancer",
   "version": "0.0.1",
   "author": "Zachary J. Hamm",
   "license": "MIT",
