@@ -28,6 +28,12 @@
     "dev:lint": "eslint . && prettier --check . && prettier --check \".github/**/*.yml\"",
     "test:mocha": "mocha"
   },
+  "files": [
+    "dist/cjs",
+    "dist/mjs",
+    "LICENSE",
+    "README.md"
+  ],
   "dependencies": {
     "@actions/core": "^1.11.1",
     "deepmerge": "^4.3.1",
