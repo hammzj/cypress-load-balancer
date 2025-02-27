@@ -19,7 +19,7 @@ class Utils {
   }
 
   get MAIN_LOAD_BALANCING_MAP_FILE_PATH() {
-    return this.getPath("main.json");
+    return this.getPath("spec-map.json");
   }
 
   get MAX_DURATIONS_ALLOWED() {
@@ -79,7 +79,8 @@ class Utils {
       forceCreateMainDirectory?: boolean;
       forceCreateMainLoadBalancingMap?: boolean;
     } = {}
-  ) {
+  ): [boolean, boolean] {
+    let [isDirectoryCreated, isFileCreated] = [false, false];
     const dir = this.CLB_DIRECTORY;
     if (!fs.existsSync(dir) || opts.forceCreateMainDirectory === true) {
       fs.mkdirSync(dir);
@@ -88,6 +89,7 @@ class Utils {
         `Force initialization?`,
         opts.forceCreateMainDirectory
       );
+      isDirectoryCreated = true;
     }
 
     if (!fs.existsSync(this.MAIN_LOAD_BALANCING_MAP_FILE_PATH) || opts.forceCreateMainLoadBalancingMap === true) {
@@ -97,7 +99,9 @@ class Utils {
         `Force initialization?`,
         opts.forceCreateMainLoadBalancingMap
       );
+      isFileCreated = true;
     }
+    return [isDirectoryCreated, isFileCreated];
   }
 
   /**

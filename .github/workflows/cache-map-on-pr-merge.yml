@@ -32,7 +32,7 @@ jobs:
       #        uses: actions/cache/restore@v4
       #        with:
       #          fail-on-cache-miss: true
-      #          path: .cypress_load_balancer/main.json
+      #          path: .cypress_load_balancer/spec-map.json
       #          key: cypress-load-balancer-map-${{ github.head_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
       #          restore-keys: |
       #            cypress-load-balancer-map-${{ github.head_ref }}-
@@ -52,16 +52,16 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: false
-          path: /temp/.cypress_load_balancer/main.json
+          path: /temp/.cypress_load_balancer/spec-map.json
           key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             cypress-load-balancer-map-${{ github.base_ref }}-
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -G "./temp/.cypress_load_balancer/main.json"
+        run: npx cypress-load-balancer merge -G "./temp/.cypress_load_balancer/spec-map.json"
 
       - name: Save merged load-balancing map
         uses: actions/cache/save@v4
         with:
-          path: .cypress_load_balancer/main.json
+          path: .cypress_load_balancer/spec-map.json
           key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
