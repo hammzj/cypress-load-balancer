@@ -143,8 +143,13 @@ their results can be merged back to the main file, which can be consumed on the 
 
 ### GitHub Actions
 
-There is an example workflow in `.github/workflows/cypress-parallel.yml`. It demonstrates (with some extra steps) how to
-perform load balancing.
+There are example workflows here:
+
+- `.github/workflows/cypress-parallel.yml`: demonstrates (with some extra steps) how to
+  perform load balancing and cache the files on runs. For pull requests, it will prepare the file to be saved when
+  merging down to the base branch.
+- `.github/workflows/cache-map-on-pr-merge.yml`: when the pull request is merged, the load balancing file from the test
+  runs on the PR will be saved to the base branch.
 
 When pull requests are merged, the latest load balancing map file is saved to the base branch so it can be used again.
 This allows the map to be saved on a trunk branch, so workflows can reuse and overwrite it when there are new pull
