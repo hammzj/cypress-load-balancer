@@ -17,8 +17,8 @@ _Note: Requires extra setup on your own CI/CD environment to function correctly!
 Install the package to your project:
 
 ```shell
-npm install --save-dev @hammzj/cypress-load-balancer
-yarn add -D @hammzj/cypress-load-balancer
+npm install --save-dev cypress-load-balancer
+yarn add -D cypress-load-balancer
 ```
 
 Add the following to your `.gitignore` and other ignore files:
