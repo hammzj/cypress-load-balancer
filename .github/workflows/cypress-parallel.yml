@@ -14,9 +14,8 @@ on:
         description: Enables debugging on the job and on the cypress-load-balancer script.
 
 env:
-  runners: ${{ inputs.runners || secrets.CYPRESS_LOAD_BALANCER_RUNNERS || 3}}
-  CYPRESS_LOAD_BALANCER_DEBUG: ${{ inputs.debug || env.ACTIONS_RUNNER_DEBUG || false }}
-  CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED: ${{ secrets.CYPRESS_LOAD_BALANCING_MAX_DURATIONS_ALLOWED }}
+  runners: ${{ inputs.runners || 3}}
+  CYPRESS_LOAD_BALANCER_DEBUG: ${{ inputs.debug || false }}
 
 jobs:
   get_specs:
