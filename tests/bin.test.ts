@@ -237,7 +237,7 @@ describe("Executables", function () {
           });
         });
 
-        //TODO: failing on CI/CD
+        //TODO: failing
         describe("initialize", function () {
           it("can initialize the file", function (done) {
             if (IS_ON_GHA) this.skip();
