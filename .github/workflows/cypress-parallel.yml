@@ -15,7 +15,7 @@ on:
         default: 3
       debug:
         type: boolean
-        description: Enables debugging on the cypress-load-balancer script
+        description: Enables debugging on the job and on the cypress-load-balancer script.
 
 env:
   node-version: 20.18.x
@@ -27,7 +27,7 @@ jobs:
   get_specs:
     runs-on: ubuntu-22.04
     outputs:
-      e2e_specs: ${{ steps.e2e-cypress-load-balancer.outputs.specs }}
+      e2e_specs: ${{ steps.e2e-cypress-load-balancer.outputs.cypressLoadBalancerSpecs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,11 +56,14 @@ jobs:
             cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref }}-
 
-      - name: "E2E: cypress-load-balancer"
+      - name: Perform load balancing for E2E tests
         id: e2e-cypress-load-balancer
-        run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string))" >> $GITHUB_OUTPUT
+        #TODO: this can eventually be replaced with a GitHub action. The executable should be used for Docker and other CI/CD tools
+        run: npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string --gha
+        #run: echo "specs=$(echo $(npx cypress-load-balancer -r ${{ env.runners }} -t e2e --fm string | tail -1))" >> $GITHUB_OUTPUT
 
-      - name: "DEBUG: read cached file"
+      - name: "DEBUG: read restored cached spec-map.json file"
+        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG == 'true' }}
         run: cat .cypress_load_balancer/spec-map.json
 
   cypress_run-e2e:
@@ -147,10 +150,11 @@ jobs:
         id: cache-save-load-balancing-map
         uses: actions/cache/save@v4
         with:
-          path: .cypress_load_balancer/spec-map.json
-          #This saves to the workflow run. To save to the trunk, this needs to be uploaded on merge
+          #This saves to the workflow run. To save to the base branch during pull requests, this needs to be uploaded on merge using a separate action
+          # @see `./save-map-on-to-base-branch-on-pr-merge.yml`
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
+          path: .cypress_load_balancer/spec-map.json
       # This is to get around the issue of not being able to access cache on the base_ref for a PR.
       # We can use this to download it in another workflow run: https://github.com/dawidd6/action-download-artifact
       # That way, we can merge the source (head) branch's load balancer map to the target (base) branch.
@@ -161,5 +165,6 @@ jobs:
           name: cypress-load-balancer-map
           path: .cypress_load_balancer/spec-map.json
 
-      - name: "DEBUG: read merged file"
+      - name: "DEBUG: read merged spec-map.json file"
+        if: ${{ env.CYPRESS_LOAD_BALANCER_DEBUG == 'true' }}
         run: cat .cypress_load_balancer/spec-map.json
