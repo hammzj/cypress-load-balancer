@@ -117,6 +117,13 @@ Examples:
                                             cypress/e2e/wee.cy.js
 ```
 
+Example of load balancing on shell:
+
+```
+#If running with DEBUG mode on, make sure to use `tail -1` to get the output correctly
+specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)
+```
+
 _This probably will not work with `tsx` or `ts-node` -- I need to figure out why._
 
 ## Configuring for CI/CD

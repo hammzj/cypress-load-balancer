@@ -1,5 +1,5 @@
 # See https://github.com/brennerm/github-actions-pr-close-showcase/
-name: Cache load balancing map on base branch
+name: Save load balancing map from head branch to base branch on pull request merge
 on:
   pull_request:
     types: [closed]
