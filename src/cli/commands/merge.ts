@@ -14,7 +14,7 @@ export default {
           alias: "og",
           description:
             `The JSON file path of the original load balancing map into which to merge other files.\n` +
-            `Defaulted to exist within the current working directory at "./cypress_load_balancer/main.json"`,
+            `Defaulted to exist within the current working directory at "./cypress_load_balancer/spec-map.json"`,
           type: "string",
           default: utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH
         })

@@ -19,6 +19,14 @@ const combineMerge = (target: any[], source: any[], options?: deepmerge.ArrayMer
   return destination;
 };
 
+/**
+ * Merges load balancing maps back to an original object.
+ * This should be executed after parallel jobs finish
+ * to collect their results and merge them to the original master file
+ * Does not save the original file, so that will need to be done separately.
+ * @param orig {LoadBalancingMap}
+ * @param extraMaps {LoadBalancingMap[]}
+ */
 export default function mergeLoadBalancingMapFiles(
   orig: LoadBalancingMap,
   extraMaps: LoadBalancingMap[]
@@ -31,5 +39,4 @@ export default function mergeLoadBalancingMapFiles(
     Object.keys(mergedFile[t]).map((f) => utils.updateFileStats(mergedFile, t, f));
   });
   return mergedFile;
-  // utils.saveMapFile(mergedFile as LoadBalancingMap, outputFile);
 }

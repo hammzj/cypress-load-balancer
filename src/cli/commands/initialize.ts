@@ -27,9 +27,15 @@ export default {
   },
   //@ts-expect-error Need to fix type
   handler: function (argv) {
-    utils.initializeLoadBalancingFiles({
+    const [isDirectoryCreated, isFileCreated] = utils.initializeLoadBalancingFiles({
       forceCreateMainDirectory: argv["force-dir"],
       forceCreateMainLoadBalancingMap: argv["force"]
     });
+    if (isDirectoryCreated) {
+      console.log("cypress-load-balancer", "Created directory");
+    }
+    if (isFileCreated) {
+      console.log("cypress-load-balancer", "Created initial file");
+    }
   }
 };
