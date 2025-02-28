@@ -19,7 +19,9 @@ inputs:
     required: false
 
 outputs:
-  cypressLoadBalancerSpecs: ${{ steps.cypress-load-balancer.outputs.cypressLoadBalancerSpecs }}
+  cypressLoadBalancerSpecs:
+    description: A list of Cypress specs balanced out per runner
+    value: ${{ steps.cypress-load-balancer.outputs.cypressLoadBalancerSpecs }}
 
 runs:
   using: "composite"
