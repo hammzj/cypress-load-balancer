@@ -1,0 +1,58 @@
+name: Load balance on Cypress specs
+
+inputs:
+  runners:
+    description: The count of runners to use for balancing
+    required: true
+
+  testing-type:
+    description: |
+      "component" or "e2e"
+    required: true
+
+  format:
+    description: |
+      "string"/"newline"/"spec"
+      Use "string" if using the cypress-io/github-action to use for its "spec" input
+    default: string
+    required: false
+
+outputs:
+  cypressLoadBalancerSpecs: ${{ steps.cypress-load-balancer.outputs.cypressLoadBalancerSpecs }}
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.18.x
+
+    - run: |
+        yarn install
+        yarn build
+      shell: bash
+
+    - name: Restore cached load balancing map
+      id: cache-restore-load-balancing-map
+      uses: actions/cache/restore@v4
+      with:
+        fail-on-cache-miss: false
+        path: .cypress_load_balancer/spec-map.json
+        key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+        # Restore keys:
+        ## 1. Same key from previous workflow run
+        ## 2. Key from pull request base branch most recent workflow. Used for the "base" map, if one exists
+        restore-keys: |
+          cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
+          cypress-load-balancer-map-${{ github.base_ref }}-
+
+    - name: Perform load balancing for ${{ inputs.testing-type }} tests
+      id: cypress-load-balancer
+      run: npx cypress-load-balancer -r ${{ inputs.runners }} -t ${{ inputs.testing-type }} --fm ${{ inputs.format }} --gha
+      shell: bash
+
+    - name: "DEBUG: read restored cached spec-map.json file"
+      if: ${{ inputs.debug == 'true' }}
+      run: cat .cypress_load_balancer/spec-map.json
+      shell: bash

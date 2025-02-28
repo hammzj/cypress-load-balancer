@@ -1,0 +1,29 @@
+name: Merge parallelized Cypress load balancer maps back to main map
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.18.x
+
+    - run: |
+        yarn install
+        yarn build
+      shell: bash
+
+    - name: Get cached load-balancing map
+      id: cache-restore-load-balancing-map
+      uses: actions/cache/restore@v4
+      with:
+        fail-on-cache-miss: false
+        path: .cypress_load_balancer/spec-map.json
+        key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+        # Restore keys:
+        ## 1. Same key from previous workflow run
+        ## 2. Key from pull request base branch most recent workflow
+        restore-keys: |
+          cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
+          cypress-load-balancer-map-${{ github.base_ref }}-
