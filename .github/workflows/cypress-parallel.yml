@@ -24,6 +24,12 @@ jobs:
       e2e_specs: ${{ steps.get-specs.outputs.cypressLoadBalancerSpecs }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: |
+          yarn install
+          yarn build
       - uses: ./.github/actions/cypress_load_balancer/get_specs
         id: get-specs
         with:

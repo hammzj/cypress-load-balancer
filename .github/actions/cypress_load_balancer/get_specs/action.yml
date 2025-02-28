@@ -26,16 +26,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-#    - uses: actions/checkout@v4
-#    - uses: actions/setup-node@v4
-#      with:
-#        node-version: 20.18.x
-#
-    - run: |
-        yarn install
-        yarn build
-      shell: bash
-
     - name: Restore cached load balancing map
       id: cache-restore-load-balancing-map
       uses: actions/cache/restore@v4
