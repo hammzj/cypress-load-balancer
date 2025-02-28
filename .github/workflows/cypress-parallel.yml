@@ -24,7 +24,7 @@ jobs:
       e2e_specs: ${{ steps.get-specs.outputs.cypressLoadBalancerSpecs }}
     steps:
       - uses: actions/checkout@v4
-      - uses: .github/actions/cypress_load_balancer/get_specs
+      - uses: ./.github/actions/cypress_load_balancer/get_specs
         id: get-specs
         with:
           runners: ${{ env.runners }}
