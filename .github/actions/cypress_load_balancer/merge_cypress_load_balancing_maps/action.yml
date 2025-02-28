@@ -1,10 +1,9 @@
 name: Merge parallelized Cypress load balancer maps back to main map
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - uses: actions/checkout@v4
-
     - uses: actions/setup-node@v4
       with:
         node-version: 20.18.x
@@ -27,3 +26,43 @@ runs:
         restore-keys: |
           cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
           cypress-load-balancer-map-${{ github.base_ref }}-
+
+    - name: If no map exists for either the base branch or the current branch, then initialize one
+      if: ${{ hashFiles('.cypress_load_balancer/spec-map.json') == '' }}
+      id: initialize-map
+      run: npx cypress-load-balancer initialize
+      shell: bash
+
+    - name: Download temp maps
+      uses: actions/download-artifact@v4
+      with:
+        pattern: "*-cypress-load-balancer-map-temp-from-parallel-job"
+        path: ./cypress_load_balancer/temp
+        merge-multiple: false
+
+    - name: Merge files
+      run: npx cypress-load-balancer merge -G "./cypress_load_balancer/temp/**/spec-map.json"
+      shell: bash
+
+    - name: Save overwritten cached load-balancing map
+      id: cache-save-load-balancing-map
+      uses: actions/cache/save@v4
+      with:
+        #This saves to the workflow run. To save to the base branch during pull requests, this needs to be uploaded on merge using a separate action
+        # @see `./save-map-on-to-base-branch-on-pr-merge.yml`
+        key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: .cypress_load_balancer/spec-map.json
+
+    # This is to get around the issue of not being able to access cache on the base_ref for a PR.
+    # We can use this to download it in another workflow run: https://github.com/dawidd6/action-download-artifact
+    # That way, we can merge the source (head) branch's load balancer map to the target (base) branch.
+    - name: Upload main load balancer map
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cypress-load-balancer-map
+        path: .cypress_load_balancer/spec-map.json
+
+    - name: "DEBUG: read merged spec-map.json file"
+      run: cat .cypress_load_balancer/spec-map.json
+      shell: bash

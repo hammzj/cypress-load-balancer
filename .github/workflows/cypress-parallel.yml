@@ -23,7 +23,8 @@ jobs:
     outputs:
       e2e_specs: ${{ steps.get-specs.outputs.cypressLoadBalancerSpecs }}
     steps:
-      - uses: ./.github/actions/cypress_load_balancer/get_specs
+      - uses: actions/checkout@v4
+      - uses: .github/actions/cypress_load_balancer/get_specs
         id: get-specs
         with:
           runners: ${{ env.runners }}
@@ -37,10 +38,6 @@ jobs:
       matrix:
         spec: ${{ fromJson(needs.get_specs.outputs.e2e_specs) }}
     steps:
-      - name: Generate uuid to use uploading a unique load balancer map artifact
-        id: generate-uuid
-        run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
-
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -63,4 +60,5 @@ jobs:
     needs: [get_specs, cypress_run_e2e]
     if: ${{ needs.get_specs.result == 'success' }}
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/cypress_load_balancer/merge_cypress_load_balancing_maps

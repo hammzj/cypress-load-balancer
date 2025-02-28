@@ -1,4 +1,4 @@
-name: Load balance on Cypress specs
+name: Upload temporary spec map from parallelized Cypress test job
 inputs:
   job-id:
     description: An ID to prefix to the artifact. If not provided, a random UUID is generated for it
@@ -8,7 +8,7 @@ outputs:
   artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
       id: generate-uuid
@@ -20,4 +20,3 @@ runs:
       with:
         name: ${{ inputs.job-id || steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-temp-from-parallel-job
         path: .cypress_load_balancer/spec-map.json
-
