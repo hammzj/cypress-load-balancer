@@ -31,10 +31,10 @@ runs:
 #      with:
 #        node-version: 20.18.x
 #
-#    - run: |
-#        yarn install
-#        yarn build
-#      shell: bash
+    - run: |
+        yarn install
+        yarn build
+      shell: bash
 
     - name: Restore cached load balancing map
       id: cache-restore-load-balancing-map
