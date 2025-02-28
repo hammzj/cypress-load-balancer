@@ -1,4 +1,8 @@
 name: Upload temporary spec map from parallelized Cypress test job
+inputs:
+  job-id:
+    description: An ID to prefix to the artifact. Must be unique per parallelized job. If not provided, a random UUID is generated for it
+    required: false
 
 outputs:
   artifact-id:
@@ -8,9 +12,13 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - run: echo uuid="$(uuidgen)" >> $GITHUB_OUTPUT
+      id: generate-uuid
+      shell: bash
+
     - name: Upload temp load balancer map
       uses: actions/upload-artifact@v4
       id: upload-artifact
       with:
-        name: ${{ github.job }}-cypress-load-balancer-map-temp-from-parallel-job
+        name: ${{ inputs.job-id || steps.generate-uuid.outputs.uuid }}-cypress-load-balancer-map-temp-from-parallel-job
         path: .cypress_load_balancer/spec-map.json
