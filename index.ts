@@ -1,3 +1,3 @@
-import { performLoadBalancing, addCypressLoadBalancerPlugin, mergeLoadBalancingMapFiles } from "./src";
+import { performLoadBalancing, addCypressLoadBalancerPlugin, mergeLoadBalancingMapFiles, cli } from "./src";
 
-export { performLoadBalancing, addCypressLoadBalancerPlugin, mergeLoadBalancingMapFiles };
+export { performLoadBalancing, addCypressLoadBalancerPlugin, mergeLoadBalancingMapFiles, cli };
