@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { globSync } from "glob";
 import utils from "../../utils";
 import mergeLoadBalancingMapFiles from "../../merge";
+import { LoadBalancingMap } from "../../types";
 
 export default {
   command: "merge",
@@ -18,12 +19,6 @@ export default {
           type: "string",
           default: utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH
         })
-        // .option("json", {
-        //   alias: "j",
-        //   description: "Provide JSONs as strings to merge. Must match the type for LoadBalancerMap",
-        //   type: "array",
-        //   default: []
-        // })
         .option("files", {
           alias: "F",
           description: "A list of other files to load and merge back to the original",
@@ -33,9 +28,10 @@ export default {
         .option("glob", {
           alias: "G",
           description:
-            "A glob pattern to match for load balancing maps to merge." +
+            "One or more glob patterns to match for load balancing maps to merge." +
             "Make sure to wrap in quotes for the glob to work correctly",
-          type: "string"
+          type: "array",
+          default: []
         })
         .option("output", {
           alias: "o",
@@ -45,7 +41,7 @@ export default {
 
         //@ts-expect-error Need to fix type
         .check(function (argv) {
-          if (argv.files.length === 0 && !argv.glob) {
+          if ([argv.files.length, argv.glob.length].every((length) => length === 0)) {
             throw Error("At least one file path or a glob pattern must be provided.");
           }
           return true;
@@ -54,22 +50,20 @@ export default {
   },
   //@ts-expect-error Need to fix type
   handler: function (argv) {
-    const orig = JSON.parse(fs.readFileSync(argv.original).toString());
-    const others = [];
-
-    if (argv.glob) {
-      const files = globSync(argv.glob, { dot: true, absolute: true, ignore: argv.original });
-      for (const f of files) {
-        const data = JSON.parse(fs.readFileSync(f).toString());
-        others.push(data);
-        utils.DEBUG("Glob results:", argv.f);
-      }
-    }
-    for (const f of argv.files) {
-      utils.DEBUG("Files:", argv.f);
-      const data = JSON.parse(fs.readFileSync(f).toString());
+    const loadFile = (fileName: string) => {
+      const data = JSON.parse(fs.readFileSync(fileName).toString());
       others.push(data);
-    }
+    };
+    const orig = JSON.parse(fs.readFileSync(argv.original).toString());
+    const others: LoadBalancingMap[] = [];
+
+    //Collect data from files found by glob
+    globSync(argv.glob, { dot: true, absolute: true, ignore: argv.original }).map(loadFile);
+
+    //Collect data from explicit file names
+    argv.files.map(loadFile);
+
+    utils.DEBUG("spec-maps to merge to original:", others);
     if (others.length > 0) {
       const merged = mergeLoadBalancingMapFiles(orig, others);
       utils.saveMapFile(merged, argv.output);

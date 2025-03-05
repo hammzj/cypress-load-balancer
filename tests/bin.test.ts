@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
-//TODO: this file is choppy. It needs to run the actual script file instead of executing npx.
+//TODO: has a lot of issues on GHA. Using husky to run tests on pre-commit now
 
 //Before you run this file, run an `npm run build` or `yarn build`
 import { exec } from "node:child_process";
@@ -9,6 +9,7 @@ import sinon from "sinon";
 //@ts-expect-error No types exist
 import findCypressSpecs from "find-cypress-specs";
 import { stubReadLoadBalancerFile, runCmd } from "./support/utils";
+import { glob } from "glob";
 import cli from "../src/cli";
 import utils from "../src/utils";
 
@@ -18,6 +19,10 @@ const sandbox = sinon.createSandbox();
 
 describe("Executables", function () {
   this.timeout(5000);
+  before(function () {
+    if (IS_ON_GHA) this.skip();
+  });
+
   describe("cypress-load-balancer", function () {
     afterEach(function () {
       sandbox.restore();
@@ -96,13 +101,30 @@ describe("Executables", function () {
             expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts\nbaz.test.ts", "bar.test.ts"]);
           });
 
-          it("uses getSpecs if no files are provided", async function () {
+          it("can find files by glob patterns", async function () {
+            const stub = sandbox.stub(glob, "globSync").returns(["foo.test.ts", "bar.test.ts"]);
+            await runCmd(cli, `-r 2 -t component --format string -G "**/foo.test.ts" -G "**/bar.test.ts"`);
+            expect(stub).to.have.been.calledOnceWith(["**/foo.test.ts", "**/bar.test.ts"]);
+          });
+
+          it("uses getSpecs if no other file options are provided", async function () {
             const stub = sandbox.stub(findCypressSpecs, "getSpecs").returns(["foo.test.ts"]);
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            sandbox
+              .stub(glob, "globSync")
+              .withArgs([])
+              .returns([])
+              .withArgs(["**/foo.test.ts"])
+              .returns(["foo.test.ts"]);
+
             //Call stub when not files are not provided
             await runCmd(cli, `-r 2 -t component`);
             //Should not be called when files are provided
             await runCmd(cli, `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`);
+
+            //Should not be called when globs are provided
+            await runCmd(cli, `-r 2 -t component --format string -G "**/foo.test.ts"`);
+
             expect(stub).to.have.been.calledOnce;
           });
 
@@ -237,33 +259,29 @@ describe("Executables", function () {
           });
         });
 
-        //TODO: failing due to stubbing not working
-        describe.skip("initialize", function () {
-          it("can initialize the file", function (done) {
-            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
-            runCmd(cli, `initialize`);
+        describe("initialize", function () {
+          it("can initialize the file", async function () {
+            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([false, false]);
+            await runCmd(cli, `initialize`);
             expect(stub).to.have.been.called;
-            done();
           });
 
-          it("can force re-create the directory", function (done) {
-            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
-            runCmd(cli, `initialize --force-dir`);
+          it("can force re-create the directory", async function () {
+            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([true, false]);
+            await runCmd(cli, `initialize --force-dir`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: true,
               forceCreateMainLoadBalancingMap: false
             });
-            done();
           });
 
-          it("can force re-create the file", function (done) {
-            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles");
-            runCmd(cli, `initialize --force`);
+          it("can force re-create the file", async function () {
+            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([false, true]);
+            await runCmd(cli, `initialize --force`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: false,
               forceCreateMainLoadBalancingMap: true
             });
-            done();
           });
         });
       });
