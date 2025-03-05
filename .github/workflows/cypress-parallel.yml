@@ -36,6 +36,7 @@ jobs:
           runners: ${{ env.runners }}
           testing-type: e2e
           format: string
+          cypress-config-file: ${{ env.CYPRESS_CONFIG_FILE }}
 
   cypress_run_e2e:
     runs-on: ubuntu-22.04
