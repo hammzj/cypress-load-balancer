@@ -15,6 +15,7 @@ on:
 
 env:
   runners: ${{ inputs.runners || 3}}
+  CYPRESS_CONFIG_FILE: ./cypress.config.ts
   CYPRESS_LOAD_BALANCER_DEBUG: ${{ inputs.debug || false }}
 
 jobs:
