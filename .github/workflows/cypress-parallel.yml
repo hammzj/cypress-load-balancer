@@ -33,7 +33,7 @@ jobs:
       - uses: hammzj/cypress-load-balancer-action/actions/balance@dev/testing-actions
         with:
           runners: ${{ env.runners }}
-          testing-type: ${{ env.testing-type }}
+          testing-type: e2e
           format: string
 
   cypress_run_e2e:
@@ -67,4 +67,3 @@ jobs:
     if: ${{ needs.get_specs.result == 'success' }}
     steps:
       - uses: hammzj/cypress-load-balancer-action/actions/merge@dev/testing-actions
-
