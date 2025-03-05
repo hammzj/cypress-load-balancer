@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - uses: hammzj/cypress-load-balancer-action/actions/balance@main
+      - uses: hammzj/cypress-load-balancer-action/actions/balance@dev/testing-actions
         with:
           runners: ${{ env.runners }}
           testing-type: ${{ env.testing-type }}
@@ -44,7 +44,6 @@ jobs:
       matrix:
         spec: ${{ fromJson(needs.get_specs.outputs.e2e_specs) }}
     steps:
-
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -59,7 +58,7 @@ jobs:
           # Fix for https://github.com/cypress-io/github-action/issues/480
           config: videosFolder=/tmp/cypress-videos
 
-      - uses: hammzj/cypress-load-balancer-action/actions/save-temporary@main
+      - uses: hammzj/cypress-load-balancer-action/actions/save-temporary@dev/testing-actions
         if: always()
 
   merge_cypress_load_balancing_maps:
@@ -67,4 +66,5 @@ jobs:
     needs: [get_specs, cypress_run_e2e]
     if: ${{ needs.get_specs.result == 'success' }}
     steps:
-      - uses: hammzj/cypress-load-balancer-action/actions/merge@main
+      - uses: hammzj/cypress-load-balancer-action/actions/merge@dev/testing-actions
+
