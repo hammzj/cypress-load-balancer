@@ -19,9 +19,9 @@ const sandbox = sinon.createSandbox();
 
 describe("Executables", function () {
   this.timeout(5000);
-  before(function(){
+  before(function () {
     if (IS_ON_GHA) this.skip();
-  })
+  });
 
   describe("cypress-load-balancer", function () {
     afterEach(function () {
