@@ -28,7 +28,7 @@ export default {
   command: "$0",
   description: "Performs load balancing against a set of runners and Cypress specs",
   //@ts-expect-error Figuring out the type later
-  builder: function(yargs) {
+  builder: function (yargs) {
     return (
       yargs
         .option("runners", {
@@ -88,25 +88,25 @@ export default {
         .help()
         .alias("help", "h")
         .example(
-          "Load balancing for 6 runners against \"component\" testing with implied Cypress configuration of `./cypress.config.js`",
+          'Load balancing for 6 runners against "component" testing with implied Cypress configuration of `./cypress.config.js`',
           "npx cypressLoadBalancer -r 6 -t component"
         )
         .example(
-          "Load balancing for 6 runners against \"component\" testing with an explicit Cypress configuration set by an environment variable",
+          'Load balancing for 6 runners against "component" testing with an explicit Cypress configuration set by an environment variable',
           "CYPRESS_CONFIG_FILE=./src/tests/cypress.config.js npx cypressLoadBalancer -r 6 -t e2e"
         )
         .example(
-          "Load balancing for 3 runners against \"e2e\" testing with specified file paths",
+          'Load balancing for 3 runners against "e2e" testing with specified file paths',
           "npx cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js cypress/e2e/bar.cy.js cypress/e2e/wee.cy.js"
         )
         .example(
-          "Load balancing for 3 runners against \"e2e\" testing with a specified glob pattern and file path",
+          'Load balancing for 3 runners against "e2e" testing with a specified glob pattern and file path',
           "npx cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js -G cypress/e2e/more_tests/*.cy.js"
         )
     );
   },
   //@ts-expect-error Figuring out the type later
-  handler: function(argv) {
+  handler: function (argv) {
     //Assign files array to detect "--files" or files found "--glob" patterns first
     let files: string[] = argv.files;
     files.push(...glob.globSync(argv.glob));
@@ -124,7 +124,10 @@ export default {
         "Original error",
         e
       );
-      throw Error(`Could not run "getSpecs" most likely do to an incorrect Cypress configuration or missing testing type. Provided testing type: ${argv[`testing-type`] || "undefined"}`, { cause: e });
+      throw Error(
+        `Could not run "getSpecs" most likely do to an incorrect Cypress configuration or missing testing type. Provided testing type: ${argv[`testing-type`] || "undefined"}`,
+        { cause: e }
+      );
     }
     const output: Runners | string[] = performLoadBalancing(argv.runners, argv["testing-type"] as TestingType, [
       ...new Set(files)
