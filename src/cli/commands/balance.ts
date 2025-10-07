@@ -8,6 +8,7 @@ import { glob } from "glob";
 import performLoadBalancing from "../../loadBalancer";
 import { Runners, TestingType } from "../../types";
 import utils from "../../utils";
+import { GetSpecsError } from "../errors";
 
 type FormatOutputOption = "spec" | "string" | "newline";
 
@@ -118,24 +119,28 @@ export default {
         files = getSpecs(undefined, argv[`testing-type`]);
       }
     } catch (e) {
+      const error = new GetSpecsError(argv["testing-type"], { cause: e });
       console.error(
-        "Could not run `getSpecs` most likely do to an incorrect Cypress configuration or missing testing type",
-        argv[`testing-type`],
-        "Original error",
-        e
-      );
-      //TODO: add custom error and pass cause to `console.error
-      throw Error(`Could not run "getSpecs" most likely do to an incorrect Cypress configuration or missing testing type. Provided testing type: ${argv[`testing-type`] || "undefined"}\n${e}`);
+        error.name,
+        error.message,
+        `Testing Type: ${error.testingType}`,
+        `Cause:`,
+        e);
+      throw error;
     }
+
     const output: Runners | string[] = performLoadBalancing(argv.runners, argv["testing-type"] as TestingType, [
       ...new Set(files)
     ]);
+
     argv.output = JSON.stringify(formatOutput(output, argv.format));
 
     if (argv[`set-gha-output`]) {
       setOutput("cypressLoadBalancerSpecs", argv.output);
     }
-    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG !== "true") console.clear();
+    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG !== "true") {
+      console.clear();
+    }
     console.log(argv.output);
   }
 };
