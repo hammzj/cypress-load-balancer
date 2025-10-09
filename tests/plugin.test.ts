@@ -66,7 +66,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       const existingSpecName = results.runs[0].spec.relative;
       stubReadLoadBalancerFile(sandbox, {
         e2e: {},
-        component: { [existingSpecName]: { stats: { durations: [3000], average: 3000 } } }
+        component: { [existingSpecName]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
       });
       handler(results);
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
@@ -90,7 +90,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       const existingSpecName = results.runs[0].spec.relative;
       stubReadLoadBalancerFile(sandbox, {
         e2e: {},
-        component: { [existingSpecName]: { stats: { durations: [3000], average: 3000 } } }
+        component: { [existingSpecName]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
       });
       handler(results);
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
@@ -111,13 +111,14 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       stubReadLoadBalancerFile(sandbox, {
         e2e: {},
-        component: { [existingSpecName]: { stats: { durations: [3000, 2000], average: 2500 } } }
+        component: { [existingSpecName]: { stats: { durations: [3000, 2000], average: 2500, median: 2000 } } }
       });
       handler(results);
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
 
-      expect(spy).to.have.been.calledWith([3000, 2000, 1000]).and.returned(2000);
+      expect(spy).to.have.been.calledWith([1000, 2000, 3000]).and.returned(2000);
       expect(loadBalancingMap.component[existingSpecName].stats.average).to.eq(2000);
+      expect(loadBalancingMap.component[existingSpecName].stats.median).to.eq(2000);
     });
 
     it("removes the oldest durations when the maximum limit has been reached", function () {
@@ -127,14 +128,14 @@ describe("addCypressLoadBalancerPlugin", function () {
       const existingSpecName = results.runs[0].spec.relative;
       stubReadLoadBalancerFile(sandbox, {
         e2e: {},
-        component: { [existingSpecName]: { stats: { durations: [3000, 2000, 1000], average: 2000 } } }
+        component: { [existingSpecName]: { stats: { durations: [3000, 2000, 1000], average: 2000, median: 2000 } } }
       });
       handler(results);
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
 
       expect(loadBalancingMap.component[existingSpecName].stats.durations).to.deep.eq([
-        2000,
         1000,
+        2000,
         results.runs[0].stats.duration
       ]);
       expect(loadBalancingMap.component[existingSpecName].stats.durations).to.have.lengthOf(3);

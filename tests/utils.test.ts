@@ -110,14 +110,16 @@ describe("Utils", function () {
       expect(this.loadBalancerMap.component["tests/foo.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [],
-          average: 0
+          average: 0,
+          median: 0
         }
       });
       expect(Object.keys(this.loadBalancerMap.e2e).length).to.eq(1);
       expect(this.loadBalancerMap.e2e["tests/bar.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [],
-          average: 0
+          average: 0,
+          median: 0
         }
       });
     });
@@ -126,10 +128,12 @@ describe("Utils", function () {
       utils.createNewEntry(this.loadBalancerMap, "component", "tests/foo.spec.ts");
       this.loadBalancerMap.component["tests/foo.spec.ts"].stats.durations = [300];
       this.loadBalancerMap.component["tests/foo.spec.ts"].stats.average = 300;
+      this.loadBalancerMap.component["tests/foo.spec.ts"].stats.median = 300;
       expect(this.loadBalancerMap.component["tests/foo.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [300],
-          average: 300
+          average: 300,
+          median: 300
         }
       });
     });
@@ -141,7 +145,8 @@ describe("Utils", function () {
       expect(this.loadBalancerMap.component["tests/foo.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [],
-          average: 0
+          average: 0,
+          median: 0
         }
       });
     });
@@ -153,7 +158,7 @@ describe("Utils", function () {
 
       const orig = {
         e2e: {},
-        component: { "tests/foo.spec.ts": { stats: { durations: [100, 200, 300], average: 200 } } }
+        component: { "tests/foo.spec.ts": { stats: { durations: [100, 200, 300], average: 200, median: 200 } } }
       };
 
       utils.updateFileStats(orig, "component", "tests/foo.spec.ts", 400);
@@ -170,6 +175,20 @@ describe("Utils", function () {
       expect(utils.calculateAverageDuration([2, 4, 6])).to.eq(4);
       //Round up
       expect(utils.calculateAverageDuration([3, 4])).to.eq(4);
+    });
+
+    it("calculates the average median as 0 if no durations are provided", function () {
+      expect(utils.calculateAverageDuration([])).to.eq(0);
+    });
+
+    it("calculates the median duration", function () {
+      expect(utils.calculateMedianDuration([1, 2, 2, 3])).to.eq(2);
+      expect(utils.calculateMedianDuration([2, 4, 6])).to.eq(4);
+      expect(utils.calculateMedianDuration([3, 4])).to.eq(3);
+      expect(utils.calculateMedianDuration([1, 2, 2, 2, 3, 4, 5, 8])).to.eq(2);
+
+      //Should sort them first (2,4,5,6,6)
+      expect(utils.calculateMedianDuration([6, 5, 4, 6, 2])).to.eq(5);
     });
   });
 

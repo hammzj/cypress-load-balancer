@@ -7,7 +7,8 @@
           200,
           300
         ],
-        "average": 200
+        "average": 200,
+        "median": 200
       }
     },
     "bar.test.ts": {
@@ -15,7 +16,8 @@
         "durations": [
           300
         ],
-        "average": 300
+        "average": 300,
+        "median": 300
       }
     },
     "baz.test.ts": {
@@ -26,7 +28,8 @@
           100,
           1000
         ],
-        "average": 1000
+        "average": 1000,
+        "median": 1000
       }
     },
     "wee.test.ts": {
@@ -37,7 +40,8 @@
           75,
           100
         ],
-        "average": 63
+        "average": 63,
+        "median": 50
       }
     },
     "zoom.test.ts": {
@@ -47,7 +51,8 @@
           4000,
           4000
         ],
-        "average": 4000
+        "average": 4000,
+        "median": 4000
       }
     },
     "tuu.test.ts": {
@@ -60,7 +65,8 @@
           1,
           1
         ],
-        "average": 1
+        "average": 1,
+        "median": 1
       }
     }
   },
@@ -70,14 +76,16 @@
         "durations": [
           50
         ],
-        "average": 50
+        "average": 50,
+        "median": 50
       },
       "bee.test.ts": {
         "stats": {
           "durations": [
             100
           ],
-          "average": 100
+          "average": 100,
+          "median": 100
         }
       }
     }
