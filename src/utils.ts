@@ -47,7 +47,7 @@ class Utils {
     } = {}
   ) {
     if (loadBalancingMap[testingType][filePath] == null || opts.force === true) {
-      loadBalancingMap[testingType][filePath] = { stats: { durations: [], average: 0 } };
+      loadBalancingMap[testingType][filePath] = { stats: { durations: [], average: 0, median: 0 } };
       this.DEBUG(`Added new entry for file in load balancer object for "${testingType}" type tests:`, filePath);
     } else {
       this.DEBUG(`File already exists in load balancer for "${testingType}" type tests:`, filePath);

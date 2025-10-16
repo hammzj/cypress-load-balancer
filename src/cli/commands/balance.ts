@@ -45,6 +45,13 @@ export default {
           demandOption: true,
           description: "The testing type to use for load balancing"
         })
+        .option("algorithm", {
+          alias: "a",
+          type: "string",
+          choices: ["total-average", "module"],
+          description:
+            "The algorithm to use for load balancing. If not provided, the default for the load balancer is used (total-average)"
+        })
         .option("files", {
           alias: "F",
           type: "array",
@@ -124,9 +131,12 @@ export default {
       throw error;
     }
 
-    const output: Runners | string[] = performLoadBalancing(argv.runners, argv["testing-type"] as TestingType, [
-      ...new Set(files)
-    ]);
+    const output: Runners | string[] = performLoadBalancing(
+      argv.runners,
+      argv["testing-type"] as TestingType,
+      [...new Set(files)],
+      argv.algorithm
+    );
 
     argv.output = JSON.stringify(formatOutput(output, argv.format));
 

@@ -110,14 +110,16 @@ describe("Utils", function () {
       expect(this.loadBalancerMap.component["tests/foo.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [],
-          average: 0
+          average: 0,
+          median: 0
         }
       });
       expect(Object.keys(this.loadBalancerMap.e2e).length).to.eq(1);
       expect(this.loadBalancerMap.e2e["tests/bar.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [],
-          average: 0
+          average: 0,
+          median: 0
         }
       });
     });
@@ -126,10 +128,12 @@ describe("Utils", function () {
       utils.createNewEntry(this.loadBalancerMap, "component", "tests/foo.spec.ts");
       this.loadBalancerMap.component["tests/foo.spec.ts"].stats.durations = [300];
       this.loadBalancerMap.component["tests/foo.spec.ts"].stats.average = 300;
+      this.loadBalancerMap.component["tests/foo.spec.ts"].stats.median = 300;
       expect(this.loadBalancerMap.component["tests/foo.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [300],
-          average: 300
+          average: 300,
+          median: 300
         }
       });
     });
@@ -141,7 +145,8 @@ describe("Utils", function () {
       expect(this.loadBalancerMap.component["tests/foo.spec.ts"]).to.exist.and.deep.eq({
         stats: {
           durations: [],
-          average: 0
+          average: 0,
+          median: 0
         }
       });
     });
@@ -153,7 +158,7 @@ describe("Utils", function () {
 
       const orig = {
         e2e: {},
-        component: { "tests/foo.spec.ts": { stats: { durations: [100, 200, 300], average: 200 } } }
+        component: { "tests/foo.spec.ts": { stats: { durations: [100, 200, 300], average: 200, median: 200 } } }
       };
 
       utils.updateFileStats(orig, "component", "tests/foo.spec.ts", 400);

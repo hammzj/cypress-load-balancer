@@ -2,6 +2,7 @@ export interface DurationStatistics {
   stats: {
     durations: Array<number>;
     average: number;
+    median: number;
   };
 }
 
