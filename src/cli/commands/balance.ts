@@ -48,7 +48,7 @@ export default {
         .option("algorithm", {
           alias: "a",
           type: "string",
-          choices: ["total-average", "module"],
+          choices: ["total-average", "modulo"],
           description:
             "The algorithm to use for load balancing. If not provided, the default for the load balancer is used (total-average)"
         })
