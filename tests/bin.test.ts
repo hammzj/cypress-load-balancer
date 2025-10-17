@@ -49,8 +49,24 @@ describe("Executables", function () {
               e2e: {},
               component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
             });
-            const [_err, argv] = await runCmd(cli, `-r 3 -t component -F "foo.test.ts"`);
+            const [_err, argv] = await runCmd(cli, `-r 3 -t component -a round-robin -F "foo.test.ts" `);
             expect(JSON.parse(argv.output)).to.deep.eq([["foo.test.ts"], [], []]);
+          });
+
+          ["weighted-total", "round-robin"].map((algorithm) => {
+            it(`can accept a choice of which algorithm to use: ${algorithm}`, async function () {
+              stubReadLoadBalancerFile(sandbox, {
+                e2e: {},
+                component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
+              });
+              const [_err, argv] = await runCmd(cli, `-r 3 -t component -F "foo.test.ts" -a ${algorithm}`);
+              expect(argv.algorithm).to.deep.eq(algorithm);
+            });
+          });
+
+          it("throws an error on unknown algorithm selection", async function () {
+            const [error] = await runCmd(cli, `-r 3 -t component -F "foo.test.ts" -a FAKE`);
+            expect(error).to.not.be.null;
           });
 
           it("can format the output as a comma-delimited string", async function () {
@@ -64,7 +80,7 @@ describe("Executables", function () {
             });
             const [_err, argv] = await runCmd(
               cli,
-              `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`
+              `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
             );
             expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts,baz.test.ts", "bar.test.ts"]);
           });
@@ -80,7 +96,7 @@ describe("Executables", function () {
             });
             const [_err, argv, _output] = await runCmd(
               cli,
-              `-r 2 -t component --fm spec -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`
+              `-r 2 -t component --fm spec -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
             );
             expect(JSON.parse(argv.output)).to.deep.eq(["--spec foo.test.ts,baz.test.ts", "--spec bar.test.ts"]);
           });
@@ -96,14 +112,17 @@ describe("Executables", function () {
             });
             const [_err, argv, _output] = await runCmd(
               cli,
-              `-r 2 -t component --fm newline -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`
+              `-r 2 -t component --fm newline -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
             );
             expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts\nbaz.test.ts", "bar.test.ts"]);
           });
 
           it("can find files by glob patterns", async function () {
             const stub = sandbox.stub(glob, "globSync").returns(["foo.test.ts", "bar.test.ts"]);
-            await runCmd(cli, `-r 2 -t component --format string -G "**/foo.test.ts" -G "**/bar.test.ts"`);
+            await runCmd(
+              cli,
+              `-r 2 -t component --format string -G "**/foo.test.ts" -G "**/bar.test.ts" -a round-robin`
+            );
             expect(stub).to.have.been.calledOnceWith(["**/foo.test.ts", "**/bar.test.ts"]);
           });
 
@@ -120,7 +139,10 @@ describe("Executables", function () {
             //Call stub when not files are not provided
             await runCmd(cli, `-r 2 -t component`);
             //Should not be called when files are provided
-            await runCmd(cli, `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`);
+            await runCmd(
+              cli,
+              `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
+            );
 
             //Should not be called when globs are provided
             await runCmd(cli, `-r 2 -t component --format string -G "**/foo.test.ts"`);
@@ -157,7 +179,7 @@ describe("Executables", function () {
               //Can't use helper function here for this
               const cmdOutput = await new Promise((resolve) => {
                 cli.parse(
-                  `-r 2 -t component --format string --gha -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts"`,
+                  `-r 2 -t component --format string --gha -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`,
                   //@ts-expect-error ignore
                   (_err, _argv, _output) => {
                     resolve(output);

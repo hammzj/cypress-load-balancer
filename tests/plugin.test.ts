@@ -121,6 +121,24 @@ describe("addCypressLoadBalancerPlugin", function () {
       expect(loadBalancingMap.component[existingSpecName].stats.median).to.eq(2000);
     });
 
+    it("calculates the median duration and saves it per spec", function () {
+      stubInitializeLoadBalancingFiles();
+      const handler = getHandler();
+      const spy = sandbox.spy(utils, "calculateAverageDuration");
+      const existingSpecName = results.runs[0].spec.relative;
+      results.runs[0].stats.duration = 1000; //Nice even number
+
+      stubReadLoadBalancerFile(sandbox, {
+        e2e: {},
+        component: { [existingSpecName]: { stats: { durations: [3000, 2000], average: 2500, median: 2000 } } }
+      });
+      handler(results);
+      const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
+
+      expect(spy).to.have.been.calledWith([1000, 2000, 3000]).and.returned(2000);
+      expect(loadBalancingMap.component[existingSpecName].stats.median).to.eq(2000);
+    });
+
     it("removes the oldest durations when the maximum limit has been reached", function () {
       sandbox.stub(utils, "MAX_DURATIONS_ALLOWED").get(() => 3);
       stubInitializeLoadBalancingFiles();

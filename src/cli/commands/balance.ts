@@ -45,6 +45,16 @@ export default {
           demandOption: true,
           description: "The testing type to use for load balancing"
         })
+        .option("algorithm", {
+          alias: "a",
+          type: "string",
+          choices: ["weighted-largest", "round-robin"],
+          default: "weighted-largest",
+          description:
+            "The algorithm to use for load balancing" +
+            `\nweighted-largest:  Attempts to get a uniform total run time between all runners by separating the longest-running tests into their own runners first, and attempting to keep all other runners equal to or lower than its time. If there are more tests than runners, it will repeat based against the newest highest run time from the runners.` +
+            `\nround-robin: Balances the runners based on a modulo-index approach, where the X-indexed runner will get the X-indexed test file after performing a modulo operation on the index against the total runner count.`
+        })
         .option("files", {
           alias: "F",
           type: "array",
@@ -124,9 +134,12 @@ export default {
       throw error;
     }
 
-    const output: Runners | string[] = performLoadBalancing(argv.runners, argv["testing-type"] as TestingType, [
-      ...new Set(files)
-    ]);
+    const output: Runners | string[] = performLoadBalancing(
+      argv.runners,
+      argv["testing-type"] as TestingType,
+      [...new Set(files)],
+      argv.algorithm
+    );
 
     argv.output = JSON.stringify(formatOutput(output, argv.format));
 
