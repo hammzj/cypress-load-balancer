@@ -1,14 +1,5 @@
 {
   "e2e": {
-    "1000.test.ts": {
-      "stats": {
-        "durations": [
-          1000
-        ],
-        "average": 1000,
-        "median": 1000
-      }
-    },
     "100.a.test.ts": {
       "stats": {
         "durations": [
@@ -36,58 +27,58 @@
         "median": 100
       }
     },
-    "50.test.ts": {
+    "100.d.test.ts": {
       "stats": {
         "durations": [
-          50
+          100
         ],
-        "average": 50,
-        "median": 50
+        "average": 100,
+        "median": 100
       }
     },
-    "25.test.ts": {
+    "100.e.test.ts": {
       "stats": {
         "durations": [
-          25
+          100
         ],
-        "average": 25,
-        "median": 25
+        "average": 100,
+        "median": 100
       }
     },
-    "10.a.test.ts": {
+    "100.f.test.ts": {
       "stats": {
         "durations": [
-          10
+          100
         ],
-        "average": 10,
-        "median": 10
+        "average": 100,
+        "median": 100
       }
     },
-    "10.b.test.ts": {
+    "100.g.test.ts": {
       "stats": {
         "durations": [
-          10
+          100
         ],
-        "average": 10,
-        "median": 10
+        "average": 100,
+        "median": 100
       }
     },
-    "10.c.test.ts": {
+    "100.h.test.ts": {
       "stats": {
         "durations": [
-          10
+          100
         ],
-        "average": 10,
-        "median": 10
+        "average": 100,
+        "median": 100
       }
     },
-    "5.test.ts": {
+    "100.i.test.ts": {
       "stats": {
         "durations": [
-          5
+          100
         ],
-        "average": 5,
-        "median": 5
+        "average": 100,
+        "median": 100
       }
     }
   }

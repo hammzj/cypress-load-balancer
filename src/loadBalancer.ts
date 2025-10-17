@@ -51,6 +51,8 @@ function balanceByWeightedLargestJob(
   runnerCount: number,
   filePaths: FilePath[]
 ): Runners {
+  if (runnerCount === 1) return [filePaths];
+
   const getFile = (fp: FilePath) => loadBalancingMap[testingType][fp];
   const getTotalMedianTime = (fps: FilePath[]) => sum(fps.map((f) => getFile(f).stats.median));
   const sortByLargestMedianTime = (fps: FilePath[]) =>
@@ -62,41 +64,30 @@ function balanceByWeightedLargestJob(
   //Sort highest to lowest by median, then by file name
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
   const popHighestFile = () => sortedFilePaths.shift();
-  const popLowestFile = () => sortedFilePaths.pop();
 
   //Initialize each runner
-  const runners: Runners = Array.from({ length: runnerCount }, () => []);
-  let highestTotalRunnerTime: number;
+  let runners: Runners = Array.from({ length: runnerCount }, () => filterOutEmpties([popHighestFile()])) as Runners;
+  let highestTotalRunnerTime = getLargestMedianTime(runners);
+
   //DEBUGGING PURPOSES ONLY
   let currentIteration = 0;
 
   do {
     utils.DEBUG(`Current Iteration: ${++currentIteration};`, "Runners: ", runners);
-
-    //Round-robin: pop out the highest time and put into each runner
-    //This is assuming that all runners are nearly equal in total time on each pass
-    const temp = Array.from({ length: runners.length }, () => filterOutEmpties([popHighestFile()])) as Runners;
-
-    //eslint-disable-next-line prefer-spread
-    runners.map((r) => r.push.apply(r, temp.shift() || []));
+    runners = runners.sort((a, b) => getTotalMedianTime(a) - getTotalMedianTime(b));
 
     //Get the highest total runner time to compare for later
     highestTotalRunnerTime = getLargestMedianTime(runners);
 
-    for (let i = 0; i <= runners.length - 1; i++) {
+    if (sortedFilePaths.length === 0) break;
+    for (let i = 0; i <= runners.length - 2; i++) {
+      if (sortedFilePaths.length === 0) break;
+
       const currentRunner = runners[i];
-      let currentRunTime = getTotalMedianTime(currentRunner);
+      const currentRunTime = getTotalMedianTime(currentRunner);
 
-      //TODO: convert to recursive function as do/while is ugly
-      //Add the smallest values to the runner until the current runner's total would be higher than the highest run time
-      do {
-        if (sortedFilePaths.length === 0 || currentRunTime >= highestTotalRunnerTime) break;
-        currentRunner.push(popLowestFile() as string);
-        currentRunTime = getTotalMedianTime(currentRunner);
-      } while (currentRunTime < highestTotalRunnerTime);
-
-      //Recalculate the largest time again for the next runners (just to be safe)
-      highestTotalRunnerTime = getLargestMedianTime(runners);
+      if (currentRunTime > highestTotalRunnerTime) continue;
+      currentRunner.push(popHighestFile() as string);
     }
   } while (sortedFilePaths.length > 0);
 

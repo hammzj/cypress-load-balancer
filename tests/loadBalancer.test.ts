@@ -58,16 +58,36 @@ describe("Load balancing", function () {
         this.filePaths = Object.keys(this.loadBalancingMap.e2e);
       });
 
+      it("balance for 1 runner", function () {
+        const filePaths = this.filePaths;
+        const runners = performLoadBalancing(1, "e2e", filePaths, "weighted-largest");
+        expect(runners).to.deep.equal([
+          [
+            "150.test.ts",
+            "100.test.ts",
+            "75.a.test.ts",
+            "75.b.test.ts",
+            "75.c.test.ts",
+            "50.test.ts",
+            "25.a.test.ts",
+            "25.b.test.ts",
+            "10.a.test.ts",
+            "10.b.test.ts",
+            "5.test.ts"
+          ]
+        ]);
+      });
+
       it("can balance for 3 runners with nearly even total time", function () {
         const filePaths = this.filePaths;
         const runners = performLoadBalancing(3, "e2e", filePaths, "weighted-largest");
         expect(runners).to.deep.equal([
-          //225 total run time
-          ["150.test.ts", "75.b.test.ts"],
-          //225 total run time
-          ["100.test.ts", "5.test.ts", "10.a.test.ts", "10.b.test.ts", "25.a.test.ts", "75.a.test.ts"],
-          //150 total run time
-          ["75.c.test.ts", "25.b.test.ts", "50.test.ts"]
+          //200 total run time
+          ["100.test.ts", "75.a.test.ts", "10.b.test.ts", "10.a.test.ts", "5.test.ts"],
+          //200 total run time
+          ["150.test.ts", "25.b.test.ts", "25.a.test.ts"],
+          //200 total run time
+          ["75.c.test.ts", "75.b.test.ts", "50.test.ts"]
         ]);
       });
 
@@ -75,14 +95,33 @@ describe("Load balancing", function () {
         const filePaths = this.filePaths;
         const runners = performLoadBalancing(4, "e2e", filePaths, "weighted-largest");
         expect(runners).to.deep.equal([
-          //150 total time
-          ["150.test.ts"],
-          //150 total time
-          ["100.test.ts", "5.test.ts", "10.a.test.ts", "10.b.test.ts", "25.a.test.ts"],
-          //150 total time
-          ["75.c.test.ts", "25.b.test.ts", "50.test.ts"],
-          //150 total time
-          ["75.b.test.ts", "75.a.test.ts"]
+          //150 total run time
+          ["100.test.ts", "25.b.test.ts", "10.b.test.ts", "10.a.test.ts", "5.test.ts"],
+          //150 total run time
+          ["75.b.test.ts", "50.test.ts", "25.a.test.ts"],
+          //150 total run time
+          ["75.c.test.ts", "75.a.test.ts"],
+          //150 total run time
+          ["150.test.ts"]
+        ]);
+      });
+
+      it("can balance for 6 runners with nearly even total time", function () {
+        const filePaths = this.filePaths;
+        const runners = performLoadBalancing(6, "e2e", filePaths, "weighted-largest");
+        expect(runners).to.deep.equal([
+          //75 Total run time
+          ["50.test.ts", "25.b.test.ts"],
+          //100 Total run time
+          ["75.c.test.ts", "25.a.test.ts"],
+          //85 Total run time
+          ["75.b.test.ts", "10.b.test.ts"],
+          //85 Total run time
+          ["75.a.test.ts", "10.a.test.ts"],
+          //105 Total run time
+          ["100.test.ts", "5.test.ts"],
+          //150 Total run time
+          ["150.test.ts"]
         ]);
       });
 
@@ -96,29 +135,30 @@ describe("Load balancing", function () {
       it("only includes files given to it and does not consider others in the load balancing map", function () {
         const fourFiles = this.filePaths.slice(0, 3);
         const runners = performLoadBalancing(2, "e2e", fourFiles, "weighted-largest");
-        expect(runners[0]).to.deep.eq(["150.test.ts"]);
-        expect(runners[1]).to.deep.eq(["100.test.ts", "75.a.test.ts"]);
+        expect(runners[0]).to.deep.eq(["100.test.ts", "75.a.test.ts"]);
+        expect(runners[1]).to.deep.eq(["150.test.ts"]);
       });
 
       it("can differentiate specs between e2e and component", function () {
         const e2eFilePaths = Object.keys(this.loadBalancingMap.e2e);
-        const componentFilePaths = Object.keys(this.loadBalancingMap.component);
         const e2eRunners = performLoadBalancing(1, "e2e", e2eFilePaths, "weighted-largest");
-        const componentRunners = performLoadBalancing(1, "component", componentFilePaths, "weighted-largest");
         expect(e2eRunners[0]).to.deep.eq([
           "150.test.ts",
           "100.test.ts",
-          "75.c.test.ts",
-          "75.b.test.ts",
           "75.a.test.ts",
+          "75.b.test.ts",
+          "75.c.test.ts",
           "50.test.ts",
-          "25.b.test.ts",
           "25.a.test.ts",
-          "10.b.test.ts",
+          "25.b.test.ts",
           "10.a.test.ts",
+          "10.b.test.ts",
           "5.test.ts"
         ]);
-        expect(componentRunners[0]).to.deep.eq(["50.test.ct.ts", "10.b.test.ct.ts", "10.a.test.ct.ts", "5.test.ct.ts"]);
+
+        const componentFilePaths = Object.keys(this.loadBalancingMap.component);
+        const componentRunners = performLoadBalancing(1, "component", componentFilePaths, "weighted-largest");
+        expect(componentRunners[0]).to.deep.eq(["50.test.ct.ts", "10.a.test.ct.ts", "10.b.test.ct.ts", "5.test.ct.ts"]);
       });
 
       it("can handle files that have not been run (or do not exist in map) yet", function () {
@@ -129,14 +169,14 @@ describe("Load balancing", function () {
         expect(runners[0]).to.deep.eq([
           "150.test.ts",
           "100.test.ts",
-          "75.c.test.ts",
-          "75.b.test.ts",
           "75.a.test.ts",
+          "75.b.test.ts",
+          "75.c.test.ts",
           "50.test.ts",
-          "25.b.test.ts",
           "25.a.test.ts",
-          "10.b.test.ts",
+          "25.b.test.ts",
           "10.a.test.ts",
+          "10.b.test.ts",
           "5.test.ts",
           "newFile.test.ts"
         ]);
@@ -231,5 +271,84 @@ describe("Load balancing", function () {
         expect(JSON.parse(stub.firstCall.args[1] as string).e2e).to.haveOwnProperty("newFile.test.ts");
       });
     });
+  });
+
+  it("works if all test files are equal in median time", function () {
+    const fixture = {
+      e2e: {
+        "100.a.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.b.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.c.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.d.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.e.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.f.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.g.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.h.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        },
+        "100.i.test.ts": {
+          stats: {
+            durations: [100],
+            average: 100,
+            median: 100
+          }
+        }
+      }
+    };
+
+    stubReadLoadBalancerFile(sandbox, fixture);
+    this.loadBalancingMap = fixture;
+    this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
+    this.filePaths = Object.keys(this.loadBalancingMap.e2e);
+
+    const e2eFilePaths = Object.keys(this.loadBalancingMap.e2e);
+    const e2eRunners = performLoadBalancing(3, "e2e", e2eFilePaths, "weighted-largest");
+    expect(e2eRunners).to.deep.equal([]);
   });
 });
