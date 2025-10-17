@@ -99,5 +99,43 @@
         "median": 5
       }
     }
+  },
+  "component": {
+    "50.test.ct.ts": {
+      "stats": {
+        "durations": [
+          50
+        ],
+        "average": 50,
+        "median": 50
+      }
+    },
+    "10.a.test.ct.ts": {
+      "stats": {
+        "durations": [
+          10
+        ],
+        "average": 10,
+        "median": 10
+      }
+    },
+    "10.b.test.ct.ts": {
+      "stats": {
+        "durations": [
+          10
+        ],
+        "average": 10,
+        "median": 10
+      }
+    },
+    "5.test.ct.ts": {
+      "stats": {
+        "durations": [
+          5
+        ],
+        "average": 5,
+        "median": 5
+      }
+    }
   }
 }

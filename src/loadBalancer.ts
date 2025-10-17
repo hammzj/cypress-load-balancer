@@ -3,7 +3,7 @@ import utils from "./utils";
 import { FilePath, Runners, TestingType, LoadBalancingMap, Algorithms } from "./types";
 
 const sum = (arr: number[]) => arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
-const filterOutEmpties = (arr: unknown[]) => arr.filter(v => v != null);
+const filterOutEmpties = (arr: unknown[]) => arr.filter((v) => v != null);
 
 function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePaths: Array<FilePath> = []) {
   if (filePaths.length > 0) {
@@ -17,6 +17,9 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
  * into their own runners first, and attempting to keep all other runners equal to or lower than its time.
  * If there are more tests than runners, then it will continually keep a check of the total run time of
  * the runner with the longest runtime, and compare other runners to stay under or near that limit.
+ *
+ * Cypress is dependent on waiting for the slowest runner to finish; there is no need to care about the fastest runner in this case.
+ * This algorithm involves making the slowest runners as fast as possible, or other runners equal to it
  *
  * Approach:
  * - Initialize an array of X runners.
@@ -35,37 +38,47 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
  * will need to wait for the longest test to complete in order to continue post-execution operations.
  * If all parallelized jobs are within the same time frame as the single longest test, then it should
  * still make the Cypress execution faster than the other algorithms.
- * **Tradeoffs**: Could be a slow O-time and memory heavy. Have not calculated yet.
+ * **Tradeoffs**: Runner times are more uniform, but there could be a larger set of slow runners overall. Could be a slow O-time and memory heavy; has not been calculated.
  *
  * @param loadBalancingMap
  * @param testingType
  * @param runnerCount
  * @param filePaths
  */
-function balanceByWeightedLargestJob(loadBalancingMap: LoadBalancingMap,
-                                     testingType: TestingType,
-                                     runnerCount: number,
-                                     filePaths: FilePath[]
+function balanceByWeightedLargestJob(
+  loadBalancingMap: LoadBalancingMap,
+  testingType: TestingType,
+  runnerCount: number,
+  filePaths: FilePath[]
 ): Runners {
   const getFile = (fp: FilePath) => loadBalancingMap[testingType][fp];
   const getTotalMedianTime = (fps: FilePath[]) => sum(fps.map((f) => getFile(f).stats.median));
-  const sortByLargestMedianTime = (fps: FilePath[]) => fps.sort((a, b) => getTotalMedianTime([a]) - getTotalMedianTime([b])).reverse();
+  const sortByLargestMedianTime = (fps: FilePath[]) =>
+    fps.sort((a, b) => getTotalMedianTime([a]) - getTotalMedianTime([b])).reverse();
 
-  const getLargestMedianTime = (runners: Runners): number => runners.map(r => getTotalMedianTime(r)).sort((a, b) => b - a)[0];
+  const getLargestMedianTime = (runners: Runners): number =>
+    runners.map((r) => getTotalMedianTime(r)).sort((a, b) => b - a)[0];
 
   //Sort highest to lowest by median, then by file name
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
   const popHighestFile = () => sortedFilePaths.shift();
   const popLowestFile = () => sortedFilePaths.pop();
+
   //Initialize each runner
   const runners: Runners = Array.from({ length: runnerCount }, () => []);
-  let highestTotalRunnerTime = getLargestMedianTime(runners);
+  let highestTotalRunnerTime: number;
+  //DEBUGGING PURPOSES ONLY
+  let currentIteration = 0;
 
   do {
+    utils.DEBUG(`Current Iteration: ${++currentIteration};`, "Runners: ", runners);
+
     //Round-robin: pop out the highest time and put into each runner
     //This is assuming that all runners are nearly equal in total time on each pass
     const temp = Array.from({ length: runners.length }, () => filterOutEmpties([popHighestFile()])) as Runners;
-    runners.map(r => r.push.apply(r, temp.shift() || []));
+
+    //eslint-disable-next-line prefer-spread
+    runners.map((r) => r.push.apply(r, temp.shift() || []));
 
     //Get the highest total runner time to compare for later
     highestTotalRunnerTime = getLargestMedianTime(runners);
@@ -85,11 +98,16 @@ function balanceByWeightedLargestJob(loadBalancingMap: LoadBalancingMap,
       //Recalculate the largest time again for the next runners (just to be safe)
       highestTotalRunnerTime = getLargestMedianTime(runners);
     }
-
   } while (sortedFilePaths.length > 0);
 
-  utils.DEBUG("Total Run Time of each runner:", runners.map((r, i) => `runner ${i}: ${getTotalMedianTime(r)}`));
-  return runners.map(r => filterOutEmpties(r)) as Runners;
+  utils.DEBUG(
+    "Completed balancing for ",
+    "weighted-total",
+    `\nTotal Iterations: ${currentIteration}`,
+    "\nTotal Run Time of each runner:",
+    runners.map((r, i) => `Runner ${i}: ${getTotalMedianTime(r)}`)
+  );
+  return runners.map((r) => filterOutEmpties(r)) as Runners;
 }
 
 /**
@@ -212,6 +230,7 @@ export default function performLoadBalancing(
   filePaths: FilePath[],
   algorithm: Algorithms = "weighted-largest"
 ): Runners {
+  utils.DEBUG(`Using algorithm for load balancing: ${algorithm}`, algorithm);
   utils.initializeLoadBalancingFiles();
   const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
   prepareFiles(loadBalancingMap, testingType, filePaths);
