@@ -176,6 +176,20 @@ describe("Utils", function () {
       //Round up
       expect(utils.calculateAverageDuration([3, 4])).to.eq(4);
     });
+
+    it("calculates the average median as 0 if no durations are provided", function () {
+      expect(utils.calculateAverageDuration([])).to.eq(0);
+    });
+
+    it("calculates the median duration", function () {
+      expect(utils.calculateMedianDuration([1, 2, 2, 3])).to.eq(2);
+      expect(utils.calculateMedianDuration([2, 4, 6])).to.eq(4);
+      expect(utils.calculateMedianDuration([3, 4])).to.eq(3);
+      expect(utils.calculateMedianDuration([1, 2, 2, 2, 3, 4, 5, 8])).to.eq(2);
+
+      //Should sort them first (2,4,5,6,6)
+      expect(utils.calculateMedianDuration([6, 5, 4, 6, 2])).to.eq(5);
+    });
   });
 
   // context.skip("isValidLoadBalancerMap", function() {

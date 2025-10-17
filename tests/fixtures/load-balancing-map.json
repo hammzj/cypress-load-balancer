@@ -1,24 +1,26 @@
 {
   "e2e": {
-    "foo.test.ts": {
+    "median.200.test.ts": {
       "stats": {
         "durations": [
           100,
           200,
           300
         ],
-        "average": 200
+        "average": 200,
+        "median": 200
       }
     },
-    "bar.test.ts": {
+    "median.300.test.ts": {
       "stats": {
         "durations": [
           300
         ],
-        "average": 300
+        "average": 300,
+        "median": 300
       }
     },
-    "baz.test.ts": {
+    "median.1000.test.ts": {
       "stats": {
         "durations": [
           1000,
@@ -26,10 +28,11 @@
           100,
           1000
         ],
-        "average": 1000
+        "average": 1000,
+        "median": 1000
       }
     },
-    "wee.test.ts": {
+    "median.50.test.ts": {
       "stats": {
         "durations": [
           25,
@@ -37,20 +40,22 @@
           75,
           100
         ],
-        "average": 63
+        "average": 63,
+        "median": 50
       }
     },
-    "zoom.test.ts": {
+    "median.4000.test.ts": {
       "stats": {
         "durations": [
           4000,
           4000,
           4000
         ],
-        "average": 4000
+        "average": 4000,
+        "median": 4000
       }
     },
-    "tuu.test.ts": {
+    "median.1.test.ts": {
       "stats": {
         "durations": [
           1,
@@ -60,24 +65,27 @@
           1,
           1
         ],
-        "average": 1
+        "average": 1,
+        "median": 1
       }
     }
   },
   "component": {
-    "foo.test.ts": {
+    "median.50.test.ct.ts": {
       "stats": {
         "durations": [
           50
         ],
-        "average": 50
+        "average": 50,
+        "median": 50
       },
-      "bee.test.ts": {
+      "median.100.test.ct.ts": {
         "stats": {
           "durations": [
             100
           ],
-          "average": 100
+          "average": 100,
+          "median": 100
         }
       }
     }

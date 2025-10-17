@@ -23,7 +23,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200],
-            average: 150
+            average: 150,
+            median: 200
           }
         }
       },
@@ -35,7 +36,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-bar.ts": {
           stats: {
             durations: [300],
-            average: 300
+            average: 300,
+            median: 300
           }
         }
       },
@@ -47,7 +49,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-baz.ts": {
           stats: {
             durations: [400],
-            average: 400
+            average: 400,
+            median: 400
           }
         }
       },
@@ -64,7 +67,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200],
-            average: 150
+            average: 150,
+            median: 200
           }
         }
       },
@@ -76,7 +80,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200, 300],
-            average: 200
+            average: 200,
+            median: 200
           }
         }
       },
@@ -94,7 +99,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [200, 200, 200],
-            average: 200
+            average: 200,
+            median: 200
           }
         }
       },
@@ -106,7 +112,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [200, 200, 200, 300],
-            average: 300
+            average: 300,
+            median: 200
           }
         }
       },
@@ -124,7 +131,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200],
-            average: 150
+            average: 150,
+            median: 200
           }
         }
       },
@@ -136,7 +144,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-bar.ts": {
           stats: {
             durations: [300],
-            average: 300
+            average: 300,
+            median: 300
           }
         }
       },
@@ -154,7 +163,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200],
-            average: 150
+            average: 150,
+            median: 200
           }
         }
       },
@@ -166,7 +176,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200],
-            average: 150
+            average: 150,
+            median: 200
           }
         }
       },
@@ -174,7 +185,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-zoom.ts": {
           stats: {
             durations: [400],
-            average: 400
+            average: 400,
+            median: 400
           }
         }
       }
@@ -192,7 +204,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200],
-            average: 150
+            average: 150,
+            median: 200
           }
         }
       },
@@ -204,7 +217,8 @@ describe("mergeLoadBalancingMapFiles", function () {
         "test-foo.ts": {
           stats: {
             durations: [100, 200, 300],
-            average: 200
+            average: 200,
+            median: 200
           }
         }
       },

@@ -58,6 +58,11 @@ class Utils {
     return Math.ceil(durations.reduce((acc, t) => acc + Math.abs(t), 0) / (durations.length || 1));
   }
 
+  calculateMedianDuration(durations: number[]): number {
+    const middleIndex = Math.ceil(durations.length / 2) - 1 || 0;
+    return durations.sort((a, b) => a - b)[middleIndex];
+  }
+
   saveMapFile(loadBalancingMap: LoadBalancingMap, fileName?: string) {
     const file =
       fileName != null
@@ -119,7 +124,12 @@ class Utils {
   updateFileStats(loadBalancingMap: LoadBalancingMap, testingType: TestingType, fileName: string, duration?: number) {
     if (duration != null) loadBalancingMap[testingType][fileName].stats.durations.push(duration);
     this.shrinkToFit(loadBalancingMap[testingType][fileName].stats.durations);
+
     loadBalancingMap[testingType][fileName].stats.average = this.calculateAverageDuration(
+      loadBalancingMap[testingType][fileName].stats.durations
+    );
+
+    loadBalancingMap[testingType][fileName].stats.median = this.calculateMedianDuration(
       loadBalancingMap[testingType][fileName].stats.durations
     );
   }

@@ -111,83 +111,6 @@ function balanceByWeightedLargestJob(
 }
 
 /**
- *  Approach:
- *  - Get the average time of the total array of inputted times.
- *  - Sort the times highest to lowest in a new array.
- *  - If max runners is provided, set that as the maximum amount of runners allowed to be utilized.
- *  - Next, balance each runner:
- *    -- Get the time in the middle of the sorted array, then remove it from the sorted array.
- *    -- If the total time of the runner is higher than the average, then move on to a new runner.
- *  - If there are no more times, then return the runner.
- *  - If neither, then repeat.
- *  - If there are any more times, spread them out amongst the remainder of the runners.
- *  - Return the runners as a two-dimensional array.
- * @param loadBalancingMap {LoadBalancingMap}
- * @param testingType {TestingType}
- * @param filePaths {FilePath[]}
- * @param [maxRunners=] {number}
- */
-function balanceByAverageTime(
-  loadBalancingMap: LoadBalancingMap,
-  testingType: TestingType,
-  filePaths: FilePath[],
-  maxRunners?: number
-): FilePath[][] {
-  const hasMaxRunners = Number.isInteger(maxRunners);
-  const getFile = (fp: FilePath) => loadBalancingMap[testingType][fp];
-
-  const sumOfRunner = (runner: FilePath[]) => sum(runner.map((fp) => getFile(fp).stats.median));
-
-  //Sort highest to lowest by median
-  const sortedFilePaths = [...filePaths.sort((a, b) => getFile(a).stats.median - getFile(b).stats.median).reverse()];
-  const totalMedianTime = sum(sortedFilePaths.map((fp) => getFile(fp).stats.median));
-  //Technically this is the average "median" time
-  const avgTime = totalMedianTime / sortedFilePaths.length;
-
-  const balanceRunner = (runner: FilePath[] = []) => {
-    if (sumOfRunner(runner) >= avgTime || sortedFilePaths.length === 0) {
-      return runner;
-    } else {
-      const middleIndex = Math.ceil((sortedFilePaths.length - 1) / 2);
-      const filePath = sortedFilePaths.splice(middleIndex, 1)[0];
-      runner.push(filePath);
-      return balanceRunner(runner);
-    }
-  };
-
-  const fillRemainderOfRunners = (runners: FilePath[][]) => {
-    if (sortedFilePaths.length === 0) {
-      return runners;
-    } else {
-      const i = sortedFilePaths.length % runners.length;
-      const filePath = sortedFilePaths.pop();
-      runners[i].push(filePath as FilePath);
-      return fillRemainderOfRunners(runners);
-    }
-  };
-
-  const addRunner = (runners: FilePath[][] = []) => {
-    // @ts-expect-error Ignore
-    const hasReachedRunnerLimit = runners.length <= maxRunners && hasMaxRunners;
-    if (sortedFilePaths.length === 0 || hasReachedRunnerLimit) {
-      return runners;
-    } else {
-      const b = balanceRunner();
-      runners.push(b);
-      return addRunner(runners);
-    }
-  };
-
-  const runners = Array.from({ length: maxRunners || 0 }, () => []);
-
-  addRunner(runners);
-
-  //@ts-expect-error Ignore
-  if (Number.isInteger(maxRunners) && runners.length <= maxRunners) fillRemainderOfRunners(runners);
-  return runners;
-}
-
-/**
  * Basic "round-robin" approach:
  * - Create X buckets based on the `runnerCount`.
  * - Sort the filePaths by their stats, from longest to shortest median time.
@@ -217,8 +140,8 @@ const balanceByMatchingArrayIndices = (
 
   const runners: Runners = Array.from({ length: runnerCount }, () => []);
   filePaths
-    .sort((a, b) => loadBalancingMap[testingType][a].stats.average - loadBalancingMap[testingType][b].stats.average)
-    .reverse() //Sort highest to lowest by average
+    .sort((a, b) => loadBalancingMap[testingType][a].stats.median - loadBalancingMap[testingType][b].stats.median)
+    .reverse() //Sort highest to lowest by median
     .map((filePath, filePathIndex) => fillByMatchingIndex(runners, filePath, filePathIndex));
 
   return runners;
@@ -240,8 +163,6 @@ export default function performLoadBalancing(
       return balanceByWeightedLargestJob(loadBalancingMap, testingType, runnerCount, filePaths);
     case "round-robin":
       return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, filePaths);
-    case "average-time":
-      return balanceByAverageTime(loadBalancingMap, testingType, filePaths, runnerCount);
     default:
       throw Error("Algorithm not known for " + algorithm);
   }

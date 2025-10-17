@@ -116,8 +116,9 @@ describe("addCypressLoadBalancerPlugin", function () {
       handler(results);
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
 
-      expect(spy).to.have.been.calledWith([3000, 2000, 1000]).and.returned(2000);
+      expect(spy).to.have.been.calledWith([1000, 2000, 3000]).and.returned(2000);
       expect(loadBalancingMap.component[existingSpecName].stats.average).to.eq(2000);
+      expect(loadBalancingMap.component[existingSpecName].stats.median).to.eq(2000);
     });
 
     it("calculates the median duration and saves it per spec", function () {
@@ -134,7 +135,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       handler(results);
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
 
-      expect(spy).to.have.been.calledWith([3000, 2000, 1000]).and.returned(2000);
+      expect(spy).to.have.been.calledWith([1000, 2000, 3000]).and.returned(2000);
       expect(loadBalancingMap.component[existingSpecName].stats.median).to.eq(2000);
     });
 
@@ -151,8 +152,8 @@ describe("addCypressLoadBalancerPlugin", function () {
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
 
       expect(loadBalancingMap.component[existingSpecName].stats.durations).to.deep.eq([
-        2000,
         1000,
+        2000,
         results.runs[0].stats.duration
       ]);
       expect(loadBalancingMap.component[existingSpecName].stats.durations).to.have.lengthOf(3);

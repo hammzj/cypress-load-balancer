@@ -53,7 +53,7 @@ describe("Executables", function () {
             expect(JSON.parse(argv.output)).to.deep.eq([["foo.test.ts"], [], []]);
           });
 
-          ["weighted-total", "average-time", "round-robin"].map((algorithm) => {
+          ["weighted-total", "round-robin"].map((algorithm) => {
             it(`can accept a choice of which algorithm to use: ${algorithm}`, async function () {
               stubReadLoadBalancerFile(sandbox, {
                 e2e: {},
