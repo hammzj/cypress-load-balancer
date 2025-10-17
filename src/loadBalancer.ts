@@ -40,10 +40,10 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
  * still make the Cypress execution faster than the other algorithms.
  * **Tradeoffs**: Runner times are more uniform, but there could be a larger set of slow runners overall. Could be a slow O-time and memory heavy; has not been calculated.
  *
- * @param loadBalancingMap
- * @param testingType
- * @param runnerCount
- * @param filePaths
+ * @param loadBalancingMap {LoadBalancingMap}
+ * @param testingType {TestingType}
+ * @param runnerCount {number}
+ * @param filePaths {FilePath[]}
  */
 function balanceByWeightedLargestJob(
   loadBalancingMap: LoadBalancingMap,
