@@ -47,7 +47,7 @@ describe("Executables", function () {
           it("runs load balancing", async function () {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
-              component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } } }
+              component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
             });
             const [_err, argv] = await runCmd(cli, `-r 3 -t component -F "foo.test.ts"`);
             expect(JSON.parse(argv.output)).to.deep.eq([["foo.test.ts"], [], []]);
@@ -57,9 +57,9 @@ describe("Executables", function () {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
               component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } },
-                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000 } },
-                ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
+                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
+                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
               }
             });
             const [_err, argv] = await runCmd(
@@ -73,9 +73,9 @@ describe("Executables", function () {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
               component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } },
-                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000 } },
-                ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
+                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
+                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
               }
             });
             const [_err, argv, _output] = await runCmd(
@@ -89,9 +89,9 @@ describe("Executables", function () {
             stubReadLoadBalancerFile(sandbox, {
               e2e: {},
               component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } },
-                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000 } },
-                ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
+                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
+                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
               }
             });
             const [_err, argv, _output] = await runCmd(
@@ -149,9 +149,9 @@ describe("Executables", function () {
               stubReadLoadBalancerFile(sandbox, {
                 e2e: {},
                 component: {
-                  ["foo.test.ts"]: { stats: { durations: [3000], average: 3000 } },
-                  ["bar.test.ts"]: { stats: { durations: [2000], average: 2000 } },
-                  ["baz.test.ts"]: { stats: { durations: [100], average: 100 } }
+                  ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
+                  ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
+                  ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
                 }
               });
               //Can't use helper function here for this

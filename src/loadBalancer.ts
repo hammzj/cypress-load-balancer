@@ -24,8 +24,8 @@ export default function performLoadBalancing(
   const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
   prepareFiles(loadBalancingMap, testingType, filePaths);
   filePaths
-    .sort((a, b) => loadBalancingMap[testingType][a].stats.average - loadBalancingMap[testingType][b].stats.average)
-    .reverse() //Sort highest to lowest by average
+    .sort((a, b) => loadBalancingMap[testingType][a].stats.median - loadBalancingMap[testingType][b].stats.median)
+    .reverse() //Sort highest to lowest by median
     .map((filePath, filePathIndex) => matchingIndexAlgorithm(filePath, filePathIndex));
 
   //TODO: consider calculating the average all at once -- more expensive, but less overhead to manage

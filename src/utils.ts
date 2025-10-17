@@ -47,7 +47,7 @@ class Utils {
     } = {}
   ) {
     if (loadBalancingMap[testingType][filePath] == null || opts.force === true) {
-      loadBalancingMap[testingType][filePath] = { stats: { durations: [], average: 0 } };
+      loadBalancingMap[testingType][filePath] = { stats: { durations: [], average: 0, median: 0 } };
       this.DEBUG(`Added new entry for file in load balancer object for "${testingType}" type tests:`, filePath);
     } else {
       this.DEBUG(`File already exists in load balancer for "${testingType}" type tests:`, filePath);
@@ -56,6 +56,11 @@ class Utils {
 
   calculateAverageDuration(durations: number[]): number {
     return Math.ceil(durations.reduce((acc, t) => acc + Math.abs(t), 0) / (durations.length || 1));
+  }
+
+  calculateMedianDuration(durations: number[]): number {
+    const middleIndex = Math.ceil(durations.length / 2) - 1 || 0;
+    return durations.sort((a, b) => a - b)[middleIndex];
   }
 
   saveMapFile(loadBalancingMap: LoadBalancingMap, fileName?: string) {
@@ -119,7 +124,12 @@ class Utils {
   updateFileStats(loadBalancingMap: LoadBalancingMap, testingType: TestingType, fileName: string, duration?: number) {
     if (duration != null) loadBalancingMap[testingType][fileName].stats.durations.push(duration);
     this.shrinkToFit(loadBalancingMap[testingType][fileName].stats.durations);
+
     loadBalancingMap[testingType][fileName].stats.average = this.calculateAverageDuration(
+      loadBalancingMap[testingType][fileName].stats.durations
+    );
+
+    loadBalancingMap[testingType][fileName].stats.median = this.calculateMedianDuration(
       loadBalancingMap[testingType][fileName].stats.durations
     );
   }
