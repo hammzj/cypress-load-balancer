@@ -20,3 +20,5 @@ export type TestingType = Cypress.TestingType;
 export type FilePath = string;
 
 export type Runners = Array<Array<FilePath>>;
+
+export type Algorithms = "weighted-largest" | "average-time" | "round-robin"

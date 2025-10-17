@@ -29,7 +29,7 @@ export default {
   command: "$0",
   description: "Performs load balancing against a set of runners and Cypress specs",
   //@ts-expect-error Figuring out the type later
-  builder: function (yargs) {
+  builder: function(yargs) {
     return (
       yargs
         .option("runners", {
@@ -48,9 +48,11 @@ export default {
         .option("algorithm", {
           alias: "a",
           type: "string",
-          choices: ["total-average", "modulo"],
+          choices: ["weighted-largest", "average-time", "round-robin"],
+          default: "weighted-largest",
           description:
-            "The algorithm to use for load balancing. If not provided, the default for the load balancer is used (total-average)"
+          //TODO: more info on the algoritms
+            "The algorithm to use for load balancing"
         })
         .option("files", {
           alias: "F",
@@ -96,25 +98,25 @@ export default {
         .help()
         .alias("help", "h")
         .example(
-          'Load balancing for 6 runners against "component" testing with implied Cypress configuration of `./cypress.config.js`',
+          "Load balancing for 6 runners against \"component\" testing with implied Cypress configuration of `./cypress.config.js`",
           "npx cypressLoadBalancer -r 6 -t component"
         )
         .example(
-          'Load balancing for 6 runners against "component" testing with an explicit Cypress configuration set by an environment variable',
+          "Load balancing for 6 runners against \"component\" testing with an explicit Cypress configuration set by an environment variable",
           "CYPRESS_CONFIG_FILE=./src/tests/cypress.config.js npx cypressLoadBalancer -r 6 -t e2e"
         )
         .example(
-          'Load balancing for 3 runners against "e2e" testing with specified file paths',
+          "Load balancing for 3 runners against \"e2e\" testing with specified file paths",
           "npx cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js cypress/e2e/bar.cy.js cypress/e2e/wee.cy.js"
         )
         .example(
-          'Load balancing for 3 runners against "e2e" testing with a specified glob pattern and file path',
+          "Load balancing for 3 runners against \"e2e\" testing with a specified glob pattern and file path",
           "npx cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js -G cypress/e2e/more_tests/*.cy.js"
         )
     );
   },
   //@ts-expect-error Figuring out the type later
-  handler: function (argv) {
+  handler: function(argv) {
     //Assign files array to detect "--files" or files found "--glob" patterns first
     let files: string[] = argv.files;
     files.push(...glob.globSync(argv.glob));
