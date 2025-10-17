@@ -79,6 +79,22 @@ Options:
                                                              [number] [required]
   -t, --testing-type           The testing type to use for load balancing
                                [string] [required] [choices: "e2e", "component"]
+  -a, --algorithm              The algorithm to use for load balancing
+                               weighted-largest:  Attempts to get a uniform
+                               total run time between all runners by separating
+                               the longest-running tests into their own runners
+                               first, and attempting to keep all other runners
+                               equal to or lower than its time. If there are
+                               more tests than runners, it will repeat based
+                               against the newest highest run time from the
+                               runners.
+                               round-robin: Balances the runners based on a
+                               modulo-index approach, where the X-indexed runner
+                               will get the X-indexed test file after performing
+                               a modulo operation on the index against the total
+                               runner count.
+                 [string] [choices: "weighted-largest", "round-robin"] [default:
+                                                             "weighted-largest"]
   -F, --files                  An array of file paths relative to the current
                                working directory to use for load balancing.
                                Overrides finding Cypress specs by configuration
@@ -89,6 +105,11 @@ Options:
                                The Cypress configuration file is implied to
                                exist at the base of the directory unless set by
                                "process.env.CYPRESS_CONFIG_FILE"
+                                                           [array] [default: []]
+  -G, --glob                   Specify one or more glob pattern to match test
+                               file names.
+                               Can be used with "--files". Overrides finding
+                               Cypress specs by configuration file.
                                                            [array] [default: []]
       --format, --fm           Transforms the output of the runner jobs into
                                various formats.
@@ -108,13 +129,20 @@ Options:
   -h, --help                   Show help                               [boolean]
 
 Examples:
-  Load balancing for 6 runners against      cypressLoadBalancer -r 6 -t
+  Load balancing for 6 runners against      npx cypressLoadBalancer -r 6 -t
   "component" testing with implied Cypress  component
   configuration of `./cypress.config.js`
-  Load balancing for 3 runners against      cypressLoadBalancer -r 3 -t e2e -F
-  "e2e" testing with specified file paths   cypress/e2e/foo.cy.js
+  Load balancing for 6 runners against      CYPRESS_CONFIG_FILE=./src/tests/cypr
+  "component" testing with an explicit      ess.config.js npx
+  Cypress configuration set by an           cypressLoadBalancer -r 6 -t e2e
+  environment variable
+  Load balancing for 3 runners against      npx cypressLoadBalancer -r 3 -t e2e
+  "e2e" testing with specified file paths   -F cypress/e2e/foo.cy.js
                                             cypress/e2e/bar.cy.js
                                             cypress/e2e/wee.cy.js
+  Load balancing for 3 runners against      npx cypressLoadBalancer -r 3 -t e2e
+  "e2e" testing with a specified glob       -F cypress/e2e/foo.cy.js -G
+  pattern and file path                     cypress/e2e/more_tests/*.cy.js
 ```
 
 Example of load balancing on shell:
