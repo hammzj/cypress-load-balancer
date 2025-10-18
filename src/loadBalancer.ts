@@ -64,6 +64,7 @@ function balanceByWeightedLargestJob(
   //Sort highest to lowest by median, then by file name
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
   const popHighestFile = () => sortedFilePaths.shift();
+  const popLowestFile = () => sortedFilePaths.pop();
 
   //Initialize each runner
   let runners: Runners = Array.from({ length: runnerCount }, () => filterOutEmpties([popHighestFile()])) as Runners;
@@ -80,13 +81,14 @@ function balanceByWeightedLargestJob(
     highestTotalRunnerTime = getLargestMedianTime(runners);
 
     if (sortedFilePaths.length === 0) break;
+    runners[0].push(popLowestFile() as string)
     for (let i = 0; i <= runners.length - 2; i++) {
       if (sortedFilePaths.length === 0) break;
 
       const currentRunner = runners[i];
       const currentRunTime = getTotalMedianTime(currentRunner);
 
-      if (currentRunTime > highestTotalRunnerTime) continue;
+      if (currentRunTime >= highestTotalRunnerTime) continue;
       currentRunner.push(popHighestFile() as string);
     }
   } while (sortedFilePaths.length > 0);
