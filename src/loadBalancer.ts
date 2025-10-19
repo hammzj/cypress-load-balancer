@@ -54,12 +54,12 @@ function balanceByWeightedLargestJob(
   if (runnerCount === 1) return [filePaths];
 
   const getFile = (fp: FilePath) => loadBalancingMap[testingType][fp];
-  const getTotalMedianTime = (fps: FilePath[]) => sum(fps.map((f) => getFile(f).stats.median));
+  const getTotalTime = (fps: FilePath[]) => sum(fps.map((f) => getFile(f).stats.median));
   const sortByLargestMedianTime = (fps: FilePath[]) =>
-    fps.sort((a, b) => getTotalMedianTime([a]) - getTotalMedianTime([b])).reverse();
+    fps.sort((a, b) => getTotalTime([a]) - getTotalTime([b])).reverse();
 
   const getLargestMedianTime = (runners: Runners): number =>
-    runners.map((r) => getTotalMedianTime(r)).sort((a, b) => b - a)[0];
+    runners.map((r) => getTotalTime(r)).sort((a, b) => b - a)[0];
 
   //Sort highest to lowest by median, then by file name
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
@@ -75,18 +75,22 @@ function balanceByWeightedLargestJob(
 
   do {
     utils.DEBUG(`Current Iteration: ${++currentIteration};`, "Runners: ", runners);
-    runners = runners.sort((a, b) => getTotalMedianTime(a) - getTotalMedianTime(b));
+    runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
 
     //Get the highest total runner time to compare for later
-    highestTotalRunnerTime = getLargestMedianTime(runners);
+    highestTotalRunnerTime = getTotalTime(runners[runners.length - 1]);
 
     if (sortedFilePaths.length === 0) break;
-    runners[0].push(popLowestFile() as string)
+    //Prevents infinite looping when all runners are of equal size
+    if (runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]))) {
+      runners[runners.length - 1].push(popLowestFile() as string);
+    }
+
     for (let i = 0; i <= runners.length - 2; i++) {
       if (sortedFilePaths.length === 0) break;
 
       const currentRunner = runners[i];
-      const currentRunTime = getTotalMedianTime(currentRunner);
+      const currentRunTime = getTotalTime(currentRunner);
 
       if (currentRunTime >= highestTotalRunnerTime) continue;
       currentRunner.push(popHighestFile() as string);
@@ -98,7 +102,7 @@ function balanceByWeightedLargestJob(
     "weighted-total",
     `\nTotal Iterations: ${currentIteration}`,
     "\nTotal Run Time of each runner:",
-    runners.map((r, i) => `Runner ${i}: ${getTotalMedianTime(r)}`)
+    runners.map((r, i) => `Runner ${i}: ${getTotalTime(r)}`)
   );
   return runners.map((r) => filterOutEmpties(r)) as Runners;
 }

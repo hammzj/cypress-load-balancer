@@ -1,6 +1,6 @@
 export interface DurationStatistics {
   stats: {
-    durations: Array<number>;
+    durations: number[];
     average: number;
     median: number;
   };
@@ -19,6 +19,6 @@ export type TestingType = Cypress.TestingType;
 
 export type FilePath = string;
 
-export type Runners = Array<Array<FilePath>>;
+export type Runners = FilePath[][];
 
 export type Algorithms = "weighted-largest" | "round-robin";
