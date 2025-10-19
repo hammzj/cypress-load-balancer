@@ -150,6 +150,7 @@ export default function performLoadBalancing(
   filePaths: FilePath[],
   algorithm: Algorithms = "weighted-largest"
 ): Runners {
+  if (runnerCount < 1) throw Error("Runner count cannot be less than 1");
   utils.DEBUG(`Using algorithm for load balancing: ${algorithm}`, algorithm);
   utils.initializeLoadBalancingFiles();
   const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
