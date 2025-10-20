@@ -73,6 +73,8 @@ function balanceByWeightedLargestJob(
   //DEBUGGING PURPOSES ONLY
   let currentIteration = 0;
 
+  //This could be done more efficiently by using array indices alongside an array of every runners' total time,
+  // instead of resorting each iteration.
   do {
     utils.DEBUG(`Current Iteration: ${++currentIteration};`, "Runners: ", runners);
     runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
