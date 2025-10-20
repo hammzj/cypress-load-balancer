@@ -1,0 +1,112 @@
+{
+  "e2e": {
+    "100.1.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.2.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.3.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.4.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.5.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.6.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.7.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.8.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.9.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.10.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "100.11.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    },
+    "1000.1.test.ts": {
+      "stats": {
+        "durations": [
+          1000
+        ],
+        "average": 1000,
+        "median": 1000
+      }
+    }
+  }
+}

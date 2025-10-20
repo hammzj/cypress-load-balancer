@@ -51,13 +51,15 @@ function balanceByWeightedLargestJob(
   runnerCount: number,
   filePaths: FilePath[]
 ): Runners {
+  if (runnerCount === 1) return [filePaths];
+
   const getFile = (fp: FilePath) => loadBalancingMap[testingType][fp];
-  const getTotalMedianTime = (fps: FilePath[]) => sum(fps.map((f) => getFile(f).stats.median));
+  const getTotalTime = (fps: FilePath[]) => sum(fps.map((f) => getFile(f).stats.median));
   const sortByLargestMedianTime = (fps: FilePath[]) =>
-    fps.sort((a, b) => getTotalMedianTime([a]) - getTotalMedianTime([b])).reverse();
+    fps.sort((a, b) => getTotalTime([a]) - getTotalTime([b])).reverse();
 
   const getLargestMedianTime = (runners: Runners): number =>
-    runners.map((r) => getTotalMedianTime(r)).sort((a, b) => b - a)[0];
+    runners.map((r) => getTotalTime(r)).sort((a, b) => b - a)[0];
 
   //Sort highest to lowest by median, then by file name
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
@@ -65,38 +67,35 @@ function balanceByWeightedLargestJob(
   const popLowestFile = () => sortedFilePaths.pop();
 
   //Initialize each runner
-  const runners: Runners = Array.from({ length: runnerCount }, () => []);
-  let highestTotalRunnerTime: number;
+  let runners: Runners = Array.from({ length: runnerCount }, () => filterOutEmpties([popHighestFile()])) as Runners;
+  let highestTotalRunnerTime = getLargestMedianTime(runners);
+
   //DEBUGGING PURPOSES ONLY
   let currentIteration = 0;
 
-  do {
+  //This could be done more efficiently by using array indices alongside an array of every runners' total time,
+  // instead of resorting each iteration.
+  sortRunners: do {
     utils.DEBUG(`Current Iteration: ${++currentIteration};`, "Runners: ", runners);
-
-    //Round-robin: pop out the highest time and put into each runner
-    //This is assuming that all runners are nearly equal in total time on each pass
-    const temp = Array.from({ length: runners.length }, () => filterOutEmpties([popHighestFile()])) as Runners;
-
-    //eslint-disable-next-line prefer-spread
-    runners.map((r) => r.push.apply(r, temp.shift() || []));
+    runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
 
     //Get the highest total runner time to compare for later
-    highestTotalRunnerTime = getLargestMedianTime(runners);
+    highestTotalRunnerTime = getTotalTime(runners[runners.length - 1]);
 
-    for (let i = 0; i <= runners.length - 1; i++) {
+    if (sortedFilePaths.length === 0) break;
+    //Prevents infinite looping when all runners are of equal size
+    if (runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]))) {
+      runners[runners.length - 1].push(popLowestFile() as string);
+    }
+
+    for (let i = 0; i <= runners.length - 2; i++) {
+      if (sortedFilePaths.length === 0) break sortRunners;
+
       const currentRunner = runners[i];
-      let currentRunTime = getTotalMedianTime(currentRunner);
+      const currentRunTime = getTotalTime(currentRunner);
 
-      //TODO: convert to recursive function as do/while is ugly
-      //Add the smallest values to the runner until the current runner's total would be higher than the highest run time
-      do {
-        if (sortedFilePaths.length === 0 || currentRunTime >= highestTotalRunnerTime) break;
-        currentRunner.push(popLowestFile() as string);
-        currentRunTime = getTotalMedianTime(currentRunner);
-      } while (currentRunTime < highestTotalRunnerTime);
-
-      //Recalculate the largest time again for the next runners (just to be safe)
-      highestTotalRunnerTime = getLargestMedianTime(runners);
+      if (currentRunTime >= highestTotalRunnerTime) continue;
+      currentRunner.push(popHighestFile() as string);
     }
   } while (sortedFilePaths.length > 0);
 
@@ -105,11 +104,12 @@ function balanceByWeightedLargestJob(
     "weighted-total",
     `\nTotal Iterations: ${currentIteration}`,
     "\nTotal Run Time of each runner:",
-    runners.map((r, i) => `Runner ${i}: ${getTotalMedianTime(r)}`)
+    runners.map((r, i) => `Runner ${i}: ${getTotalTime(r)}`)
   );
   return runners.map((r) => filterOutEmpties(r)) as Runners;
 }
 
+//TODO: this is not very efficient but can be improved.
 /**
  * Basic "round-robin" approach:
  * - Create X buckets based on the `runnerCount`.
@@ -153,6 +153,7 @@ export default function performLoadBalancing(
   filePaths: FilePath[],
   algorithm: Algorithms = "weighted-largest"
 ): Runners {
+  if (runnerCount < 1) throw Error("Runner count cannot be less than 1");
   utils.DEBUG(`Using algorithm for load balancing: ${algorithm}`, algorithm);
   utils.initializeLoadBalancingFiles();
   const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());

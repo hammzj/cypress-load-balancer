@@ -158,6 +158,8 @@ _This probably will not work with `tsx` or `ts-node` -- I need to figure out why
 
 ### General instructions
 
+For more complete instructions, see [USING_WIH_WORKFLOWS.md](./docs/USING_WITH_WORKFLOWS.md).
+
 This is the basic idea of steps that need to occur in order to use load balancing properly. The load balancing map file
 needs to saved and persisted throughout all runs in a stable, base location. After all parallel test runs complete,
 their results can be merged back to the main file, which can be consumed on the next test runs, and so on.
