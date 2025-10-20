@@ -44,7 +44,7 @@ describe("Load balancing", function () {
 
   describe("load balancing algorithms", function () {
     it("defaults to weighted-largest", function () {
-      const fixture = getFixture<LoadBalancingMap>("load-balancing-map-weighted-largest.json", { parseJSON: true });
+      const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
       stubReadLoadBalancerFile(sandbox, fixture);
       this.loadBalancingMap = fixture;
       sandbox.stub(fs, "writeFileSync");
@@ -56,7 +56,7 @@ describe("Load balancing", function () {
     });
 
     it("throws an error on unknown algorithm", function () {
-      const fixture = getFixture<LoadBalancingMap>("load-balancing-map-weighted-largest.json", { parseJSON: true });
+      const fixture = getFixture<LoadBalancingMap>("spec-map/generic.json", { parseJSON: true });
       stubReadLoadBalancerFile(sandbox, fixture);
       this.loadBalancingMap = fixture;
       sandbox.stub(fs, "writeFileSync");
@@ -67,7 +67,7 @@ describe("Load balancing", function () {
 
     context("weighted-largest", function () {
       beforeEach(function () {
-        const fixture = getFixture<LoadBalancingMap>("load-balancing-map-weighted-largest.json", { parseJSON: true });
+        const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
         stubReadLoadBalancerFile(sandbox, fixture);
         this.loadBalancingMap = fixture;
         this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
@@ -151,92 +151,6 @@ describe("Load balancing", function () {
         ]);
       });
 
-      it("works if all test files are equal in median time", function () {
-        const fixture = {
-          e2e: {
-            "100.a.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.b.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.c.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.d.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.e.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.f.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.g.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.h.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            },
-            "100.i.test.ts": {
-              stats: {
-                durations: [100],
-                average: 100,
-                median: 100
-              }
-            }
-          },
-          component: {}
-        };
-
-        sandbox.restore();
-        stubReadLoadBalancerFile(sandbox, fixture);
-        this.loadBalancingMap = fixture;
-        this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
-        this.filePaths = Object.keys(this.loadBalancingMap.e2e);
-
-        const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
-        expect(runners).to.deep.equal([
-          ["100.i.test.ts", "100.f.test.ts", "100.d.test.ts"],
-          ["100.h.test.ts", "100.e.test.ts", "100.c.test.ts"],
-          ["100.g.test.ts", "100.a.test.ts", "100.b.test.ts"]
-        ]);
-        const expectedTime = getTotalMedianTime(this.loadBalancingMap, "e2e", runners[0]);
-        runners.every((r) => assertTotalRunnerTime(this.loadBalancingMap, "e2e", r, expectedTime));
-      });
-
       it("can handle more runners than files", function () {
         const filePaths = this.filePaths;
         const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths, "weighted-largest");
@@ -297,12 +211,46 @@ describe("Load balancing", function () {
           "newFile.test.ts"
         );
       });
+
+      it("can handle a brand new map", function () {
+        this.writeFileSyncStub = this.writeFileSyncStub.withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
+        const runners = performLoadBalancing(2, "e2e", ["newFile.test.ts", "newFile.2.test.ts"], "weighted-largest");
+        expect(runners).to.deep.eq([["newFile.2.test.ts"], ["newFile.test.ts"]]);
+        expect(this.writeFileSyncStub.calledOnce).to.be.true;
+        expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty(
+          "newFile.test.ts"
+        );
+        expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty(
+          "newFile.2.test.ts"
+        );
+      });
+
+      context("specific cases", function () {
+        it("all test files equal in time", function () {
+          sandbox.restore();
+          const fixture = getFixture<LoadBalancingMap>("spec-map/all-equal-time.json", { parseJSON: true });
+          stubReadLoadBalancerFile(sandbox, fixture);
+          this.loadBalancingMap = fixture;
+          this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
+          this.filePaths = Object.keys(this.loadBalancingMap.e2e);
+
+          const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
+          expect(runners).to.deep.equal([
+            ["100.i.test.ts", "100.f.test.ts", "100.d.test.ts"],
+            ["100.h.test.ts", "100.e.test.ts", "100.c.test.ts"],
+            ["100.g.test.ts", "100.a.test.ts", "100.b.test.ts"]
+          ]);
+          const expectedTime = getTotalMedianTime(this.loadBalancingMap, "e2e", runners[0]);
+          runners.every((r) => assertTotalRunnerTime(this.loadBalancingMap, "e2e", r, expectedTime));
+        });
+      });
     });
 
+    //TODO: REDO TESTS
     context("round-robin", function () {
       beforeEach(function () {
         //SLOWEST TO FASTEST: "median.4000.test.ts", "median.1000.test.ts", "median.300.test.ts", "median.200.test.ts", "median.50.test.ts", "median.1.test.ts"
-        const fixture = getFixture<LoadBalancingMap>("load-balancing-map.json", { parseJSON: true });
+        const fixture = getFixture<LoadBalancingMap>("spec-map/generic.json", { parseJSON: true });
         stubReadLoadBalancerFile(sandbox, fixture);
 
         this.loadBalancingMap = fixture;

@@ -269,8 +269,10 @@ describe("Executables", function () {
 
           it("can use a glob pattern to find input files", async function () {
             const stub = sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            await runCmd(cli, `merge -G tests/fixtures/*.json`);
-            expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/load-balancing-map.json"))).to.be.true;
+            await runCmd(cli, `merge -G tests/fixtures/spec-map/**.json`);
+            expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/spec-map/generic.json"))).to.be.true;
+            expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/spec-map/all-equal-time.json"))).to.be
+              .true;
           });
 
           it("skips merging if no files are found", function (done) {
