@@ -75,7 +75,7 @@ function balanceByWeightedLargestJob(
 
   //This could be done more efficiently by using array indices alongside an array of every runners' total time,
   // instead of resorting each iteration.
-  do {
+  sortRunners: do {
     utils.DEBUG(`Current Iteration: ${++currentIteration};`, "Runners: ", runners);
     runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
 
@@ -89,7 +89,7 @@ function balanceByWeightedLargestJob(
     }
 
     for (let i = 0; i <= runners.length - 2; i++) {
-      if (sortedFilePaths.length === 0) break;
+      if (sortedFilePaths.length === 0) break sortRunners;
 
       const currentRunner = runners[i];
       const currentRunTime = getTotalTime(currentRunner);
