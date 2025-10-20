@@ -18,67 +18,76 @@
         "median": 100
       }
     },
-    "100.3.test.ts": {
+    "500.1.test.ts": {
       "stats": {
         "durations": [
-          100
+          500
         ],
-        "average": 100,
-        "median": 100
+        "average": 500,
+        "median": 500
       }
     },
-    "100.4.test.ts": {
+    "500.2.test.ts": {
       "stats": {
         "durations": [
-          100
+          500
         ],
-        "average": 100,
-        "median": 100
+        "average": 500,
+        "median": 500
       }
     },
-    "100.5.test.ts": {
+    "500.3.test.ts": {
       "stats": {
         "durations": [
-          100
+          500
         ],
-        "average": 100,
-        "median": 100
+        "average": 500,
+        "median": 500
       }
     },
-    "100.6.test.ts": {
+    "500.4.test.ts": {
       "stats": {
         "durations": [
-          100
+          500
         ],
-        "average": 100,
-        "median": 100
+        "average": 500,
+        "median": 500
       }
     },
-    "100.7.test.ts": {
+    "500.5.test.ts": {
       "stats": {
         "durations": [
-          100
+          500
         ],
-        "average": 100,
-        "median": 100
+        "average": 500,
+        "median": 500
       }
     },
-    "100.8.test.ts": {
+    "500.6.test.ts": {
       "stats": {
         "durations": [
-          100
+          500
         ],
-        "average": 100,
-        "median": 100
+        "average": 500,
+        "median": 500
       }
     },
-    "100.9.test.ts": {
+    "500.7.test.ts": {
       "stats": {
         "durations": [
-          100
+          500
         ],
-        "average": 100,
-        "median": 100
+        "average": 500,
+        "median": 500
+      }
+    },
+    "500.8.test.ts": {
+      "stats": {
+        "durations": [
+          500
+        ],
+        "average": 500,
+        "median": 500
       }
     }
   }

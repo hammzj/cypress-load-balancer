@@ -1,6 +1,6 @@
 {
   "e2e": {
-    "150.test.ts": {
+    "150.1.test.ts": {
       "stats": {
         "durations": [
           150
@@ -9,7 +9,7 @@
         "median": 150
       }
     },
-    "100.test.ts": {
+    "100.1.test.ts": {
       "stats": {
         "durations": [
           100
@@ -18,7 +18,7 @@
         "median": 100
       }
     },
-    "75.a.test.ts": {
+    "75.1.test.ts": {
       "stats": {
         "durations": [
           75
@@ -27,7 +27,7 @@
         "median": 75
       }
     },
-    "75.b.test.ts": {
+    "75.2.test.ts": {
       "stats": {
         "durations": [
           75
@@ -36,7 +36,7 @@
         "median": 75
       }
     },
-    "75.c.test.ts": {
+    "75.3.test.ts": {
       "stats": {
         "durations": [
           75
@@ -45,7 +45,7 @@
         "median": 75
       }
     },
-    "50.test.ts": {
+    "50.1.test.ts": {
       "stats": {
         "durations": [
           50
@@ -54,7 +54,7 @@
         "median": 50
       }
     },
-    "25.a.test.ts": {
+    "25.1.test.ts": {
       "stats": {
         "durations": [
           25
@@ -63,7 +63,7 @@
         "median": 25
       }
     },
-    "25.b.test.ts": {
+    "25.2.test.ts": {
       "stats": {
         "durations": [
           25
@@ -72,7 +72,7 @@
         "median": 25
       }
     },
-    "10.a.test.ts": {
+    "10.1.test.ts": {
       "stats": {
         "durations": [
           10
@@ -81,7 +81,7 @@
         "median": 10
       }
     },
-    "10.b.test.ts": {
+    "10.2.test.ts": {
       "stats": {
         "durations": [
           10
@@ -90,7 +90,7 @@
         "median": 10
       }
     },
-    "5.test.ts": {
+    "5.1.test.ts": {
       "stats": {
         "durations": [
           5
@@ -101,7 +101,7 @@
     }
   },
   "component": {
-    "50.test.ct.ts": {
+    "50.1.test.ct.ts": {
       "stats": {
         "durations": [
           50
@@ -110,7 +110,7 @@
         "median": 50
       }
     },
-    "10.a.test.ct.ts": {
+    "10.1.test.ct.ts": {
       "stats": {
         "durations": [
           10
@@ -119,7 +119,7 @@
         "median": 10
       }
     },
-    "10.b.test.ct.ts": {
+    "10.2.test.ct.ts": {
       "stats": {
         "durations": [
           10
@@ -128,7 +128,7 @@
         "median": 10
       }
     },
-    "5.test.ct.ts": {
+    "5.1.test.ct.ts": {
       "stats": {
         "durations": [
           5
