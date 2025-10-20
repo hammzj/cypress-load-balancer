@@ -202,11 +202,12 @@ Someone please help me here :simple_smile:
 ## Development
 
 ## Publishing
+
 _THIS WILL BECOME A WORKFLOW AT SOME POINT._
 
-* Increment the version in the `package.json` Prefer a minor version in most cases (`0.X.0`).
-* Run `yarn run build`. THIS NEEDS TO HAPPEN EACH TIME.
-* Run `npm publish`.
+- Increment the version in the `package.json` Prefer a minor version in most cases (`0.X.0`).
+- Run `yarn run build`. THIS NEEDS TO HAPPEN EACH TIME.
+- Run `npm publish`.
 
 ### Creating a hybrid package for ESM and CommonJS
 
