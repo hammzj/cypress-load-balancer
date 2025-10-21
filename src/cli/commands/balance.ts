@@ -75,7 +75,7 @@ export default {
         .option("removeEmptyRunners", {
           type: "boolean",
           default: true,
-          description: `If true, will remove empty runners and only return the number of runners that have files. If false, retains any empty runner arrays.`
+          description: `If true, will remove empty runners and only return the number of runners that have files. If false, retains any empty runner arrays. In most cases, this should remain as true as providing any empty buckets to "--spec" may inadvertently result in Cypress failures.`
         })
         .option("format", {
           alias: "fm",
