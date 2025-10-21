@@ -111,6 +111,13 @@ Options:
                                Can be used with "--files". Overrides finding
                                Cypress specs by configuration file.
                                                            [array] [default: []]
+      --removeEmptyRunners     If true, will remove empty runners and only
+                               return the number of runners that have files. If
+                               false, retains any empty runner arrays. In most
+                               cases, this should remain as true as providing
+                               any empty buckets to "--spec" may inadvertently
+                               result in Cypress failures.
+                                                       [boolean] [default: true]
       --format, --fm           Transforms the output of the runner jobs into
                                various formats.
                                "--transform spec": Converts the output of the
