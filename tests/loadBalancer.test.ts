@@ -42,6 +42,24 @@ describe("Load balancing", function () {
     });
   });
 
+  it("can remove empty runners if there are no files", function () {
+    stubReadLoadBalancerFile(sandbox);
+    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest", { removeEmptyRunners: true });
+    expect(runners).to.have.lengthOf(0);
+  });
+
+  it("defaults to remove empty runners", function () {
+    stubReadLoadBalancerFile(sandbox);
+    const runners = performLoadBalancing(3, "e2e", []);
+    expect(runners).to.have.lengthOf(0);
+  });
+
+  it("can keep empty runners when the option is specified", function () {
+    stubReadLoadBalancerFile(sandbox);
+    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest", { removeEmptyRunners: false });
+    expect(runners).to.have.lengthOf(3);
+  });
+
   describe("load balancing algorithms", function () {
     it("defaults to weighted-largest", function () {
       const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
@@ -155,7 +173,9 @@ describe("Load balancing", function () {
 
       it("can handle more runners than files", function () {
         const filePaths = this.filePaths;
-        const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths, "weighted-largest");
+        const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths, "weighted-largest", {
+          removeEmptyRunners: false
+        });
         expect(runners.filter((r) => r.length === 0)).to.have.lengthOf(1);
         expect(runners.filter((r) => r.length === 1)).to.have.lengthOf(filePaths.length);
       });
@@ -554,7 +574,9 @@ describe("Load balancing", function () {
       it("can handle less files than runners", function () {
         sandbox.stub(fs, "writeFileSync");
         const filePaths = Object.keys(this.loadBalancingMap.e2e);
-        const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths, "round-robin");
+        const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths, "round-robin", {
+          removeEmptyRunners: false
+        });
         expect(runners[0]).to.have.lengthOf(1);
         expect(runners[runners.length - 1]).to.have.lengthOf(0);
       });

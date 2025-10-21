@@ -49,7 +49,10 @@ describe("Executables", function () {
               e2e: {},
               component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
             });
-            const [_err, argv] = await runCmd(cli, `-r 3 -t component -a round-robin -F "foo.test.ts" `);
+            const [_err, argv] = await runCmd(
+              cli,
+              `-r 3 -t component -a round-robin -F "foo.test.ts" --removeEmptyRunners=false`
+            );
             expect(JSON.parse(argv.output)).to.deep.eq([["foo.test.ts"], [], []]);
           });
 
@@ -118,6 +121,14 @@ describe("Executables", function () {
           });
 
           it("can find files by glob patterns", async function () {
+            stubReadLoadBalancerFile(sandbox, {
+              e2e: {},
+              component: {
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
+                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
+                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
+              }
+            });
             const stub = sandbox.stub(glob, "globSync").returns(["foo.test.ts", "bar.test.ts"]);
             await runCmd(
               cli,
@@ -148,6 +159,44 @@ describe("Executables", function () {
             await runCmd(cli, `-r 2 -t component --format string -G "**/foo.test.ts"`);
 
             expect(stub).to.have.been.calledOnce;
+          });
+
+          it("defaults to filters out empty runners", async function () {
+            const specMap = {
+              e2e: {},
+              component: {
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } }
+              }
+            };
+            stubReadLoadBalancerFile(sandbox, specMap);
+            //Runner count is greater than the total files
+            const runnerCount = Object.keys(specMap.component).length + 1;
+
+            const [_err, argv] = await runCmd(
+              cli,
+              `-r ${runnerCount} -t component --format string -F "foo.test.ts" -a round-robin`
+            );
+            expect(JSON.parse(argv.output)).to.have.lengthOf(1);
+            expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts"]);
+          });
+
+          it("can skip filtering out empty runners with an option", async function () {
+            const specMap = {
+              e2e: {},
+              component: {
+                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } }
+              }
+            };
+            stubReadLoadBalancerFile(sandbox, specMap);
+            //Runner count is greater than the total files
+            const runnerCount = Object.keys(specMap.component).length + 1;
+
+            const [_err, argv] = await runCmd(
+              cli,
+              `-r ${runnerCount} -t component --format string -F "foo.test.ts" -a round-robin --removeEmptyRunners=false`
+            );
+            expect(JSON.parse(argv.output)).to.have.lengthOf(2);
+            expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts", ""]);
           });
 
           context("setting GitHub Actions outputs", function () {

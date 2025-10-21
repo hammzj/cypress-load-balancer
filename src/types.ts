@@ -22,3 +22,7 @@ export type FilePath = string;
 export type Runners = FilePath[][];
 
 export type Algorithms = "weighted-largest" | "round-robin";
+
+export interface PerformLoadBalancingOptions {
+  removeEmptyRunners?: boolean;
+}

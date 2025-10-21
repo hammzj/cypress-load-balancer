@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import utils from "./utils";
-import { FilePath, Runners, TestingType, LoadBalancingMap, Algorithms } from "./types";
+import { FilePath, Runners, TestingType, LoadBalancingMap, Algorithms, PerformLoadBalancingOptions } from "./types";
 
 const sum = (arr: number[]) => arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
 const filterOutEmpties = (arr: unknown[]) => arr.filter((v) => v != null);
@@ -151,7 +151,8 @@ export default function performLoadBalancing(
   runnerCount: number,
   testingType: TestingType,
   filePaths: FilePath[],
-  algorithm: Algorithms = "weighted-largest"
+  algorithm: Algorithms = "weighted-largest",
+  opts: PerformLoadBalancingOptions = { removeEmptyRunners: true }
 ): Runners {
   if (runnerCount < 1) throw Error("Runner count cannot be less than 1");
   utils.DEBUG(`Using algorithm for load balancing: ${algorithm}`, algorithm);
@@ -159,12 +160,25 @@ export default function performLoadBalancing(
   const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
   prepareFiles(loadBalancingMap, testingType, filePaths);
 
-  switch (algorithm) {
-    case "weighted-largest":
-      return balanceByWeightedLargestJob(loadBalancingMap, testingType, runnerCount, filePaths);
-    case "round-robin":
-      return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, filePaths);
-    default:
-      throw Error("Algorithm not known for " + algorithm);
+  const getRunners = () => {
+    switch (algorithm) {
+      case "weighted-largest":
+        return balanceByWeightedLargestJob(loadBalancingMap, testingType, runnerCount, filePaths);
+      case "round-robin":
+        return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, filePaths);
+      default:
+        throw Error("Algorithm not known for " + algorithm);
+    }
+  };
+
+  let runners = getRunners();
+  if (opts.removeEmptyRunners === true) {
+    runners = runners.filter((r) => r.length > 0);
+    if (runners.length === 0) {
+      utils.DEBUG("No files found and removeEmptyRunners=true, so there are no runners!");
+      //Return at least 1 empty runner
+      return [];
+    }
   }
+  return runners;
 }

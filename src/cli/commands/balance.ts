@@ -72,6 +72,11 @@ export default {
             `Specify one or more glob pattern to match test file names.` +
             `\nCan be used with "--files". Overrides finding Cypress specs by configuration file.`
         })
+        .option("removeEmptyRunners", {
+          type: "boolean",
+          default: true,
+          description: `If true, will remove empty runners and only return the number of runners that have files. If false, retains any empty runner arrays.`
+        })
         .option("format", {
           alias: "fm",
           choices: ["spec", "string", "newline"] as FormatOutputOption[],
@@ -138,7 +143,8 @@ export default {
       argv.runners,
       argv["testing-type"] as TestingType,
       [...new Set(files)],
-      argv.algorithm
+      argv.algorithm,
+      { removeEmptyRunners: argv.removeEmptyRunners }
     );
 
     argv.output = JSON.stringify(formatOutput(output, argv.format));
