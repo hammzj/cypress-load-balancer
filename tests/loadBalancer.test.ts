@@ -418,6 +418,23 @@ describe("Load balancing", function () {
           ]);
         });
 
+        it("extreme end distribution (3 runners)", function () {
+          const fixture = getFixture<LoadBalancingMap>("spec-map/extreme-ends-distribution.json", { parseJSON: true });
+          stubReadLoadBalancerFile(sandbox, fixture);
+          this.loadBalancingMap = fixture;
+          this.filePaths = Object.keys(this.loadBalancingMap.e2e);
+
+          const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
+          expect(runners).to.deep.equal([
+            ["100.3.test.ts", "90.1.test.ts", "70.1.test.ts", "20.1.test.ts", "10.3.test.ts"],
+            ["100.4.test.ts", "100.1.test.ts", "50.1.test.ts", "30.1.test.ts", "10.4.test.ts"],
+            ["100.2.test.ts", "10.1.test.ts", "80.1.test.ts", "60.1.test.ts", "40.1.test.ts", "10.2.test.ts"]
+          ]);
+          expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([
+            290, 290, 300
+          ]);
+        });
+
         it("uniform distribution (3 runners)", function () {
           const fixture = getFixture<LoadBalancingMap>("spec-map/uniform-distribution.json", { parseJSON: true });
           stubReadLoadBalancerFile(sandbox, fixture);
@@ -748,6 +765,23 @@ describe("Load balancing", function () {
 
           expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([
             300, 270, 230
+          ]);
+        });
+
+        it("extreme end distribution (3 runners)", function () {
+          const fixture = getFixture<LoadBalancingMap>("spec-map/extreme-ends-distribution.json", { parseJSON: true });
+          stubReadLoadBalancerFile(sandbox, fixture);
+          this.loadBalancingMap = fixture;
+          this.filePaths = Object.keys(this.loadBalancingMap.e2e);
+
+          const runners = performLoadBalancing(3, "e2e", this.filePaths, "round-robin");
+          expect(runners).to.deep.equal([
+            ["100.4.test.ts", "100.1.test.ts", "70.1.test.ts", "40.1.test.ts", "10.4.test.ts", "10.1.test.ts"],
+            ["100.3.test.ts", "90.1.test.ts", "60.1.test.ts", "30.1.test.ts", "10.3.test.ts"],
+            ["100.2.test.ts", "80.1.test.ts", "50.1.test.ts", "20.1.test.ts", "10.2.test.ts"]
+          ]);
+          expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([
+            330, 290, 260
           ]);
         });
 
