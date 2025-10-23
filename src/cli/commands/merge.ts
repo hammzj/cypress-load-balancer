@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { globSync } from "glob";
 import utils from "../../utils";
+import { debug } from "../../helpers";
 import mergeLoadBalancingMapFiles from "../../merge";
 import { LoadBalancingMap } from "../../types";
 
@@ -63,13 +64,13 @@ export default {
     //Collect data from explicit file names
     argv.files.map(loadFile);
 
-    utils.DEBUG("spec-maps to merge to original:", others);
+    debug("spec-maps to merge to original: %o", others);
     if (others.length > 0) {
       const merged = mergeLoadBalancingMapFiles(orig, others);
       utils.saveMapFile(merged, argv.output);
-      console.log("cypress load balancer map merge complete");
+      console.log("cypress-load-balancer", "map merge complete");
     } else {
-      console.warn("No input files found, so skipping merging");
+      console.warn("cypress-load-balancer", "No input files found, so skipping merging of maps");
     }
   }
 };

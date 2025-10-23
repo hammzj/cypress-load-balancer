@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import utils from "./utils";
+import { debug } from "./helpers";
 import { LoadBalancingMap, TestingType } from "./types";
 import CypressRunResult = CypressCommandLine.CypressRunResult;
 import CypressFailedRunResult = CypressCommandLine.CypressFailedRunResult;
@@ -17,7 +18,7 @@ export default function addCypressLoadBalancerPlugin(on: Cypress.PluginEvents, t
       ) as LoadBalancingMap;
 
       for (const run of cypressRunResult.runs) {
-        // @ts-expect-error THe Cypress config type for PublicConfig is wrong
+        // @ts-expect-error The Cypress config type for PublicConfig is wrong
         testingType = (cypressRunResult.config?.testingType || testingType) as TestingType;
         const fileName = run.spec.relative;
         utils.createNewEntry(loadBalancingMap, testingType, fileName);
@@ -25,7 +26,7 @@ export default function addCypressLoadBalancerPlugin(on: Cypress.PluginEvents, t
       }
       //Overwrite original load balancing file
       utils.saveMapFile(loadBalancingMap);
-      utils.DEBUG("Updated load balancing map with new file averages");
+      debug("%s Saved load balancing map with new file stats", "Plugin");
     }
   });
 }

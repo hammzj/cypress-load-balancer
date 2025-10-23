@@ -7,7 +7,7 @@ import { getSpecs } from "find-cypress-specs";
 import { glob } from "glob";
 import performLoadBalancing from "../../loadBalancer";
 import { Runners, TestingType } from "../../types";
-import utils from "../../utils";
+import { debug } from "../../helpers";
 import { GetSpecsError } from "../errors";
 
 type FormatOutputOption = "spec" | "string" | "newline";
@@ -119,6 +119,10 @@ export default {
           'Load balancing for 3 runners against "e2e" testing with a specified glob pattern and file path',
           "npx cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js -G cypress/e2e/more_tests/*.cy.js"
         )
+        .example(
+          "If running with DEBUG mode on, make sure to use `tail -1` to get the output correctly",
+          "DEBUG=cypress-load-balancer specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)"
+        )
     );
   },
   //@ts-expect-error Figuring out the type later
@@ -130,7 +134,7 @@ export default {
     //If nothing is found from either option, use the base cypress configuration
     try {
       if (files.length === 0) {
-        utils.DEBUG("No files provided, so using Cypress configuration");
+        debug("No files provided, so using Cypress configuration");
         files = getSpecs(undefined, argv[`testing-type`]);
       }
     } catch (e) {
@@ -138,6 +142,8 @@ export default {
       console.error(error.name, error.message, `Testing Type: ${error.testingType}`, `Cause:`, e);
       throw error;
     }
+
+    debug("CLI arguments: %o", argv);
 
     const output: Runners | string[] = performLoadBalancing(
       argv.runners,
@@ -152,7 +158,7 @@ export default {
     if (argv[`set-gha-output`]) {
       setOutput("cypressLoadBalancerSpecs", argv.output);
     }
-    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG !== "true") {
+    if (process.env.DEBUG != null) {
       console.clear();
     }
     console.log(argv.output);

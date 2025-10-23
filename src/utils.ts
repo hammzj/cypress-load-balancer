@@ -1,17 +1,11 @@
 import path from "path";
 import fs from "node:fs";
 import { FilePath, LoadBalancingMap, TestingType } from "./types";
+import { debug } from "./helpers";
 
 class Utils {
   private getPath(...pathNames: string[]) {
     return path.join(process.cwd(), ".cypress_load_balancer", ...pathNames);
-  }
-
-  //eslint-disable-next-line @typescript-eslint/no-explicit-any
-  DEBUG(...args: any[]) {
-    if (process.env.CYPRESS_LOAD_BALANCER_DEBUG == "true") {
-      console.debug("cypress-load-balancer", ...args);
-    }
   }
 
   get CLB_DIRECTORY() {
@@ -48,9 +42,9 @@ class Utils {
   ) {
     if (loadBalancingMap[testingType][filePath] == null || opts.force === true) {
       loadBalancingMap[testingType][filePath] = { stats: { durations: [], average: 0, median: 0 } };
-      this.DEBUG(`Added new entry for file in load balancer object for "${testingType}" type tests:`, filePath);
+      debug(`Added new entry for file in load balancer object for "%s" type tests: "%s"`, testingType, filePath);
     } else {
-      this.DEBUG(`File already exists in load balancer for "${testingType}" type tests:`, filePath);
+      debug(`File already exists in load balancer for "%s" type tests: "%s"`, testingType, filePath);
     }
   }
 
@@ -69,12 +63,14 @@ class Utils {
         ? this.getPath(fileName.replace(/.json/g, ``) + ".json")
         : this.MAIN_LOAD_BALANCING_MAP_FILE_PATH;
     fs.writeFileSync(file, JSON.stringify(loadBalancingMap));
-    this.DEBUG("Saved load balancing map file");
+    debug("Saved load balancing map file");
   }
 
   shrinkToFit(arr: number[]): number[] {
     if (arr.length > this.MAX_DURATIONS_ALLOWED) {
-      arr.splice(0, arr.length - this.MAX_DURATIONS_ALLOWED);
+      const length = arr.length - this.MAX_DURATIONS_ALLOWED;
+      debug("Must shrink durations array to new length of %d", length);
+      arr.splice(0, length);
     }
     return arr;
   }
@@ -89,21 +85,13 @@ class Utils {
     const dir = this.CLB_DIRECTORY;
     if (!fs.existsSync(dir) || opts.forceCreateMainDirectory === true) {
       fs.mkdirSync(dir);
-      this.DEBUG(
-        "Created directory for `/.cypress_load_balancer",
-        `Force initialization?`,
-        opts.forceCreateMainDirectory
-      );
+      debug("Created directory for `/.cypress_load_balancer", `Force initialization?`, opts.forceCreateMainDirectory);
       isDirectoryCreated = true;
     }
 
     if (!fs.existsSync(this.MAIN_LOAD_BALANCING_MAP_FILE_PATH) || opts.forceCreateMainLoadBalancingMap === true) {
       this.saveMapFile({ e2e: {}, component: {} });
-      this.DEBUG(
-        "Cypress load balancing file initialized",
-        `Force initialization?`,
-        opts.forceCreateMainLoadBalancingMap
-      );
+      debug("Load balancing map file initialized", `Forced initialization?`, opts.forceCreateMainLoadBalancingMap);
       isFileCreated = true;
     }
     return [isDirectoryCreated, isFileCreated];
@@ -131,6 +119,13 @@ class Utils {
 
     loadBalancingMap[testingType][fileName].stats.median = this.calculateMedianDuration(
       loadBalancingMap[testingType][fileName].stats.durations
+    );
+
+    debug(
+      `%s test file stats updated for "%s": %O`,
+      testingType,
+      fileName,
+      loadBalancingMap[testingType][fileName].stats
     );
   }
 
