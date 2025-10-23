@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import utils from "./utils";
 import { FilePath, Runners, TestingType, LoadBalancingMap, Algorithms, PerformLoadBalancingOptions } from "./types";
+import { debug } from "./helpers";
 
 const sum = (arr: number[]) => arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
 const filterOutEmpties = (arr: unknown[]) => arr.filter((v) => v != null);
@@ -76,8 +77,9 @@ function balanceByWeightedLargestJob(
   //This could be done more efficiently by using array indices alongside an array of every runners' total time,
   // instead of resorting each iteration.
   sortRunners: do {
-    utils.DEBUG(`Current Iteration: ${++currentIteration};`, "Runners: ", runners);
+    debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
     runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
+    debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
 
     //Get the highest total runner time to compare for later
     highestTotalRunnerTime = getTotalTime(runners[runners.length - 1]);
@@ -99,13 +101,14 @@ function balanceByWeightedLargestJob(
     }
   } while (sortedFilePaths.length > 0);
 
-  utils.DEBUG(
-    "Completed balancing for ",
-    "weighted-total",
-    `\nTotal Iterations: ${currentIteration}`,
-    "\nTotal Run Time of each runner:",
+  debug(`%s Total iterations: %d`, `weighted-largest`, currentIteration);
+  debug(
+    `%s Total run time of each runner: %o`,
+    `weighted-largest`,
     runners.map((r, i) => `Runner ${i}: ${getTotalTime(r)}`)
   );
+  debug(`%s Completed load balancing algorithm`, `weighted-largest`);
+
   return runners.map((r) => filterOutEmpties(r)) as Runners;
 }
 
@@ -144,6 +147,7 @@ const balanceByMatchingArrayIndices = (
     .reverse() //Sort highest to lowest by median
     .map((filePath, filePathIndex) => fillByMatchingIndex(runners, filePath, filePathIndex));
 
+  debug("%s Completed load balancing algorithm", "round-robin");
   return runners;
 };
 
@@ -155,7 +159,10 @@ export default function performLoadBalancing(
   opts: PerformLoadBalancingOptions = { removeEmptyRunners: true }
 ): Runners {
   if (runnerCount < 1) throw Error("Runner count cannot be less than 1");
-  utils.DEBUG(`Using algorithm for load balancing: ${algorithm}`, algorithm);
+  debug(`Using algorithm for load balancing: %s`, algorithm);
+  debug(`Runner count: %d`, runnerCount);
+  debug(`File paths provided: %o`, filePaths);
+
   utils.initializeLoadBalancingFiles();
   const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
   prepareFiles(loadBalancingMap, testingType, filePaths);
@@ -175,10 +182,11 @@ export default function performLoadBalancing(
   if (opts.removeEmptyRunners === true) {
     runners = runners.filter((r) => r.length > 0);
     if (runners.length === 0) {
-      utils.DEBUG("No files found and removeEmptyRunners=true, so there are no runners!");
+      debug("No files found and removeEmptyRunners=%s, so there are no runners!", opts.removeEmptyRunners);
       //Return at least 1 empty runner
-      return [];
+      runners = [];
     }
   }
+  debug("Runners: %O", runners);
   return runners;
 }

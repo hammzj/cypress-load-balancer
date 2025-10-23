@@ -6,6 +6,7 @@ import performLoadBalancing from "../src/loadBalancer";
 import fs from "node:fs";
 import { getFixture, stubReadLoadBalancerFile } from "./support/utils";
 import { FilePath, LoadBalancingMap, TestingType } from "../src/types";
+import { debug as debugInitializer } from "debug";
 
 //eslint-disable-next-line prefer-const
 let sandbox = sinon.createSandbox();
@@ -26,6 +27,7 @@ describe("Load balancing", function () {
     this.initializeLoadBalancingFilesStub = sandbox.stub(utils, "initializeLoadBalancingFiles");
   });
   afterEach(function () {
+    debugInitializer.disable();
     sandbox.restore();
   });
 
@@ -61,18 +63,38 @@ describe("Load balancing", function () {
   });
 
   describe("load balancing algorithms", function () {
-    it("defaults to weighted-largest", function () {
-      const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
-      stubReadLoadBalancerFile(sandbox, fixture);
-      this.loadBalancingMap = fixture;
-      sandbox.stub(fs, "writeFileSync");
+    context("defaults", function () {
+      let output: string, write;
+      //eslint-disable-next-line prefer-const
+      write = process.stderr.write;
 
-      const callable = { performLoadBalancing: performLoadBalancing };
-      const spy = sinon.spy(utils, "DEBUG");
-      callable.performLoadBalancing(4, "e2e", ["file.cy.ts"]);
-      expect(spy).to.have.been.calledWith(`Using algorithm for load balancing: weighted-largest`, "weighted-largest");
+      beforeEach(function () {
+        //if (process.env.DEBUG == null) process.env.DEBUG = "FAKE";
+
+        output = "";
+        //@ts-expect-error Ignore
+        process.stderr.write = function (str) {
+          output += str;
+        };
+      });
+
+      afterEach(function () {
+        process.stderr.write = write;
+      });
+
+      it("defaults to weighted-largest", function () {
+        const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
+        stubReadLoadBalancerFile(sandbox, fixture);
+        this.loadBalancingMap = fixture;
+        sandbox.stub(fs, "writeFileSync");
+
+        const callable = { performLoadBalancing: performLoadBalancing };
+
+        debugInitializer.enable("cypress-load-balancer");
+        callable.performLoadBalancing(4, "e2e", ["file.cy.ts"]);
+        expect(output).to.include("Using algorithm for load balancing: weighted-largest");
+      });
     });
-
     it("throws an error on unknown algorithm", function () {
       const fixture = getFixture<LoadBalancingMap>("spec-map/generic.json", { parseJSON: true });
       stubReadLoadBalancerFile(sandbox, fixture);

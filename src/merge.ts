@@ -2,6 +2,7 @@ import merge from "deepmerge";
 import utils from "./utils.js";
 import { LoadBalancingMap } from "./types";
 import deepmerge from "deepmerge";
+import { debug } from "./helpers";
 
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
 const combineMerge = (target: any[], source: any[], options?: deepmerge.ArrayMergeOptions): any[] => {
@@ -31,6 +32,9 @@ export default function mergeLoadBalancingMapFiles(
   orig: LoadBalancingMap,
   extraMaps: LoadBalancingMap[]
 ): LoadBalancingMap {
+  debug("Original file: %o", orig);
+  debug("File to merge: %o", extraMaps);
+
   const mergedFile = merge.all([orig, ...extraMaps], { arrayMerge: combineMerge }) as LoadBalancingMap;
   //TODO: Optimization
   // It would be more efficient to calculate only files with new values.
@@ -38,5 +42,7 @@ export default function mergeLoadBalancingMapFiles(
   utils.TESTING_TYPES.map((t) => {
     Object.keys(mergedFile[t]).map((f) => utils.updateFileStats(mergedFile, t, f));
   });
+
+  debug("Completed merging load balancing map: %O", mergedFile);
   return mergedFile;
 }

@@ -7,7 +7,7 @@ import { getSpecs } from "find-cypress-specs";
 import { glob } from "glob";
 import performLoadBalancing from "../../loadBalancer";
 import { Runners, TestingType } from "../../types";
-import utils from "../../utils";
+import { debug } from "../../helpers";
 import { GetSpecsError } from "../errors";
 
 type FormatOutputOption = "spec" | "string" | "newline";
@@ -130,7 +130,7 @@ export default {
     //If nothing is found from either option, use the base cypress configuration
     try {
       if (files.length === 0) {
-        utils.DEBUG("No files provided, so using Cypress configuration");
+        debug("No files provided, so using Cypress configuration");
         files = getSpecs(undefined, argv[`testing-type`]);
       }
     } catch (e) {
