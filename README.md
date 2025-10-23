@@ -10,7 +10,9 @@ _Note: Requires extra setup on your own CI/CD environment to function correctly!
 
 - `CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
   durations once the maximum limit has been reached. **Defaulted to 10**.
-- `CYPRESS_LOAD_BALANCER_DEBUG`: Enables debugging output. Does not clear the console, so the output may be unusable.
+- `DEBUG`: Logs can be enabled with `DEBUG=cypress-load-balancer` or generically as `DEBUG=*`. Please note that with debugging enabled, it does not clear the console, so the output may be unusable.
+  - If running with `DEBUG` mode enabled, make sure to use `tail -1` to get the output correctly: 
+  - `specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)` 
 
 ## Setup
 
@@ -150,16 +152,14 @@ Examples:
   Load balancing for 3 runners against      npx cypressLoadBalancer -r 3 -t e2e
   "e2e" testing with a specified glob       -F cypress/e2e/foo.cy.js -G
   pattern and file path                     cypress/e2e/more_tests/*.cy.js
+  If running with DEBUG mode on, make sure  DEBUG=cypress-load-balancer
+  to use `tail -1` to get the output        specs=$(echo npx
+  correctly                                 cypress-load-balancer -r 3 -t e2e |
+                                            tail -1)
+
 ```
 
-Example of load balancing on shell:
-
-```
-#If running with DEBUG mode on, make sure to use `tail -1` to get the output correctly
-specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)
-```
-
-_This probably will not work with `tsx` or `ts-node` -- I need to figure out why._
+_This may have issues with `tsx` or `ts-node`._
 
 ## Configuring for CI/CD
 
