@@ -11,8 +11,8 @@ _Note: Requires extra setup on your own CI/CD environment to function correctly!
 - `CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
   durations once the maximum limit has been reached. **Defaulted to 10**.
 - `DEBUG`: Logs can be enabled with `DEBUG=cypress-load-balancer` or generically as `DEBUG=*`. Please note that with debugging enabled, it does not clear the console, so the output may be unusable.
-  - If running with `DEBUG` mode enabled, make sure to use `tail -1` to get the output correctly: 
-  - `specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)` 
+  - If running with `DEBUG` mode enabled, make sure to use `tail -1` to get the output correctly:
+  - `specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)`
 
 ## Setup
 
