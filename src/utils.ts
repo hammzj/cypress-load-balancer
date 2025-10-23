@@ -122,7 +122,7 @@ class Utils {
     );
 
     debug(
-      `%s test file stats updated for \"%s\": %O`,
+      `%s test file stats updated for "%s": %O`,
       testingType,
       fileName,
       loadBalancingMap[testingType][fileName].stats
