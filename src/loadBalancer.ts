@@ -89,6 +89,8 @@ function balanceByWeightedLargestRunner(
     }
 
     //Get the highest runner runtime of this iteration to compare against the other smaller runners
+
+    //eslint-disable-next-line prefer-const
     let highestRunTime = getTotalTime(runners[runners.length - 1]);
 
     for (let i = 0; i <= runners.length - 2; i++) {
