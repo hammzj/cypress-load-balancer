@@ -46,7 +46,7 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
  * @param runnerCount {number}
  * @param filePaths {FilePath[]}
  */
-function balanceByWeightedLargestJob(
+function balanceByWeightedLargestRunner(
   loadBalancingMap: LoadBalancingMap,
   testingType: TestingType,
   runnerCount: number,
@@ -59,17 +59,13 @@ function balanceByWeightedLargestJob(
   const sortByLargestMedianTime = (fps: FilePath[]) =>
     fps.sort((a, b) => getTotalTime([a]) - getTotalTime([b])).reverse();
 
-  const getLargestMedianTime = (runners: Runners): number =>
-    runners.map((r) => getTotalTime(r)).sort((a, b) => b - a)[0];
-
-  //Sort highest to lowest by median, then by file name
+  //Sort files from highest to lowest "expected run time" (median runtime)
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
-  const popHighestFile = () => sortedFilePaths.shift();
-  const popLowestFile = () => sortedFilePaths.pop();
+  const popHighestFile = () => sortedFilePaths.shift() as string;
+  const popLowestFile = () => sortedFilePaths.pop() as string;
 
   //Initialize each runner
   let runners: Runners = Array.from({ length: runnerCount }, () => filterOutEmpties([popHighestFile()])) as Runners;
-  let highestTotalRunnerTime = getLargestMedianTime(runners);
 
   //DEBUGGING PURPOSES ONLY
   let currentIteration = 0;
@@ -78,26 +74,32 @@ function balanceByWeightedLargestJob(
   // instead of resorting each iteration.
   sortRunners: do {
     debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
-    runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
-    debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
-
-    //Get the highest total runner time to compare for later
-    highestTotalRunnerTime = getTotalTime(runners[runners.length - 1]);
 
     if (sortedFilePaths.length === 0) break;
+
+    //Sort runners from smallest to highest runtime
+    runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
+
+    debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
+
     //Prevents infinite looping when all runners are of equal size
-    if (runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]))) {
-      runners[runners.length - 1].push(popLowestFile() as string);
+    const areAllRunnersOfEqualRunTime = runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]));
+    if (areAllRunnersOfEqualRunTime) {
+      runners[runners.length - 1].push(popLowestFile());
     }
+
+    //Get the highest runner runtime of this iteration to compare against the other smaller runners
+
+    //eslint-disable-next-line prefer-const
+    let highestRunTime = getTotalTime(runners[runners.length - 1]);
 
     for (let i = 0; i <= runners.length - 2; i++) {
       if (sortedFilePaths.length === 0) break sortRunners;
-
       const currentRunner = runners[i];
-      const currentRunTime = getTotalTime(currentRunner);
+      const currentRunnerRunTime = getTotalTime(currentRunner);
 
-      if (currentRunTime >= highestTotalRunnerTime) continue;
-      currentRunner.push(popHighestFile() as string);
+      if (currentRunnerRunTime >= highestRunTime) continue;
+      currentRunner.push(popHighestFile());
     }
   } while (sortedFilePaths.length > 0);
 
@@ -109,6 +111,7 @@ function balanceByWeightedLargestJob(
   );
   debug(`%s Completed load balancing algorithm`, `weighted-largest`);
 
+  //Remove empty values just in case
   return runners.map((r) => filterOutEmpties(r)) as Runners;
 }
 
@@ -170,7 +173,7 @@ export default function performLoadBalancing(
   const getRunners = () => {
     switch (algorithm) {
       case "weighted-largest":
-        return balanceByWeightedLargestJob(loadBalancingMap, testingType, runnerCount, filePaths);
+        return balanceByWeightedLargestRunner(loadBalancingMap, testingType, runnerCount, filePaths);
       case "round-robin":
         return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, filePaths);
       default:
