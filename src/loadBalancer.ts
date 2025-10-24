@@ -46,7 +46,7 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
  * @param runnerCount {number}
  * @param filePaths {FilePath[]}
  */
-function balanceByWeightedLargestJob(
+function balanceByWeightedLargestRunner(
   loadBalancingMap: LoadBalancingMap,
   testingType: TestingType,
   runnerCount: number,
@@ -175,7 +175,7 @@ export default function performLoadBalancing(
   const getRunners = () => {
     switch (algorithm) {
       case "weighted-largest":
-        return balanceByWeightedLargestJob(loadBalancingMap, testingType, runnerCount, filePaths);
+        return balanceByWeightedLargestRunner(loadBalancingMap, testingType, runnerCount, filePaths);
       case "round-robin":
         return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, filePaths);
       default:
