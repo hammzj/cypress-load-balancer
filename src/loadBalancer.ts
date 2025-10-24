@@ -59,9 +59,6 @@ function balanceByWeightedLargestRunner(
   const sortByLargestMedianTime = (fps: FilePath[]) =>
     fps.sort((a, b) => getTotalTime([a]) - getTotalTime([b])).reverse();
 
-  const getLargestMedianTime = (runners: Runners): number =>
-    runners.map((r) => getTotalTime(r)).sort((a, b) => b - a)[0];
-
   //Sort highest to lowest by median, then by file name
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
   const popHighestFile = () => sortedFilePaths.shift() as string;
@@ -69,7 +66,6 @@ function balanceByWeightedLargestRunner(
 
   //Initialize each runner
   let runners: Runners = Array.from({ length: runnerCount }, () => filterOutEmpties([popHighestFile()])) as Runners;
-  let highestRunTime = getLargestMedianTime(runners);
 
   //DEBUGGING PURPOSES ONLY
   let currentIteration = 0;
@@ -92,8 +88,8 @@ function balanceByWeightedLargestRunner(
       runners[runners.length - 1].push(popLowestFile());
     }
 
-    //Get the highest runtime to compare for later
-    highestRunTime = getTotalTime(runners[runners.length - 1]);
+    //Get the highest runner runtime of this iteration to compare against the other smaller runners
+    let highestRunTime = getTotalTime(runners[runners.length - 1]);
 
     for (let i = 0; i <= runners.length - 2; i++) {
       if (sortedFilePaths.length === 0) break sortRunners;
