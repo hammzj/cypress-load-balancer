@@ -78,11 +78,11 @@ function balanceByWeightedLargestJob(
   // instead of resorting each iteration.
   sortRunners: do {
     debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
+
     if (sortedFilePaths.length === 0) break;
-
     runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
-    debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
 
+    debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
 
     //Prevents infinite looping when all runners are of equal size
     if (runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]))) {
