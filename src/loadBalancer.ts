@@ -80,12 +80,15 @@ function balanceByWeightedLargestJob(
     debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
 
     if (sortedFilePaths.length === 0) break;
+
+    //Sort runners from smallest to highest runtime
     runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
 
     debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
 
     //Prevents infinite looping when all runners are of equal size
-    if (runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]))) {
+    const areAllRunnersOfEqualRunTime = runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]))
+    if (areAllRunnersOfEqualRunTime) {
       runners[runners.length - 1].push(popLowestFile() as string);
     }
 
