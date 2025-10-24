@@ -69,7 +69,7 @@ function balanceByWeightedLargestJob(
 
   //Initialize each runner
   let runners: Runners = Array.from({ length: runnerCount }, () => filterOutEmpties([popHighestFile()])) as Runners;
-  let highestTotalRunnerTime = getLargestMedianTime(runners);
+  let highestRunTime = getLargestMedianTime(runners);
 
   //DEBUGGING PURPOSES ONLY
   let currentIteration = 0;
@@ -78,25 +78,26 @@ function balanceByWeightedLargestJob(
   // instead of resorting each iteration.
   sortRunners: do {
     debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
+    if (sortedFilePaths.length === 0) break;
+
     runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
     debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
 
-    //Get the highest total runner time to compare for later
-    highestTotalRunnerTime = getTotalTime(runners[runners.length - 1]);
 
-    if (sortedFilePaths.length === 0) break;
     //Prevents infinite looping when all runners are of equal size
     if (runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]))) {
       runners[runners.length - 1].push(popLowestFile() as string);
     }
 
+    //Get the highest runtime to compare for later
+    highestRunTime = getTotalTime(runners[runners.length - 1]);
+
     for (let i = 0; i <= runners.length - 2; i++) {
       if (sortedFilePaths.length === 0) break sortRunners;
-
       const currentRunner = runners[i];
-      const currentRunTime = getTotalTime(currentRunner);
+      const currentRunnerRunTime = getTotalTime(currentRunner);
 
-      if (currentRunTime >= highestTotalRunnerTime) continue;
+      if (currentRunnerRunTime >= highestRunTime) continue;
       currentRunner.push(popHighestFile() as string);
     }
   } while (sortedFilePaths.length > 0);
@@ -109,6 +110,7 @@ function balanceByWeightedLargestJob(
   );
   debug(`%s Completed load balancing algorithm`, `weighted-largest`);
 
+  //Remove empty values just in case
   return runners.map((r) => filterOutEmpties(r)) as Runners;
 }
 
