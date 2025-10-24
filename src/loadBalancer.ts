@@ -59,7 +59,7 @@ function balanceByWeightedLargestRunner(
   const sortByLargestMedianTime = (fps: FilePath[]) =>
     fps.sort((a, b) => getTotalTime([a]) - getTotalTime([b])).reverse();
 
-  //Sort highest to lowest by median, then by file name
+  //Sort files from highest to lowest "expected run time" (median runtime)
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
   const popHighestFile = () => sortedFilePaths.shift() as string;
   const popLowestFile = () => sortedFilePaths.pop() as string;
