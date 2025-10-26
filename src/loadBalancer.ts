@@ -82,10 +82,13 @@ function balanceByWeightedLargestRunner(
 
     debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
 
+    //TODO: this isn't working if all files are 0. It loads one runner with one file and the remainder with the rest
     //Prevents infinite looping when all runners are of equal size
     const areAllRunnersOfEqualRunTime = runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]));
     if (areAllRunnersOfEqualRunTime) {
       runners[runners.length - 1].push(popLowestFile());
+      //TODO: this may work
+      //runners[0].push(popLowestFile());
     }
 
     //Get the highest runner runtime of this iteration to compare against the other smaller runners
