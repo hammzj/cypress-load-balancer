@@ -9,9 +9,6 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       addCypressLoadBalancerPlugin(on, config, "e2e");
       return config;
-    },
-    env: {
-      runner: "1/20"
     }
   }
 });
