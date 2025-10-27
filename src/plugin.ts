@@ -34,7 +34,9 @@ const getRunnerEnv = (envRunner: string): [number, number] => {
       "env.runner must be provided in X/Y format, where X is the runner index, and Y is the total runner count to use."
     );
   } else if (runnerIndex <= 0) {
-    throw Error("env.runner cannot be 0! Runner indices must begin at 1");
+    throw Error("env.runner index cannot be 0! Runner indices must begin at 1");
+  } else if (runnerCount <= 0) {
+    throw Error("env.runner count cannot be 0! Runner count must begin at 1");
   } else if (runnerIndex > runnerCount) {
     throw Error(
       `env.runner is incorrect! The runner index cannot be greater than the total runner count: ${envRunner}`
@@ -69,41 +71,6 @@ export default function addCypressLoadBalancerPlugin(
   config: Cypress.PluginConfigOptions,
   testingType: TestingType
 ) {
-
-  //TODO: Error handling for shard
-  if (config.env?.runner != null) {
-    const { runner, cypressLoadBalancerAlgorithm } = config.env;
-    debug("Starting up load balancing process as \"env.runner\" has been declared: %o", {
-      runner,
-      cypressLoadBalancerAlgorithm
-    });
-    const [runnerIndex, runnerCount] = getRunnerEnv(runner);
-
-    //This will appropriately update the `specPattern` if an override is declared
-    const specPatternOverride = getSpecPatternOverride(config);
-    debug("specPatternOverride: %s", specPatternOverride);
-    const getSpecsOptions = {
-      ...config,
-      specPattern: specPatternOverride.length > 0 ? specPatternOverride : config.specPattern
-    };
-    const filePaths = getSpecs(getSpecsOptions, testingType);
-
-    const runners = performLoadBalancing(
-      runnerCount,
-      testingType,
-      filePaths,
-      cypressLoadBalancerAlgorithm || "weighted-largest"
-    );
-
-    const currentRunner = runners[runnerIndex];
-    const isCurrentRunnerFilePatternEmpty = currentRunner == null || currentRunner.length === 0;
-    config.specPattern = isCurrentRunnerFilePatternEmpty
-      ? createEmptyFileForEmptyRunner(runnerIndex, runnerCount)
-      : currentRunner;
-    //Debugging adds 1 to the runnerIndex so it's easier for a user to read.
-    debug(`config.specPattern updated for runner ${runnerIndex + 1}/${runnerCount}: %s`, currentRunner);
-  }
-
   //TODO: allow skipping results collection
   on("after:run", (results: CypressCommandLine.CypressRunResult | CypressCommandLine.CypressFailedRunResult) => {
     if ((results as CypressCommandLine.CypressFailedRunResult).status === "failed") {
@@ -146,6 +113,39 @@ export default function addCypressLoadBalancerPlugin(
       }
     }
   });
+
+  if (config.env?.runner != null) {
+    const { runner, cypressLoadBalancerAlgorithm } = config.env;
+    debug("Starting up load balancing process as \"env.runner\" has been declared: %o", {
+      runner,
+      cypressLoadBalancerAlgorithm
+    });
+    const [runnerIndex, runnerCount] = getRunnerEnv(runner);
+
+    //This will appropriately update the `specPattern` if an override is declared
+    const specPatternOverride = getSpecPatternOverride(config);
+    debug("specPatternOverride: %s", specPatternOverride);
+    const getSpecsOptions = {
+      ...config,
+      specPattern: specPatternOverride.length > 0 ? specPatternOverride : config.specPattern
+    };
+    const filePaths = getSpecs(getSpecsOptions, testingType);
+
+    const runners = performLoadBalancing(
+      runnerCount,
+      testingType,
+      filePaths,
+      cypressLoadBalancerAlgorithm || "weighted-largest"
+    );
+
+    const currentRunner = runners[runnerIndex];
+    const isCurrentRunnerFilePatternEmpty = currentRunner == null || currentRunner.length === 0;
+    config.specPattern = isCurrentRunnerFilePatternEmpty
+      ? createEmptyFileForEmptyRunner(runnerIndex, runnerCount)
+      : currentRunner;
+    //Debugging adds 1 to the runnerIndex so it's easier for a user to read.
+    debug(`config.specPattern updated for runner ${runnerIndex + 1}/${runnerCount}: %s`, currentRunner);
+  }
 
   return config;
 }
