@@ -17,10 +17,13 @@ const createEmptyFileForEmptyRunner = (runnerIndex: number, runnerCount: number)
   //TODO: don't just copy this code
   // copy the empty spec file from our source folder into temp folder
   const emptyFilename = path.resolve(__dirname, EMPTY_FILE_NAME);
-  const tempFileNameToUse = path.join(os.tmpdir(), `clb-empty-${runnerIndex}-${runnerCount}.cy.js`);
+
+  //Make the runnerIndex match the user input
+  const userInputtedRunnerIndex = runnerIndex + 1;
+  const tempFileNameToUse = path.join(os.tmpdir(), `clb-empty-${userInputtedRunnerIndex}-${runnerCount}.cy.js`);
   fs.copyFileSync(emptyFilename, tempFileNameToUse);
 
-  debug("Empty file created for runner %d/%d: %s", runnerIndex, runnerCount, tempFileNameToUse);
+  debug("Empty file created for runner %d/%d: %s", userInputtedRunnerIndex, runnerCount, tempFileNameToUse);
   return tempFileNameToUse;
 };
 
@@ -120,11 +123,13 @@ export default function addCypressLoadBalancerPlugin(
       runner,
       cypressLoadBalancerAlgorithm
     });
+
     const [runnerIndex, runnerCount] = getRunnerEnv(runner);
 
     //This will appropriately update the `specPattern` if an override is declared
     const specPatternOverride = getSpecPatternOverride(config);
     debug("specPatternOverride: %s", specPatternOverride);
+
     const getSpecsOptions = {
       ...config,
       specPattern: specPatternOverride.length > 0 ? specPatternOverride : config.specPattern
@@ -141,9 +146,10 @@ export default function addCypressLoadBalancerPlugin(
     const currentRunner = runners[runnerIndex];
     const isCurrentRunnerFilePatternEmpty = currentRunner == null || currentRunner.length === 0;
     config.specPattern = isCurrentRunnerFilePatternEmpty
-      ? createEmptyFileForEmptyRunner(runnerIndex, runnerCount)
+      ? [createEmptyFileForEmptyRunner(runnerIndex, runnerCount)]
       : currentRunner;
-    //Debugging adds 1 to the runnerIndex so it's easier for a user to read.
+
+    //Add 1 to match user input for runner index
     debug(`config.specPattern updated for runner ${runnerIndex + 1}/${runnerCount}: %s`, currentRunner);
   }
 

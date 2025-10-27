@@ -7,9 +7,13 @@ import addCypressLoadBalancerPlugin from "../src/plugin";
 import utils from "../src/utils";
 // @ts-expect-error No types exist for this package
 import findCypressSpecs from "find-cypress-specs";
+import { debug as debugInitializer } from "debug";
 
 let sandbox: SinonSandbox;
 let onEventSpy: SinonSpy;
+let output: string, write;
+//eslint-disable-next-line prefer-const
+write = process.stderr.write;
 
 describe("addCypressLoadBalancerPlugin", function() {
   const getOnEventSpyHandler = () => {
@@ -19,6 +23,19 @@ describe("addCypressLoadBalancerPlugin", function() {
   const stubInitializeLoadBalancingFiles = () => {
     return sandbox.stub(utils, "initializeLoadBalancingFiles");
   };
+
+  //Chg stderr for debugging
+  beforeEach(function() {
+    output = "";
+    //@ts-expect-error Ignore
+    process.stderr.write = function(str) {
+      output += str;
+    };
+  });
+
+  afterEach(function() {
+    process.stderr.write = write;
+  });
 
   context("base plugin", function() {
     beforeEach(function() {
@@ -32,14 +49,15 @@ describe("addCypressLoadBalancerPlugin", function() {
       sandbox = sinon.createSandbox();
 
       this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
+      this.specFiles = [
+        "cypress/tests/TestFunction.cy.ts",
+        "cypress/tests/TestFunction.2.cy.ts",
+        "cypress/tests/TestFunction.3.cy.ts",
+        "cypress/tests/TestFunction.4.cy.ts"
+      ];
       this.getSpecsStub = sandbox
         .stub(findCypressSpecs, "getSpecs")
-        .returns([
-          "cypress/tests/TestFunction.cy.ts",
-          "cypress/tests/TestFunction.2.cy.ts",
-          "cypress/tests/TestFunction.3.cy.ts",
-          "cypress/tests/TestFunction.4.cy.ts"
-        ]);
+        .returns(this.specFiles);
       onEventSpy = sandbox.spy();
     });
 
@@ -48,121 +66,236 @@ describe("addCypressLoadBalancerPlugin", function() {
       sinon.restore();
     });
 
-
-    it("starts up when \"env.runners\" is specified", function() {
-
+    it("only starts up when \"env.runner\" is specified", function() {
+      debugInitializer.enable("cypress-load-balancer");
+      addCypressLoadBalancerPlugin(
+        onEventSpy,
+        {
+          ...this.cypressConfigFile,
+          env: { runner: "1/2" }
+        },
+        "component"
+      );
+      expect(output).to
+        .include(`cypress-load-balancer`)
+        .and.include(`Starting up load balancing process as "env.runner" has been declared`);
     });
 
-    it("does not start up if \"env.runners\" is empty", function() {
+    it("does not start up if \"env.runner\" is empty", function() {
+      debugInitializer.enable("cypress-load-balancer");
+      addCypressLoadBalancerPlugin(
+        onEventSpy,
+        {
+          ...this.cypressConfigFile,
+          env: {}
+        },
+        "component"
+      );
+      expect(output).to.be.empty;
     });
 
-    context("env inputs", function() {
-      //TODO
-      it("runners must be in X/Y format", function() {
-      });
-      //TODO
-      it("runner index cannot be 0", function() {
-      });
-      //TODO
-      it("runner count cannot be 0", function() {
-      });
-      //TODO
-      it("runner index cannot be higher than the runner count", function() {
-      });
-    });
+    context("Empty runner handling", function() {
+      it("initializes a runner with an empty spec if no specs have been found", function() {
+        this.getSpecsStub.restore()
+        this.getSpecsStub = sandbox.stub(findCypressSpecs, "getSpecs").returns([]);
 
-    const test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess = [
-      {
-        runner: "1/2", expectedSpecPattern: [
-          "cypress/tests/TestFunction.4.cy.ts",
-          "cypress/tests/TestFunction.2.cy.ts"
-        ]
-      },
-      {
-        runner: "2/2", expectedSpecPattern: [
-          "cypress/tests/TestFunction.3.cy.ts",
-          "cypress/tests/TestFunction.cy.ts"
-        ]
-      }
-    ];
-    test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess.map(({ runner, expectedSpecPattern }) => {
-      it("the runner index specifies the specs that will be run in the Cypress process", function() {
-        let updatedConfigFile = addCypressLoadBalancerPlugin(onEventSpy, {
-          ...this.cypressConfigFile,
-          env: { runner }
-        }, "component");
-        expect(updatedConfigFile.specPattern).to.deep.equal(expectedSpecPattern);
+        const updatedConfigFile = addCypressLoadBalancerPlugin(
+          onEventSpy,
+          {
+            ...this.cypressConfigFile,
+            env: { runner: `1/1` }
+          },
+          "component"
+        );
+
+        expect(updatedConfigFile.specPattern).to.have.lengthOf(1)
+        expect(updatedConfigFile.specPattern[0]).to.include("clb-empty-1-1.cy.js");
+      });
+
+
+      it("initializes a runner with an empty spec if the runner count is greater than the file count", function() {
+        const updatedConfigFile = addCypressLoadBalancerPlugin(
+          onEventSpy,
+          {
+            ...this.cypressConfigFile,
+            env: { runner: `${this.specFiles.length + 1}/${this.specFiles.length + 1}` }
+          },
+          "component"
+        );
+
+        expect(updatedConfigFile.specPattern).to.have.lengthOf(1)
+        expect(updatedConfigFile.specPattern[0]).to.include("clb-empty-5-5.cy.js");
       });
     });
 
+    context("inputs", function() {
+      context("env.runner", function() {
+        it("runner must be in X/Y format", function() {
+          expect(() => addCypressLoadBalancerPlugin(onEventSpy, {
+            ...this.cypressConfigFile,
+            env: { runner: "foo" }
+          }, "component"))
+            .to.throw("env.runner must be provided in X/Y format, where X is the runner index, and Y is the total runner count to use.");
+        });
 
-    context("specPattern overriding", function() {
-      afterEach(function() {
-        delete process.env.SPEC;
-        delete process.env.spec;
+        it("cannot have an index 0", function() {
+          expect(() => addCypressLoadBalancerPlugin(onEventSpy, {
+            ...this.cypressConfigFile,
+            env: { runner: "0/4" }
+          }, "component"))
+            .to.throw("env.runner index cannot be 0! Runner indices must begin at 1");
+        });
+
+        it("cannot have a count of 0", function() {
+          expect(() => addCypressLoadBalancerPlugin(onEventSpy, {
+            ...this.cypressConfigFile,
+            env: { runner: "1/0" }
+          }, "component"))
+            .to.throw("env.runner count cannot be 0! Runner count must begin at 1");
+        });
+
+        it("the index cannot be higher than the runner count", function() {
+          expect(() => addCypressLoadBalancerPlugin(onEventSpy, {
+            ...this.cypressConfigFile,
+            env: { runner: "2/1" }
+          }, "component"))
+            .to.throw("nv.runner is incorrect! The runner index cannot be greater than the total runner count: 2/1");
+        });
+
+        const test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess = [
+          {
+            runner: "1/2",
+            expectedSpecPattern: ["cypress/tests/TestFunction.4.cy.ts", "cypress/tests/TestFunction.2.cy.ts"]
+          },
+          {
+            runner: "2/2",
+            expectedSpecPattern: ["cypress/tests/TestFunction.3.cy.ts", "cypress/tests/TestFunction.cy.ts"]
+          }
+        ];
+        test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess.map(({ runner, expectedSpecPattern }) => {
+          it("the runner index specifies the specs that will be run in the Cypress process", function() {
+            const updatedConfigFile = addCypressLoadBalancerPlugin(
+              onEventSpy,
+              {
+                ...this.cypressConfigFile,
+                env: { runner }
+              },
+              "component"
+            );
+            expect(updatedConfigFile.specPattern).to.deep.equal(expectedSpecPattern);
+          });
+        });
       });
 
-      it("defaults to use the config specPattern defined for that testing type", function() {
-        let updatedConfigFile = addCypressLoadBalancerPlugin(onEventSpy, {
-          ...this.cypressConfigFile,
-          env: { runner: "1/1" }
-        }, "component");
-
-        expect(this.getSpecsStub).to.have.been.calledWith(sinon.match(this.cypressConfigFile), "component");
-
-        expect(updatedConfigFile.specPattern).to.deep.equal([
-          "cypress/tests/TestFunction.cy.ts",
-          "cypress/tests/TestFunction.2.cy.ts",
-          "cypress/tests/TestFunction.3.cy.ts",
-          "cypress/tests/TestFunction.4.cy.ts"
-        ]);
+      context("cypressLoadBalancerAlgorithm", function() {
+        it("can specify a different load balancing algorithm", function() {
+          debugInitializer.enable("cypress-load-balancer");
+          addCypressLoadBalancerPlugin(
+            onEventSpy,
+            {
+              ...this.cypressConfigFile,
+              env: { runner: "1/2", cypressLoadBalancerAlgorithm: "round-robin" }
+            },
+            "component"
+          );
+          expect(output).to.include("Using algorithm for load balancing: round-robin");
+        });
       });
 
-      it("can override the config spec pattern with \"config.env.spec\"", function() {
-        addCypressLoadBalancerPlugin(onEventSpy, {
-          ...this.cypressConfigFile,
-          env: { runner: "1/1", spec: "cypress/tests/TestFunction.2.cy.ts" }
-        }, "component");
+      context("specPattern overriding", function() {
+        afterEach(function() {
+          delete process.env.SPEC;
+          delete process.env.spec;
+        });
 
-        expect(this.getSpecsStub).to.have.been.calledWith(sinon.match({
-          specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
-        }), "component");
-      });
+        it("defaults to use the config specPattern defined for that testing type", function() {
+          let updatedConfigFile = addCypressLoadBalancerPlugin(
+            onEventSpy,
+            {
+              ...this.cypressConfigFile,
+              env: { runner: "1/1" }
+            },
+            "component"
+          );
 
-      it("can override the config spec pattern with \"config.env.SPEC\"", function() {
+          expect(this.getSpecsStub).to.have.been.calledWith(sinon.match(this.cypressConfigFile), "component");
 
-        addCypressLoadBalancerPlugin(onEventSpy, {
-          ...this.cypressConfigFile,
-          env: { runner: "1/1", SPEC: "cypress/tests/TestFunction.2.cy.ts" }
-        }, "component");
+          expect(updatedConfigFile.specPattern).to.deep.equal([
+            "cypress/tests/TestFunction.cy.ts",
+            "cypress/tests/TestFunction.2.cy.ts",
+            "cypress/tests/TestFunction.3.cy.ts",
+            "cypress/tests/TestFunction.4.cy.ts"
+          ]);
+        });
 
-        expect(this.getSpecsStub).to.have.been.calledWith(sinon.match({
-          specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
-        }), "component");
-      });
+        it("can override the config spec pattern with \"config.env.spec\"", function() {
+          addCypressLoadBalancerPlugin(
+            onEventSpy,
+            {
+              ...this.cypressConfigFile,
+              env: { runner: "1/1", spec: "cypress/tests/TestFunction.2.cy.ts" }
+            },
+            "component"
+          );
 
-      it("can override the config spec pattern with \"process.env.spec\"", function() {
-        process.env.spec = "cypress/tests/TestFunction.2.cy.ts";
+          expect(this.getSpecsStub).to.have.been.calledWith(
+            sinon.match({
+              specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
+            }),
+            "component"
+          );
+        });
 
-        addCypressLoadBalancerPlugin(onEventSpy, { ...this.cypressConfigFile, env: { runner: "1/1" } }, "component");
+        it("can override the config spec pattern with \"config.env.SPEC\"", function() {
+          addCypressLoadBalancerPlugin(
+            onEventSpy,
+            {
+              ...this.cypressConfigFile,
+              env: { runner: "1/1", SPEC: "cypress/tests/TestFunction.2.cy.ts" }
+            },
+            "component"
+          );
 
-        expect(this.getSpecsStub).to.have.been.calledWith(sinon.match({
-          specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
-        }), "component");
+          expect(this.getSpecsStub).to.have.been.calledWith(
+            sinon.match({
+              specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
+            }),
+            "component"
+          );
+        });
 
-      });
+        it("can override the config spec pattern with \"process.env.spec\"", function() {
+          process.env.spec = "cypress/tests/TestFunction.2.cy.ts";
 
-      it("can override the config spec pattern with \"process.env.SPEC\"", function() {
-        process.env.SPEC = "cypress/tests/TestFunction.2.cy.ts";
+          addCypressLoadBalancerPlugin(onEventSpy, { ...this.cypressConfigFile, env: { runner: "1/1" } }, "component");
 
-        addCypressLoadBalancerPlugin(onEventSpy, {
-          ...this.cypressConfigFile,
-          env: { runner: "1/1" }
-        }, "component");
+          expect(this.getSpecsStub).to.have.been.calledWith(
+            sinon.match({
+              specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
+            }),
+            "component"
+          );
+        });
 
-        expect(this.getSpecsStub).to.have.been.calledWith(sinon.match({
-          specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
-        }), "component");
+        it("can override the config spec pattern with \"process.env.SPEC\"", function() {
+          process.env.SPEC = "cypress/tests/TestFunction.2.cy.ts";
+
+          addCypressLoadBalancerPlugin(
+            onEventSpy,
+            {
+              ...this.cypressConfigFile,
+              env: { runner: "1/1" }
+            },
+            "component"
+          );
+
+          expect(this.getSpecsStub).to.have.been.calledWith(
+            sinon.match({
+              specPattern: ["cypress/tests/TestFunction.2.cy.ts"]
+            }),
+            "component"
+          );
+        });
       });
     });
   });
@@ -223,23 +356,22 @@ describe("addCypressLoadBalancerPlugin", function() {
       { called: "1/2", notCalled: "2/2" },
       { called: "2/2", notCalled: "1/2" }
     ];
-    tests_onlyCreatesAMapForTheCurrentRunnerAndNoOtherRunners.map(({ called, notCalled }: {
-      called: string,
-      notCalled: string
-    }) => {
-      it("only creates a map for the current runner and no other runners", function() {
-        const updatedConfigFile = { ...this.cypressConfigFile, env: { runner: called } };
+    tests_onlyCreatesAMapForTheCurrentRunnerAndNoOtherRunners.map(
+      ({ called, notCalled }: { called: string; notCalled: string }) => {
+        it("only creates a map for the current runner and no other runners", function() {
+          const updatedConfigFile = { ...this.cypressConfigFile, env: { runner: called } };
 
-        const stub = sandbox.stub(utils, "saveMapFile");
-        stubReadLoadBalancerFile(sandbox);
+          const stub = sandbox.stub(utils, "saveMapFile");
+          stubReadLoadBalancerFile(sandbox);
 
-        addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
-        let handler = getOnEventSpyHandler();
-        handler(this.results);
-        expect(stub).to.have.been.calledWith(sinon.match.any, `spec-map-${called.replace("/", "-")}.json`);
-        expect(stub).to.not.have.been.calledWith(sinon.match.any, `spec-map-${notCalled.replace("/", "-")}.json`);
-      });
-    });
+          addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
+          let handler = getOnEventSpyHandler();
+          handler(this.results);
+          expect(stub).to.have.been.calledWith(sinon.match.any, `spec-map-${called.replace("/", "-")}.json`);
+          expect(stub).to.not.have.been.calledWith(sinon.match.any, `spec-map-${notCalled.replace("/", "-")}.json`);
+        });
+      }
+    );
 
     it("runs file initialization for the base map if it does not exist", function() {
       const initializeLoadBalancingFilesStub = sandbox.stub(utils, "initializeLoadBalancingFiles");
@@ -431,5 +563,4 @@ describe("addCypressLoadBalancerPlugin", function() {
         .and.to.have.lengthOf(3);
     });
   });
-})
-;
+});
