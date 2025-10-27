@@ -119,7 +119,7 @@ export default function addCypressLoadBalancerPlugin(
 
   if (config.env?.runner != null) {
     const { runner, cypressLoadBalancerAlgorithm } = config.env;
-    debug("Starting up load balancing process as \"env.runner\" has been declared: %o", {
+    debug('Starting up load balancing process as "env.runner" has been declared: %o', {
       runner,
       cypressLoadBalancerAlgorithm
     });
