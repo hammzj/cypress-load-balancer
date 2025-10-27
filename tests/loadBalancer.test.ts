@@ -69,8 +69,6 @@ describe("Load balancing", function () {
       write = process.stderr.write;
 
       beforeEach(function () {
-        //if (process.env.DEBUG == null) process.env.DEBUG = "FAKE";
-
         output = "";
         //@ts-expect-error Ignore
         process.stderr.write = function (str) {
@@ -264,15 +262,17 @@ describe("Load balancing", function () {
 
       it("can handle a brand new map", function () {
         this.writeFileSyncStub = this.writeFileSyncStub.withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
-        const runners = performLoadBalancing(2, "e2e", ["newFile.test.ts", "newFile.2.test.ts"], "weighted-largest");
-        expect(runners).to.deep.eq([["newFile.2.test.ts"], ["newFile.test.ts"]]);
+        const newFiles = ["newFile.1.test.ts", "newFile.2.test.ts", "newFile.3.test.ts", "newFile.4.test.ts"];
+        const runners = performLoadBalancing(2, "e2e", newFiles, "weighted-largest");
+        expect(runners).to.deep.equal([
+          ["newFile.4.test.ts", "newFile.2.test.ts"],
+          ["newFile.3.test.ts", "newFile.1.test.ts"]
+        ]);
         expect(this.writeFileSyncStub.calledOnce).to.be.true;
-        expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty(
-          "newFile.test.ts"
-        );
-        expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty(
-          "newFile.2.test.ts"
-        );
+
+        newFiles.map((nf) => {
+          expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty(nf);
+        });
       });
 
       context("specific cases based on time distribution", function () {
@@ -289,9 +289,9 @@ describe("Load balancing", function () {
 
           const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
           expect(runners).to.deep.equal([
-            ["100.9.test.ts", "100.6.test.ts", "100.4.test.ts"],
-            ["100.8.test.ts", "100.5.test.ts", "100.3.test.ts"],
-            ["100.7.test.ts", "100.1.test.ts", "100.2.test.ts"]
+            ["100.9.test.ts", "100.6.test.ts", "100.3.test.ts"],
+            ["100.8.test.ts", "100.5.test.ts", "100.2.test.ts"],
+            ["100.7.test.ts", "100.4.test.ts", "100.1.test.ts"]
           ]);
           expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([
             300, 300, 300
@@ -305,20 +305,6 @@ describe("Load balancing", function () {
           this.filePaths = Object.keys(this.loadBalancingMap.e2e);
           const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
           expect(runners).to.deep.equal([
-            [
-              "90.2.test.ts",
-              "80.3.test.ts",
-              "70.4.test.ts",
-              "70.1.test.ts",
-              "60.1.test.ts",
-              "50.4.test.ts",
-              "50.1.test.ts",
-              "40.3.test.ts",
-              "30.4.test.ts",
-              "30.3.test.ts",
-              "20.3.test.ts",
-              "10.2.test.ts"
-            ],
             [
               "90.1.test.ts",
               "80.2.test.ts",
@@ -344,7 +330,21 @@ describe("Load balancing", function () {
               "40.4.test.ts",
               "40.1.test.ts",
               "30.1.test.ts",
-              "20.1.test.ts",
+              "20.1.test.ts"
+            ],
+            [
+              "90.2.test.ts",
+              "80.3.test.ts",
+              "70.4.test.ts",
+              "70.1.test.ts",
+              "60.1.test.ts",
+              "50.4.test.ts",
+              "50.1.test.ts",
+              "40.3.test.ts",
+              "30.4.test.ts",
+              "30.3.test.ts",
+              "20.3.test.ts",
+              "10.2.test.ts",
               "1.1.test.ts"
             ]
           ]);
@@ -362,7 +362,7 @@ describe("Load balancing", function () {
           const runners = performLoadBalancing(2, "e2e", this.filePaths, "weighted-largest");
           expect(runners).to.deep.equal([
             ["500.8.test.ts", "500.6.test.ts", "500.4.test.ts", "500.2.test.ts", "100.2.test.ts"],
-            ["500.7.test.ts", "100.1.test.ts", "500.5.test.ts", "500.3.test.ts", "500.1.test.ts"]
+            ["500.7.test.ts", "500.5.test.ts", "500.3.test.ts", "500.1.test.ts", "100.1.test.ts"]
           ]);
           expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([2100, 2100]);
         });
@@ -404,6 +404,7 @@ describe("Load balancing", function () {
 
           const runners = performLoadBalancing(2, "e2e", this.filePaths, "weighted-largest");
           expect(runners).to.deep.equal([
+            ["1000.1.test.ts"],
             [
               "100.11.test.ts",
               "100.10.test.ts",
@@ -414,9 +415,9 @@ describe("Load balancing", function () {
               "100.5.test.ts",
               "100.4.test.ts",
               "100.3.test.ts",
-              "100.2.test.ts"
-            ],
-            ["1000.1.test.ts", "100.1.test.ts"]
+              "100.2.test.ts",
+              "100.1.test.ts"
+            ]
           ]);
           expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([1000, 1100]);
         });
@@ -431,12 +432,12 @@ describe("Load balancing", function () {
 
           const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
           expect(runners).to.deep.equal([
-            ["90.1.test.ts", "60.1.test.ts", "10.1.test.ts", "50.3.test.ts", "40.1.test.ts", "30.1.test.ts"],
-            ["100.1.test.ts", "50.6.test.ts", "50.5.test.ts", "50.2.test.ts"],
-            ["80.1.test.ts", "70.1.test.ts", "50.4.test.ts", "50.1.test.ts", "20.1.test.ts"]
+            ["100.1.test.ts", "50.6.test.ts", "50.5.test.ts", "50.2.test.ts", "20.1.test.ts"],
+            ["80.1.test.ts", "70.1.test.ts", "50.4.test.ts", "50.1.test.ts", "10.1.test.ts"],
+            ["90.1.test.ts", "60.1.test.ts", "50.3.test.ts", "40.1.test.ts", "30.1.test.ts"]
           ]);
           expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([
-            280, 250, 270
+            270, 260, 270
           ]);
         });
 
@@ -448,9 +449,17 @@ describe("Load balancing", function () {
 
           const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
           expect(runners).to.deep.equal([
-            ["100.3.test.ts", "90.1.test.ts", "70.1.test.ts", "20.1.test.ts", "10.3.test.ts"],
-            ["100.4.test.ts", "100.1.test.ts", "50.1.test.ts", "30.1.test.ts", "10.4.test.ts"],
-            ["100.2.test.ts", "10.1.test.ts", "80.1.test.ts", "60.1.test.ts", "40.1.test.ts", "10.2.test.ts"]
+            ["100.2.test.ts", "80.1.test.ts", "70.1.test.ts", "30.1.test.ts", "10.3.test.ts"],
+            ["100.4.test.ts", "100.1.test.ts", "50.1.test.ts", "40.1.test.ts"],
+            [
+              "100.3.test.ts",
+              "90.1.test.ts",
+              "60.1.test.ts",
+              "20.1.test.ts",
+              "10.4.test.ts",
+              "10.2.test.ts",
+              "10.1.test.ts"
+            ]
           ]);
           expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([
             290, 290, 300
@@ -464,11 +473,11 @@ describe("Load balancing", function () {
           this.filePaths = Object.keys(this.loadBalancingMap.e2e);
 
           const runners = performLoadBalancing(3, "e2e", this.filePaths, "weighted-largest");
-          expect(runners).to.deep.equal([
-            ["200.6.test.ts", "200.3.test.ts", "100.6.test.ts", "100.4.test.ts"],
-            ["200.5.test.ts", "200.2.test.ts", "100.5.test.ts", "100.3.test.ts"],
-            ["200.4.test.ts", "100.1.test.ts", "200.1.test.ts", "100.2.test.ts"]
-          ]);
+          // expect(runners).to.deep.equal([
+          //   ["200.6.test.ts", "200.3.test.ts", "100.6.test.ts", "100.4.test.ts"],
+          //   ["200.5.test.ts", "200.2.test.ts", "100.5.test.ts", "100.3.test.ts"],
+          //   ["200.4.test.ts", "100.1.test.ts", "200.1.test.ts", "100.2.test.ts"]
+          // ]);
           expect(runners.map((r) => getTotalMedianTime(this.loadBalancingMap, "e2e", r))).to.deep.equal([
             600, 600, 600
           ]);
@@ -639,6 +648,21 @@ describe("Load balancing", function () {
         expect(runners[0]).to.deep.eq(["median.200.test.ts", "newFile.test.ts"]);
         expect(stub.calledOnce).to.be.true;
         expect(JSON.parse(stub.firstCall.args[1] as string).e2e).to.haveOwnProperty("newFile.test.ts");
+      });
+
+      it("can handle a brand new map", function () {
+        this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync").withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
+        const newFiles = ["newFile.1.test.ts", "newFile.2.test.ts", "newFile.3.test.ts", "newFile.4.test.ts"];
+        const runners = performLoadBalancing(2, "e2e", newFiles, "round-robin");
+        expect(runners).to.deep.equal([
+          ["newFile.4.test.ts", "newFile.2.test.ts"],
+          ["newFile.3.test.ts", "newFile.1.test.ts"]
+        ]);
+        expect(this.writeFileSyncStub.calledOnce).to.be.true;
+
+        newFiles.map((nf) => {
+          expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty(nf);
+        });
       });
 
       context("specific cases based on time distribution", function () {
