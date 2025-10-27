@@ -368,7 +368,40 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     //TODO
-    it("is skipped if env.skipCypressLoadBalancingResults is true", function () {});
+    it("is skipped if env.skipCypressLoadBalancingResults is true", function () {
+      const updatedConfigFile = {
+        ...this.cypressConfigFile,
+        env: { runner: "1/2", skipCypressLoadBalancingResults: true }
+      };
+      const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
+
+      stubReadLoadBalancerFile(sandbox);
+      addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
+      let handler = getOnEventSpyHandler();
+      handler(this.results);
+
+      expect(updateFileStatsStub).to.not.have.been.called;
+    });
+
+    it("is skipped if there is only an empty file being run", function () {
+      const emptyFileResults = getFixture<CypressCommandLine.CypressRunResult>(
+        "component-results-for-empty-file.json",
+        { parseJSON: true }
+      );
+      const updatedConfigFile = {
+        ...this.cypressConfigFile,
+        env: { runner: "1/2" }
+      };
+      const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
+
+      stubReadLoadBalancerFile(sandbox);
+      addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
+
+      let handler = getOnEventSpyHandler();
+      handler(emptyFileResults);
+
+      expect(updateFileStatsStub).to.not.have.been.called;
+    });
 
     const tests_onlyCreatesAMapForTheCurrentRunnerAndNoOtherRunners = [
       { called: "1/2", notCalled: "2/2" },

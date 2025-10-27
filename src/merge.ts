@@ -32,8 +32,9 @@ export default function mergeLoadBalancingMapFiles(
   orig: LoadBalancingMap,
   extraMaps: LoadBalancingMap[]
 ): LoadBalancingMap {
-  debug("Original file: %o", orig);
-  debug("File to merge: %o", extraMaps);
+  debug("Beginning map merge process");
+  debug("Original load balancing map file: %o", orig);
+  debug("Files being merged to original: %O", extraMaps);
 
   const mergedFile = merge.all([orig, ...extraMaps], { arrayMerge: combineMerge }) as LoadBalancingMap;
   //TODO: Optimization

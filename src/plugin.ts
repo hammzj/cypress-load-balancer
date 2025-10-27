@@ -83,7 +83,7 @@ export default function addCypressLoadBalancerPlugin(
         const { runner, skipCypressLoadBalancingResults } = config.env;
         const cypressRunResult = results as CypressCommandLine.CypressRunResult;
 
-        if (skipCypressLoadBalancingResults === true) {
+        if (skipCypressLoadBalancingResults) {
           debug("Skipping updating all file statistics, %o", { skipCypressLoadBalancingResults });
           return;
         }
