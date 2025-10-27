@@ -61,13 +61,21 @@ function balanceByWeightedLargestRunner(
 
   //Sort files from highest to lowest "expected run time" (median runtime)
   const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
-  const popHighestFile = () => sortedFilePaths.shift() as string;
-  const popLowestFile = () => sortedFilePaths.pop() as string;
+  const addFileToRunner = (runner: FilePath[], highestOrLowest: "highest" | "lowest") => {
+    const file = highestOrLowest === "highest" ?
+      sortedFilePaths.shift() :
+      sortedFilePaths.pop();
+    if (file == null) {
+      debug("No more files in sortedFilePaths to remove, %o", sortedFilePaths);
+      return;
+    }
+    runner.push(file as string);
+  };
+
 
   //Initialize each runner
-  let runners: Runners = Array.from({ length: runnerCount }, () => filterOutEmpties([popHighestFile()])) as Runners;
-
-  //DEBUGGING PURPOSES ONLY
+  let runners: Runners = Array.from({ length: runnerCount }, () => []) as Runners;
+  runners.map(r => addFileToRunner(r,  "highest"))
   let currentIteration = 0;
 
   //This could be done more efficiently by using array indices alongside an array of every runners' total time,
@@ -78,15 +86,12 @@ function balanceByWeightedLargestRunner(
     if (sortedFilePaths.length === 0) break;
 
     //Sort runners from smallest to highest runtime
-    runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
-
-    debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
-
-    //Prevents infinite looping when all runners are of equal size
-    const areAllRunnersOfEqualRunTime = runners.every((r) => getTotalTime(r) === getTotalTime(runners[0]));
-    if (areAllRunnersOfEqualRunTime) {
-      runners[runners.length - 1].push(popLowestFile());
+    const areAllRunnersEqualInTime = runners.every(r => getTotalTime(r) === getTotalTime(runners[0]));
+    if (areAllRunnersEqualInTime) {
+      runners.map(r => addFileToRunner(r,  "highest"));
     }
+    runners = runners.sort((a, b) => getTotalTime(a) - getTotalTime(b));
+    debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, runners);
 
     //Get the highest runner runtime of this iteration to compare against the other smaller runners
 
@@ -99,7 +104,7 @@ function balanceByWeightedLargestRunner(
       const currentRunnerRunTime = getTotalTime(currentRunner);
 
       if (currentRunnerRunTime >= highestRunTime) continue;
-      currentRunner.push(popHighestFile());
+      addFileToRunner(currentRunner, "highest");
     }
   } while (sortedFilePaths.length > 0);
 
