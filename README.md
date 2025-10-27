@@ -10,9 +10,10 @@ _Note: Requires extra setup on your own CI/CD environment to function correctly!
 
 - `CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
   durations once the maximum limit has been reached. **Defaulted to 10**.
-- `DEBUG`: Logs can be enabled with `DEBUG=cypress-load-balancer` or generically as `DEBUG=*`. Please note that with debugging enabled, it does not clear the console, so the output may be unusable.
-  - If running with `DEBUG` mode enabled, make sure to use `tail -1` to get the output correctly:
-  - `specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)`
+- `DEBUG`: Logs can be enabled with `DEBUG=cypress-load-balancer` or generically as `DEBUG=*`. Please note that with
+  debugging enabled, it does not clear the console, so the output may be unusable.
+    - If running with `DEBUG` mode enabled, make sure to use `tail -1` to get the output correctly:
+    - `specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)`
 
 ## Setup
 
@@ -30,8 +31,12 @@ Add the following to your `.gitignore` and other ignore files:
 ```
 
 In your Cypress configuration file, add the plugin separately to your `e2e` configuration and also `component`
-configuration, if you have one.
-This will register load balancing for separate testing types
+configuration, if you have one. It must come after any other plugins that can mutate the `config.specPattern`. It is
+best to register it as the last plugin. 
+
+Finally, return the `config` from `setupNodeEvents.
+
+This will register load balancing for separate testing types:
 
 ```js
 import { addCypressLoadBalancerPlugin } from "cypress-load-balancer";
@@ -39,12 +44,24 @@ import { addCypressLoadBalancerPlugin } from "cypress-load-balancer";
 defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      addCypressLoadBalancerPlugin(on);
+      //Any other plugins that mutate the config's specPattern
+
+      //This add this plugin
+      addCypressLoadBalancerPlugin(on, config, 'e2e');
+
+      //Return the config as well!
+      return confg
     }
   },
   component: {
     setupNodeEvents(on, config) {
-      addCypressLoadBalancerPlugin(on);
+      //Any other plugins that mutate the config's specPattern
+
+      //This add this plugin
+      addCypressLoadBalancerPlugin(on, config, 'component');
+
+      //Return the config as well!
+      return confg
     }
   }
 });
