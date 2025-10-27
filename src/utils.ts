@@ -89,6 +89,7 @@ class Utils {
       isDirectoryCreated = true;
     }
 
+    //This is for the MAIN map! Not the current runner map!
     if (!fs.existsSync(this.MAIN_LOAD_BALANCING_MAP_FILE_PATH) || opts.forceCreateMainLoadBalancingMap === true) {
       this.saveMapFile({ e2e: {}, component: {} });
       debug("Load balancing map file initialized", `Forced initialization?`, opts.forceCreateMainLoadBalancingMap);

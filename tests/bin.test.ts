@@ -31,7 +31,7 @@ describe("Executables", function () {
     context("client", function () {
       context("commands", function () {
         describe("initialize", function () {
-          it("can initialize the file", async function () {
+          it("can initialize the main file", async function () {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([false, false]);
             await runCmd(cli, `initialize`);
             expect(stub).to.have.been.called;
