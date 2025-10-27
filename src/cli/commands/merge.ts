@@ -9,7 +9,7 @@ export default {
   command: "merge",
   description: "Merges load balancing map files together back to an original map.",
   //@ts-expect-error Need to fix type
-  builder: function (yargs) {
+  builder: function(yargs) {
     return (
       yargs
         .option("original", {
@@ -30,7 +30,8 @@ export default {
           alias: "G",
           description:
             "One or more glob patterns to match for load balancing maps to merge." +
-            "Make sure to wrap in quotes for the glob to work correctly",
+            "Make sure to wrap in quotes for the glob to work correctly." +
+            "\nNOTE: If merging maps from multiple runners, use the pattern \"./cypress_load_balancer/spec-map-*-*.json\"",
           type: "array",
           default: []
         })
@@ -41,7 +42,7 @@ export default {
         })
 
         //@ts-expect-error Need to fix type
-        .check(function (argv) {
+        .check(function(argv) {
           if ([argv.files.length, argv.glob.length].every((length) => length === 0)) {
             throw Error("At least one file path or a glob pattern must be provided.");
           }
@@ -50,7 +51,7 @@ export default {
     );
   },
   //@ts-expect-error Need to fix type
-  handler: function (argv) {
+  handler: function(argv) {
     const loadFile = (fileName: string) => {
       const data = JSON.parse(fs.readFileSync(fileName).toString());
       others.push(data);
