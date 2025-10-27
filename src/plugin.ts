@@ -134,6 +134,7 @@ export default function addCypressLoadBalancerPlugin(
       ...config,
       specPattern: specPatternOverride.length > 0 ? specPatternOverride : config.specPattern
     };
+
     const filePaths = getSpecs(getSpecsOptions, testingType);
 
     const runners = performLoadBalancing(

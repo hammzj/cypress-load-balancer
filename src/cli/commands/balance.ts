@@ -3,8 +3,7 @@
 
 import { setOutput } from "@actions/core";
 // @ts-expect-error There are no types for this package
-import { getSpecs } from "find-cypress-specs";
-import { glob } from "glob";
+import findCypressSpecs from "find-cypress-specs";
 import performLoadBalancing from "../../loadBalancer";
 import { Runners, TestingType } from "../../types";
 import { debug } from "../../helpers";
@@ -55,22 +54,11 @@ export default {
             `\nweighted-largest:  Attempts to get a uniform total run time between all runners by separating the longest-running tests into their own runners first, and attempting to keep all other runners equal to or lower than its time. If there are more tests than runners, it will repeat based against the newest highest run time from the runners.` +
             `\nround-robin: Balances the runners based on a modulo-index approach, where the X-indexed runner will get the X-indexed test file after performing a modulo operation on the index against the total runner count.`
         })
-        .option("files", {
-          alias: "F",
-          type: "array",
-          default: [],
+        .option("spec", {
+          type: "string",
+          demandOption: false,
           description:
-            `An array of file paths relative to the current working directory to use for load balancing. Overrides finding Cypress specs by configuration file.` +
-            `\nIf left empty, it will utilize a Cypress configuration file to find test files to use for load balancing.` +
-            `\nThe Cypress configuration file is implied to exist at the base of the directory unless set by "process.env.CYPRESS_CONFIG_FILE"`
-        })
-        .option("glob", {
-          alias: "G",
-          type: "array",
-          default: [],
-          description:
-            `Specify one or more glob pattern to match test file names.` +
-            `\nCan be used with "--files". Overrides finding Cypress specs by configuration file.`
+            'Declare "--spec" if you wish to override the Cypress configuration `specPattern`. This is assumed to match what can be input as `cypress run --env spec={your-pattern}`'
         })
         .option("removeEmptyRunners", {
           type: "boolean",
@@ -113,11 +101,11 @@ export default {
         )
         .example(
           'Load balancing for 3 runners against "e2e" testing with specified file paths',
-          "npx cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js cypress/e2e/bar.cy.js cypress/e2e/wee.cy.js"
+          'npx cypressLoadBalancer -r 3 -t e2e --spec "cypress/e2e/foo.cy.js,cypress/e2e/bar.cy.js,cypress/e2e/wee.cy.js"'
         )
         .example(
-          'Load balancing for 3 runners against "e2e" testing with a specified glob pattern and file path',
-          "npx cypressLoadBalancer -r 3 -t e2e -F cypress/e2e/foo.cy.js -G cypress/e2e/more_tests/*.cy.js"
+          'Load balancing for 3 runners against "e2e" testing with a specified --spec pattern with relative file path and glob pattern',
+          "npx cypressLoadBalancer -r 3 -t e2e --spec cypress/e2e/foo.cy.js,cypress/e2e/more_tests/*.cy.js"
         )
         .example(
           "If running with DEBUG mode on, make sure to use `tail -1` to get the output correctly",
@@ -127,18 +115,21 @@ export default {
   },
   //@ts-expect-error Figuring out the type later
   handler: function (argv) {
-    //Assign files array to detect "--files" or files found "--glob" patterns first
-    let files: string[] = argv.files;
-    files.push(...glob.globSync(argv.glob));
-
-    //If nothing is found from either option, use the base cypress configuration
+    let files: string[] = [];
+    const testingType = argv[`testing-type`];
     try {
-      if (files.length === 0) {
-        debug("No files provided, so using Cypress configuration");
-        files = getSpecs(undefined, argv[`testing-type`]);
+      const config = findCypressSpecs.getConfig();
+      const getSpecsOptions = { ...config };
+      if (argv.spec != null) {
+        debug("argv.spec provided, so overriding base Cypress configuration specPattern");
+        debug("Base config spec pattern: %s", config[testingType]?.specPattern);
+        getSpecsOptions[testingType].specPattern = argv.spec;
+        getSpecsOptions.specPattern = argv.spec;
       }
+      debug("getSpecs options: %o", getSpecsOptions);
+      files = findCypressSpecs.getSpecs(getSpecsOptions, testingType);
     } catch (e) {
-      const error = new GetSpecsError(argv["testing-type"], { cause: e });
+      const error = new GetSpecsError(testingType, { cause: e });
       console.error(error.name, error.message, `Testing Type: ${error.testingType}`, `Cause:`, e);
       throw error;
     }
@@ -147,7 +138,7 @@ export default {
 
     const output: Runners | string[] = performLoadBalancing(
       argv.runners,
-      argv["testing-type"] as TestingType,
+      testingType as TestingType,
       [...new Set(files)],
       argv.algorithm,
       { removeEmptyRunners: argv.removeEmptyRunners }
