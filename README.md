@@ -2,18 +2,9 @@
 
 A simple load balancer for Cypress tests.
 
-Use this for parallelizing jobs across CI/CD solutions, or locally if set up.
+Use this for parallelizing jobs across CI/CD solutions or locally in separate processes.
 
 _Note: Requires extra setup on your own CI/CD environment to function correctly!_
-
-## Environment Variables:
-
-- `CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`: Determines how many durations are saved per file. Deletes oldest
-  durations once the maximum limit has been reached. **Defaulted to 10**.
-- `DEBUG`: Logs can be enabled with `DEBUG=cypress-load-balancer` or generically as `DEBUG=*`. Please note that with
-  debugging enabled, it does not clear the console, so the output may be unusable.
-  - If running with `DEBUG` mode enabled, make sure to use `tail -1` to get the output correctly:
-  - `specs=$(echo npx cypress-load-balancer -r 3 -t e2e | tail -1)`
 
 ## Setup
 
@@ -67,116 +58,174 @@ defineConfig({
 });
 ```
 
-**Currently, this only supports one configuration. I am considering how to handle multiple configs later on.**
-
 Now, when you run your suite, it will calculate the average for each file based on previous durations and output it into
 `.cypress_load_balancer/spec-map.json`. This is the load balancing map file.
 
-## Executables
+**Currently, this file will place files from ALL configurations in it. I am investigating how to handle separate load
+balancing map files for use with multiple configs later on.**
 
-### `cypress-load-balancer`
+### Installing the plugin
 
-This can be executed with `npx cypress-load-balancer`:
+## Usage
+
+This works very similar to other sharding techniques that can be found in WebDriverIO, Playwright, and Vitest.
+Runners, like shards, are declared in an `X/Y` pattern, where `X` is the current runner index, and `Y` is the total
+count of runners to use.
+
+For example, if you want to use 4 runners, you would execute each of these commands within 4 separate processes:
+
+- Process 1: `cypress run --env runner=1/4`
+- Process 2: `cypress run --env runner=2/4`
+- Process 3: `cypress run --env runner=3/4`
+- Process 4: `cypress run --env runner=4/4`
+
+To enable, you need to declare `runner` in your Cypress environment variables. There are two ways:
+
+1. Cypress CLI `--env runner` option: `cypress run --env runner="1/2"` (the first of two runners)
+   Note:
+2. Node environment variables in `CYPRESS_runner` format: `CYPRESS_runner=1/2 cypress run`
+
+However, the runners WILL affect the specs displayed in `cypress open`, so do NOT declare `--env runner` for "open"
+mode!
+
+**Note: do NOT declare the runner count within your configuration file as it may permanently filter out your test files!
+Only declare it from the command line when you need to use parallel processes.**
+
+### Using a different configuration file
+
+To use a different configuration file, simply add this plugin to all Cypress configurations needed and declare
+`--env runner` normally. For example, `cypress run --config-file "my-other-cypress-config.js" --env runner="1/2"`
+
+You can also use a node env variable of
+`CYPRESS_CONFIG_FILE=./my-other-cypress-config.js cypress run --env runner="1/2"`
+
+### Overriding the configuration `specPattern`
+
+If you wish to run any files or a different set of files than your configuration's `specPattern`, then simply pass this
+to `cypress run`: `--config specPattern="{FILE_PATTERN}"`.
+
+This is the only way to get the load balancer to handle a different pattern than what is specified in your configuration
+file. Please note you may need to also declare `--config excludeSpecPattern=""` to override your config file's default
+option for that, if one is specified that may exclude your new spec pattern. In most cases, you should not need to do
+so.
+
+**Warning: do not use `cypress run --spec "{FILE_PATTERN}` as it may produce Cypress errors with an empty fileset!
+Use `--config specPattern` instead.**
+
+### Result collection
+
+Results are only collected in `cypress run` mode. They are not collected when using the interactive testrunner from
+`cypress open`.
+
+Each separate runner will create its own load balancing map in the format of `spec-map-{index}-{total}.json`. For
+example, `runner=2/4` will create a spec-map of `spec-map-2-4.json`. When tests have finished, they will update that
+runner's load balancing map with statistics on the total file run. These statistics are used for the load balancing
+algorithms.
+
+### Merging results
+
+When all tests have completed, you will need to use `npx cypress-load-balancer merge` to merge the results. In MOST
+cases, you should use this command to correctly get all parallelized maps and then delete them:
 
 ```
-$: npx cypress-load-balancer --help
-cypress-load-balancer
+npx cypress-load-balancer -G "/.cypress_load_balancer/spec-map-*-*.json --rm"
+```
 
-Performs load balancing against a set of runners and Cypress specs
+## Command-line interface commands
+
+[//]: # "ALWAYS UPDATE THIS WHEN THE COMMAND LINE INTERFACE NEEDS UPDATED "
+
+This package also includes a command line interface for some additional helpers.
+
+_Note: The CLI may have issues with `tsx` or `ts-node` as it has not been tested with those tools._
+
+```
+cypress-load-balancer <command>
 
 Commands:
-  cypress-load-balancer             Performs load balancing against a set of
-                                    runners and Cypress specs          [default]
-  cypress-load-balancer initialize  Initializes the load balancing map file and
-                                    directory.
-  cypress-load-balancer merge       Merges load balancing map files together
-                                    back to an original map.
-
-Options:
-      --version                Show version number                     [boolean]
-  -r, --runners                The count of executable runners to use
-                                                             [number] [required]
-  -t, --testing-type           The testing type to use for load balancing
-                               [string] [required] [choices: "e2e", "component"]
-  -a, --algorithm              The algorithm to use for load balancing
-                               weighted-largest:  Attempts to get a uniform
-                               total run time between all runners by separating
-                               the longest-running tests into their own runners
-                               first, and attempting to keep all other runners
-                               equal to or lower than its time. If there are
-                               more tests than runners, it will repeat based
-                               against the newest highest run time from the
-                               runners.
-                               round-robin: Balances the runners based on a
-                               modulo-index approach, where the X-indexed runner
-                               will get the X-indexed test file after performing
-                               a modulo operation on the index against the total
-                               runner count.
-                 [string] [choices: "weighted-largest", "round-robin"] [default:
-                                                             "weighted-largest"]
-  -F, --files                  An array of file paths relative to the current
-                               working directory to use for load balancing.
-                               Overrides finding Cypress specs by configuration
-                               file.
-                               If left empty, it will utilize a Cypress
-                               configuration file to find test files to use for
-                               load balancing.
-                               The Cypress configuration file is implied to
-                               exist at the base of the directory unless set by
-                               "process.env.CYPRESS_CONFIG_FILE"
-                                                           [array] [default: []]
-  -G, --glob                   Specify one or more glob pattern to match test
-                               file names.
-                               Can be used with "--files". Overrides finding
-                               Cypress specs by configuration file.
-                                                           [array] [default: []]
-      --removeEmptyRunners     If true, will remove empty runners and only
-                               return the number of runners that have files. If
-                               false, retains any empty runner arrays. In most
-                               cases, this should remain as true as providing
-                               any empty buckets to "--spec" may inadvertently
-                               result in Cypress failures.
-                                                       [boolean] [default: true]
-      --format, --fm           Transforms the output of the runner jobs into
-                               various formats.
-                               "--transform spec": Converts the output of the
-                               load balancer to be as an array of "--spec
-                               {file}" formats
-                               "--transform string": Spec files per runner are
-                               joined with a comma; example:
-                               "tests/spec.a.ts,tests/spec.b.ts"
-                               "--transform newline": Spec files per runner are
-                               joined with a newline; example:
-                                "tests/spec.a.ts
-                               tests/spec.b.ts"
-                                          [choices: "spec", "string", "newline"]
-      --set-gha-output, --gha  Sets the output to the GitHub Actions step output
-                               as "cypressLoadBalancerSpecs"           [boolean]
-  -h, --help                   Show help                               [boolean]
-
-Examples:
-  Load balancing for 6 runners against      npx cypressLoadBalancer -r 6 -t
-  "component" testing with implied Cypress  component
-  configuration of `./cypress.config.js`
-  Load balancing for 6 runners against      CYPRESS_CONFIG_FILE=./src/tests/cypr
-  "component" testing with an explicit      ess.config.js npx
-  Cypress configuration set by an           cypressLoadBalancer -r 6 -t e2e
-  environment variable
-  Load balancing for 3 runners against      npx cypressLoadBalancer -r 3 -t e2e
-  "e2e" testing with specified file paths   -F cypress/e2e/foo.cy.js
-                                            cypress/e2e/bar.cy.js
-                                            cypress/e2e/wee.cy.js
-  Load balancing for 3 runners against      npx cypressLoadBalancer -r 3 -t e2e
-  "e2e" testing with a specified glob       -F cypress/e2e/foo.cy.js -G
-  pattern and file path                     cypress/e2e/more_tests/*.cy.js
-  If running with DEBUG mode on, make sure  DEBUG=cypress-load-balancer
-  to use `tail -1` to get the output        specs=$(echo npx
-  correctly                                 cypress-load-balancer -r 3 -t e2e |
-                                            tail -1)
-
+  cypress-load-balancer initialize          Initializes the load balancing map
+                                            file and directory.
+  cypress-load-balancer merge               Merges load balancing map files
+                                            together back to an original map.
+  cypress-load-balancer generate-runners    Creates an array of runner patterns
+  <count>                                   to pass to `--env runners` in a
+                                            CI/CD workflow.
 ```
 
-_This may have issues with `tsx` or `ts-node`._
+### `initialize`
+
+```
+cypress-load-balancer initialize
+
+Initializes the load balancing map file and directory.
+
+Options:
+  --help       Show help                                               [boolean]
+  --version    Show version number                                     [boolean]
+  --force      Forces re-initialization of file even if existing
+                                                      [boolean] [default: false]
+  --force-dir  Forces re-initialization of directory even if existing
+                                                      [boolean] [default: false]
+```
+
+### `merge`
+
+```
+cypress-load-balancer merge
+
+Merges load balancing map files together back to an original map.
+
+Options:
+      --help                   Show help                               [boolean]
+      --version                Show version number                     [boolean]
+      --original, --og         The JSON file path of the original load balancing
+                               map into which to merge other files.
+                               Defaulted to exist within the current working
+                               directory at
+                               "./cypress_load_balancer/spec-map.json"
+  [string] [default: "/Users/hammzj/Documents/GitHub/hammzj/cypress-load-balance
+                                        r/.cypress_load_balancer/spec-map.json"]
+  -F, --files                  A list of other files to load and merge back to
+                               the original                [array] [default: []]
+  -G, --glob                   One or more glob patterns to match for load
+                               balancing maps to merge.Make sure to wrap in
+                               quotes for the glob to work correctly.
+                               NOTE: If merging maps from multiple runners, use
+                               the pattern
+                               ".cypress_load_balancer/spec-map-*-*.json"
+                                                           [array] [default: []]
+      --removeExtraMaps, --rm  If true, it will delete all input files while
+                               keeping the original map. This only works if in
+                               the default ".cypress_load_balancer" directory.
+                                                      [boolean] [default: false]
+  -o, --output                 An output file path to which to save. If not
+                               provided, uses the original file path    [string]
+```
+
+### `generate-runners`
+
+```
+cypress-load-balancer generate-runners <count>
+
+Creates an array of runner patterns to pass to `--env runners` in a CI/CD
+workflow.
+
+Positionals:
+  count  The count of runners to use                         [number] [required]
+
+Options:
+  --help     Show help                                                 [boolean]
+  --version  Show version number                                       [boolean]
+
+Examples:
+  npx cypress-load-balancer                 Returns [ "1/4", "2/4", "3/4", "4/4"
+  generate-runners 4                        ]. For example, in a GitHub Actions
+                                            workflow job, this can be passed to
+                                            `strategy.matrix.runner` and then to
+                                            either ENV.CYPRESS_runner or to
+                                            `cypress run --env
+                                            runner="${{matrix.runner}}"`
+```
 
 ## Configuring for CI/CD
 
@@ -188,21 +237,15 @@ This is the basic idea of steps that need to occur in order to use load balancin
 needs to saved and persisted throughout all runs in a stable, base location. After all parallel test runs complete,
 their results can be merged back to the main file, which can be consumed on the next test runs, and so on.
 
-1. **Install and configure the plugin.** When Cypress runs, it will be able to locally save the results of the spec
-   executions per each runner.
-2. **Initialize the load balancer main map file in a persisted location that can be easily restored from cache.** This
-   means the main file needs to be in a place outside of the parallelized jobs to can be referenced _by_ the
-   parallelized jobs in order to save new results.
-3. **Execute the load balancer against a number of runners.** The output is able to be used for all parallelized jobs to
-   instruct them which specs to execute.
-4. **Run each parallelized job that will execute the Cypress testrunner with the spec output per each runner.**
-5. **Collect and save the output of the load balancing files from each job in a temporary location.**
-6. **After all parallelized test jobs complete, merge their load balancing map results back to the persisted map file
-   and cached for later usage.**
-   In a GitHub Actions run, this means on pull request merge, the load balancing files from the base branch and the head
-   branch need to be merged, then cached down to the base branch.
+1. **Set a number of runners in `X/Y` format.** For example, 2 runners would mean saving `"1/2"`, `"2/2"`, for later.
+2. **Restore the load balancer main map file from a persisted location.**
+3. **Execute each Cypress `run` process in parallel using the `runner` variables.**
+4. **Wait for each Cypress process to fully complete.**
+5. **Collect the load balancing maps from each completed runner process.**
+6. **Merge the temporary maps back to the original load balancing map.**
+7. **Save the updated main load balancing map back to its persisted location.**
 
-### GitHub Actions
+#### GitHub Actions
 
 There are example workflows here:
 
@@ -217,21 +260,26 @@ When pull requests are merged, the latest load balancing map file is saved to th
 This allows the map to be saved on a trunk branch, so workflows can reuse and overwrite it when there are new pull
 requests with updated test results.
 
-I'd love to add actual GitHub Actions for this project.
-
-### Docker and Docker Compose
-
-Someone please help me here :simple_smile:
-
 ## Development
+
+### Debugging
+
+Debug logs can be enabled for the plugin and CLI commands with the Node environment variable of
+`DEBUG=cypress-load-balancer`.
 
 ## Publishing
 
-_THIS WILL BECOME A WORKFLOW AT SOME POINT._
+### On GitHub
 
-- Increment the version in the `package.json` Prefer a minor version in most cases (`0.X.0`).
-- Run `yarn run build`. THIS NEEDS TO HAPPEN EACH TIME.
-- Run `npm publish`.
+This should activate a GitHub Actions workflow when publishing a new version on the repository, but if it fails, try
+manually.
+
+### Manually
+
+- Increment the version in the `package.json` according to [semantic versions](https://semver.org/).
+- Run `yarn run build`
+- Run `npm publish`
+- Login to NPM with an OTP and it should complete!
 
 ### Creating a hybrid package for ESM and CommonJS
 

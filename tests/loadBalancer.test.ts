@@ -44,21 +44,15 @@ describe("Load balancing", function () {
     });
   });
 
-  it("can remove empty runners if there are no files", function () {
-    stubReadLoadBalancerFile(sandbox);
-    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest", { removeEmptyRunners: true });
-    expect(runners).to.have.lengthOf(0);
-  });
-
-  it("defaults to remove empty runners", function () {
+  it("defaults to keep empty runners (needed for consistency's sake)", function () {
     stubReadLoadBalancerFile(sandbox);
     const runners = performLoadBalancing(3, "e2e", []);
-    expect(runners).to.have.lengthOf(0);
+    expect(runners).to.have.lengthOf(3);
   });
 
-  it("can keep empty runners when the option is specified", function () {
+  it("can retains empty runners when there are no files", function () {
     stubReadLoadBalancerFile(sandbox);
-    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest", { removeEmptyRunners: false });
+    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest");
     expect(runners).to.have.lengthOf(3);
   });
 

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import utils from "./utils";
-import { FilePath, Runners, TestingType, LoadBalancingMap, Algorithms, PerformLoadBalancingOptions } from "./types";
+import { FilePath, Runners, TestingType, LoadBalancingMap, Algorithms } from "./types";
 import { debug } from "./helpers";
 
 const sum = (arr: number[]) => arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
@@ -165,7 +165,8 @@ export default function performLoadBalancing(
   testingType: TestingType,
   filePaths: FilePath[],
   algorithm: Algorithms = "weighted-largest",
-  opts: PerformLoadBalancingOptions = { removeEmptyRunners: true }
+  // @ts-expect-error Needed for backwards compatibility
+  opts = {}
 ): Runners {
   if (runnerCount < 1) throw Error("Runner count cannot be less than 1");
   debug(`Using algorithm for load balancing: %s`, algorithm);
@@ -187,15 +188,7 @@ export default function performLoadBalancing(
     }
   };
 
-  let runners = getRunners();
-  if (opts.removeEmptyRunners === true) {
-    runners = runners.filter((r) => r.length > 0);
-    if (runners.length === 0) {
-      debug("No files found and removeEmptyRunners=%s, so there are no runners!", opts.removeEmptyRunners);
-      //Return at least 1 empty runner
-      runners = [];
-    }
-  }
+  const runners = getRunners();
   debug("Runners: %O", runners);
   return runners;
 }
