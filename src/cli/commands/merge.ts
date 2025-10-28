@@ -31,7 +31,7 @@ export default {
           description:
             "One or more glob patterns to match for load balancing maps to merge." +
             "Make sure to wrap in quotes for the glob to work correctly." +
-            '\nNOTE: If merging maps from multiple runners, use the pattern ".cypress_load_balancer/spec-map-*-*.json"',
+            '\nNOTE: If merging maps from multiple runners, use the pattern ".cypress_load_balancer/**/spec-map-*-*.json"',
           type: "array",
           default: []
         })

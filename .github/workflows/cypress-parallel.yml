@@ -139,7 +139,7 @@ jobs:
           merge-multiple: false
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -G "./temp/spec-map-*.json" --HE error
+        run: npx cypress-load-balancer merge -G "./temp/**/spec-map-*.json" --HE error
 
       - name: Save overwritten cached load-balancing map
         id: cache-save-load-balancing-map
