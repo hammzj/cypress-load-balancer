@@ -19,7 +19,7 @@ The process is as such:
     `process.env.CYPRESS_CONFIG_FILE`.
 - **Merge temp maps back to man map:** When all parallelized Cypress jobs complete, collect all of the `spec-map.json`
   files in the
-  temporary directory, and run `npx cypress-load-balancer merge -G .cypress_load_balancer/spec-map-*.json`. This
+  temporary directory, and run `npx cypress-load-balancer merge -G .cypress_load_balancer/**/spec-map-*.json`. This
   will merge their results back to the persistent mapping object.
   - You may need to restore the main persistent `.cypress_load_balancer/spec-map.json` to this job before beginning
     merging, if it is not available.

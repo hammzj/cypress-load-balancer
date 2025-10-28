@@ -363,7 +363,7 @@ Options:
                                    quotes for the glob to work correctly.
                                    NOTE: If merging maps from multiple runners,
                                    use the pattern
-                                   ".cypress_load_balancer/spec-map-*-*.json"
+                                   ".cypress_load_balancer/**/spec-map-*.json"
                                                            [array] [default: []]
       --handle-empty-files, --hef  What should the script do when it has no
                                    files to merge?
