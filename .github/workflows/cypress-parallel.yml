@@ -138,10 +138,6 @@ jobs:
           path: .cypress_load_balancer/temp
           merge-multiple: false
 
-          #TODO: TEMPORARY
-      - run: ls -al
-      - run: cd temp && ls -al
-
       - name: Merge files
         run: npx cypress-load-balancer merge -G "./.cypress_load_balancer/temp/spec-map-*.json" --HE error
 
