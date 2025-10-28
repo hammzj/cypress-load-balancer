@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           yarn install
-          yarn build 
+          yarn build
 
       - id: generate-runners
         run: npx cypress-load-balancer generate-runners ${{ inputs.runner_count || env.runner_count }} --gha
