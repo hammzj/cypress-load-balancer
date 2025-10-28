@@ -88,7 +88,7 @@ jobs:
       - id: standardize-runner-name-for-artifacts
         run: |
           runner_name="${${{ matrix.runner }}//\//-}"
-          echo "runner_name=runner_name" >> "$GITHUB_OUTPUT"
+          echo "runner_name=$runner_name" >> "$GITHUB_OUTPUT"
 
       - name: Upload temp load balancer map
         if: (!cancelled())
