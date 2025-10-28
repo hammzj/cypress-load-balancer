@@ -5,6 +5,9 @@ import Utils from "../src/utils";
 
 const decodeStdout = (stdout: Buffer) => Buffer.from(stdout).toString();
 
+const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
+const SHOULD_RUN = process.env.RUN_CYPRESS_EXAMPLES || IS_ON_GHA;
+
 describe("Actual Cypress examples with load balancing enabled", function () {
   this.retries(1);
   this.timeout(15000);
@@ -12,6 +15,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
   before(function () {
     process.env.NO_COLOR = "1";
     process.env.FORCE_COLOR = "0";
+  });
+
+  before(function () {
+    if (!SHOULD_RUN) this.skip();
   });
 
   beforeEach(function () {
