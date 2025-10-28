@@ -79,7 +79,6 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           browser: electron
-          build: yarn build
           # Fix for https://github.com/cypress-io/github-action/issues/480
           config: videosFolder=/tmp/cypress-videos
         env:
