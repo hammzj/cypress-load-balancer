@@ -31,7 +31,7 @@ jobs:
   generate_runner_variables:
     runs-on: ubuntu-22.04
     outputs:
-      runner: ${{ steps.generate-runners.runner-variables }}
+      runner-variables: ${{ steps.generate-runners.outputs.runner-variables }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.generate_runner_variables.outputs.runner) }}
+        runner: ${{ fromJson(needs.generate_runner_variables.outputs.runner-variables) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
