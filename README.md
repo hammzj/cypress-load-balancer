@@ -29,7 +29,7 @@ Finally, return the `config` from `setupNodeEvents.
 
 This will register load balancing for separate testing types:
 
-```js
+```typescript
 import { addCypressLoadBalancerPlugin } from "cypress-load-balancer";
 
 defineConfig({
@@ -141,6 +141,145 @@ cases, you should use this command to correctly get all parallelized maps and th
 ```
 npx cypress-load-balancer -G "/.cypress_load_balancer/spec-map-*-*.json --rm"
 ```
+
+### Usage with Cucumber
+
+This can be used with the [Cypress Cucumber preprocessor](https://github.com/badeball/cypress-cucumber-preprocessor/),
+though the configuration is a bit different. You can use it just as you would in a regular Cypress project, and it even
+works by filtering Cucumber tags!
+
+```
+# This example works by filtering ALL features with tags!
+cypress run --env tags="@smoke",runner=2/2
+
+# This example works by filtering only specific features with tags!
+cypress run --env tags="@smoke",runner=2/2 --config specPattern="my-other-features/**/*.feature"
+
+```
+
+Since **"cypress-load-balancer"** also registers an `after:run` event, it may conflict with the one registered by the
+Cucumber preprocessor. We also advise setting `env.filterSpecs=true` to avoid creating bad file stats.
+
+There are two ways to handle this configuration:
+
+<details>
+<summary> 1. Use `cypress-on-fix` to handle multiple event handlers</summary>
+
+```typescript
+import { defineConfig } from "cypress";
+// @ts-expect-error No types
+import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
+import { addCucumberPreprocessorPlugin } from "@badeball/cypress-cucumber-preprocessor";
+import { addCypressLoadBalancerPlugin } from "./";
+import createEsbuildPlugin from "@badeball/cypress-cucumber-preprocessor/dist/subpath-entrypoints/esbuild";
+import cypressOnFix from "cypress-on-fix";
+
+defineConfig({
+  e2e: {
+    async setupNodeEvents(originalOn, config) {
+      const on = cypressOnFix(originalOn);
+      on(
+        "file:preprocessor",
+        createBundler({
+          plugins: [createEsbuildPlugin(config)]
+        })
+      );
+      await addCucumberPreprocessorPlugin(on, config);
+      addCypressLoadBalancerPlugin(on, config, "e2e");
+      return config;
+    }
+  },
+  env: {
+    stepDefinitions: "...",
+    filterSpecs: true
+  }
+});
+```
+
+</details>
+
+<details>
+<summary>2. Individually override the event handlers from the Cucumber plugin (Not recommended)</summary>
+
+Note: If you have even more plugins with event handlers, you may need to register their methods in each `on` event here
+as well!
+
+```typescript
+import { defineConfig } from "cypress";
+// @ts-expect-error No types
+import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
+import { addCucumberPreprocessorPlugin } from "@badeball/cypress-cucumber-preprocessor";
+import { addCypressLoadBalancerPlugin } from "./";
+import createEsbuildPlugin from "@badeball/cypress-cucumber-preprocessor/dist/subpath-entrypoints/esbuild";
+
+defineConfig({
+  e2e: {
+    async setupNodeEvents(on, config) {
+      on(
+        "file:preprocessor",
+        createBundler({
+          plugins: [createEsbuildPlugin(config)]
+        })
+      );
+
+      await cucumberPreprocessor.addCucumberPreprocessorPlugin(on, config, {
+        omitBeforeRunHandler: true,
+        omitBeforeSpecHandler: true,
+        omitAfterSpecHandler: true,
+        omitAfterRunHandler: true,
+        omitAfterScreenshotHandler: true
+      });
+
+      on("before:run", async () => {
+        await cucumberPreprocessor.beforeRunHandler(config);
+        //Put any additional handlers as needed
+      });
+
+      on("before:spec", async (spec) => {
+        await cucumberPreprocessor.beforeSpecHandler(config, spec);
+        //Put any additional handlers as needed
+      });
+
+      on("after:spec", async (spec, results) => {
+        /*
+        Needed so it does not fail on CI/CD. There's some issues with memory leakages
+        and the after:spec handler for the Cucumber reporter will cause errors when the Chromium process crashes
+         */
+        try {
+          await cucumberPreprocessor.afterSpecHandler(config, spec, results);
+          //Put any additional handlers as needed
+        } catch (e) {
+          console.error(`Error in "after:spec" hook`, e);
+        }
+      });
+
+      on("after:run", async function () {
+        //@see https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/event-handlers.md
+        try {
+          await cucumberPreprocessor.afterRunHandler(config);
+          //Put any additional handlers as needed
+        } catch (e) {
+          console.error(`Error in "after:run" hook`, e);
+        }
+      });
+
+      on("after:screenshot", async function (details) {
+        await cucumberPreprocessor.afterScreenshotHandler(config, details);
+        //Put any additional handlers as needed
+      });
+
+      addCypressLoadBalancerPlugin(on, config, "e2e");
+      return config;
+    }
+  },
+  env: {
+    stepDefinitions: "...",
+    filterSpecs: true
+  }
+});
+```
+
+</details>
 
 ## Command-line interface commands
 

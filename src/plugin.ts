@@ -13,9 +13,11 @@ const EMPTY_FILE_NAME = "empty.cy.js";
 
 //Thanks to Gleb Bahmutov with cypress-split -- this works very well
 //@see https://github.com/bahmutov/cypress-split for inspiration
-const createEmptyFileForEmptyRunner = (runnerIndex: number, runnerCount: number) => {
-  //TODO: don't just copy this code
-  // copy the empty spec file from our source folder into temp folder
+const createEmptyFileForEmptyRunner = (
+  runnerIndex: number,
+  runnerCount: number,
+  cypressLoadBalancerDisableWarnings: boolean
+) => {
   const emptyFilename = path.resolve(__dirname, EMPTY_FILE_NAME);
 
   //Make the runnerIndex match the user input
@@ -23,11 +25,13 @@ const createEmptyFileForEmptyRunner = (runnerIndex: number, runnerCount: number)
   const tempFileNameToUse = path.join(os.tmpdir(), `clb-empty-${userInputtedRunnerIndex}-${runnerCount}.cy.js`);
   fs.copyFileSync(emptyFilename, tempFileNameToUse);
 
-  console.warn(
-    "Runner %d/%d is empty! Running an empty spec instead to prevent Cypress producing an error.",
-    userInputtedRunnerIndex,
-    runnerCount
-  );
+  if (!cypressLoadBalancerDisableWarnings) {
+    console.warn(
+      "Runner %d/%d is empty! Running an empty spec instead to prevent Cypress producing an error.",
+      userInputtedRunnerIndex,
+      runnerCount
+    );
+  }
   debug("Empty file created for runner %d/%d: %s", userInputtedRunnerIndex, runnerCount, tempFileNameToUse);
   return tempFileNameToUse;
 };
@@ -160,7 +164,7 @@ export default function addCypressLoadBalancerPlugin(
     const currentRunner = runners[runnerIndex];
     const isCurrentRunnerFilePatternEmpty = currentRunner == null || currentRunner.length === 0;
     config.specPattern = isCurrentRunnerFilePatternEmpty
-      ? [createEmptyFileForEmptyRunner(runnerIndex, runnerCount)]
+      ? [createEmptyFileForEmptyRunner(runnerIndex, runnerCount, cypressLoadBalancerDisableWarnings)]
       : currentRunner;
 
     //Add 1 to match user input for runner index
