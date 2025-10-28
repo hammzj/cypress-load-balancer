@@ -136,7 +136,7 @@ export default function addCypressLoadBalancerPlugin(
       CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED,
       cypressLoadBalancerDisableWarnings
     } = getAllEnvVariables(config);
-    debug("Starting up load balancing process as \"env.runner\" has been declared: %o", {
+    debug('Starting up load balancing process as "env.runner" has been declared: %o', {
       runner,
       cypressLoadBalancerAlgorithm
     });
