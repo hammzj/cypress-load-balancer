@@ -89,14 +89,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           # Artifacts cannot be saved with a forward slash ( / ), so using runner.name as it is unique
-          name: spec-map-${{ runner-name }}
+          name: spec-map-${{ runner.name }}
           path: .cypress_load_balancer/spec-map-*.json
           include-hidden-files: true
           if-no-files-found: "error"
 
   merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
-    needs: [ cypress_run_e2e ]
+    needs: [cypress_run_e2e]
     if: (!cancelled())
     steps:
       - name: Checkout
