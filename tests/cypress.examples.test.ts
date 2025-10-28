@@ -13,12 +13,9 @@ describe("Actual Cypress examples with load balancing enabled", function () {
   this.timeout(15000);
 
   before(function () {
+    if (!SHOULD_RUN) this.skip();
     process.env.NO_COLOR = "1";
     process.env.FORCE_COLOR = "0";
-  });
-
-  before(function () {
-    if (!SHOULD_RUN) this.skip();
   });
 
   beforeEach(function () {
