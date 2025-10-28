@@ -120,6 +120,26 @@ file. Please note you may need to also declare `--config excludeSpecPattern=""` 
 option for that, if one is specified that may exclude your new spec pattern. In most cases, you should not need to do
 so.
 
+Examples:
+
+```
+# Run a single file (on the first runner; the second runner is empty!_
+cypress run --env runner=1/2 --config specPattern="cypress/e2e/**/actions.cy.js"
+
+
+# Run a set of multiple files (both runners have files!)
+cypress run  --env runner=1/2 --config '{"specPattern":["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]}'
+cypress run  --env runner=2/2 --config '{"specPattern":["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]}'
+
+# These may also work for multiple files
+cypress run  --env runner=1/2 --config specPattern='["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]'
+cypress run  --env runner=1/2 --config specPattern=["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]
+
+
+
+
+```
+
 **Warning: do not use `cypress run --spec "{FILE_PATTERN}` as it may produce Cypress errors with an empty fileset!
 Use `--config specPattern` instead.**
 

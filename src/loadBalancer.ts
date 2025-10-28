@@ -166,6 +166,7 @@ export default function performLoadBalancing(
   filePaths: FilePath[],
   algorithm: Algorithms = "weighted-largest",
   // @ts-expect-error Needed for backwards compatibility
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   opts = {}
 ): Runners {
   if (runnerCount < 1) throw Error("Runner count cannot be less than 1");

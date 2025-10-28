@@ -1,15 +1,13 @@
 import fs from "node:fs";
 import utils from "./utils";
-// @ts-ignore
-import findCypressSpecs, { getSpecs, getConfig as getConfigFindCypressSpecs } from "find-cypress-specs";
+// @ts-expect-error Does not have typings
+import { getSpecs } from "find-cypress-specs";
 import { debug } from "./helpers";
 import { LoadBalancingMap, TestingType } from "./types";
 import { performLoadBalancing } from "./";
 import path from "path";
 import * as os from "node:os";
-
-const EMPTY_FILE_NAME_REGEXP = /clb-empty-\d+-\d+.cy.js/;
-const EMPTY_FILE_NAME = "empty.cy.js";
+import Utils from "./utils";
 
 //Thanks to Gleb Bahmutov with cypress-split -- this works very well
 //@see https://github.com/bahmutov/cypress-split for inspiration
@@ -18,7 +16,7 @@ const createEmptyFileForEmptyRunner = (
   runnerCount: number,
   cypressLoadBalancerDisableWarnings: boolean
 ) => {
-  const emptyFilename = path.resolve(__dirname, EMPTY_FILE_NAME);
+  const emptyFilename = path.resolve(__dirname, Utils.EMPTY_FILE_NAME);
 
   //Make the runnerIndex match the user input
   const userInputtedRunnerIndex = runnerIndex + 1;
@@ -95,7 +93,7 @@ export default function addCypressLoadBalancerPlugin(
       const hasOnlyEmptyFile =
         cypressRunResult.runs.length === 1 &&
         cypressRunResult.runs.some((r) => {
-          return r.spec.relative.match(EMPTY_FILE_NAME_REGEXP);
+          return r.spec.relative.match(Utils.EMPTY_FILE_NAME_REGEXP);
         });
 
       if (cypressLoadBalancerSkipResults || hasOnlyEmptyFile) {
@@ -117,7 +115,7 @@ export default function addCypressLoadBalancerPlugin(
 
         //This line should never be true, but is here just-in-case
         //We should never save the results of empty files generated from this process
-        if (fileName.match(EMPTY_FILE_NAME_REGEXP)) {
+        if (fileName.match(Utils.EMPTY_FILE_NAME_REGEXP)) {
           return;
         }
 

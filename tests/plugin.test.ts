@@ -222,7 +222,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       });
 
       it("defaults to use the config specPattern defined for that testing type", function () {
-        let updatedConfigFile = addCypressLoadBalancerPlugin(
+        const updatedConfigFile = addCypressLoadBalancerPlugin(
           onEventSpy,
           {
             ...this.cypressConfigFile,
@@ -298,7 +298,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       stubReadLoadBalancerFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
-      let handler = getOnEventSpyHandler();
+      const handler = getOnEventSpyHandler();
       handler(failedResults);
 
       expect(updateFileStatsStub).to.not.have.been.called;
@@ -314,7 +314,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       stubReadLoadBalancerFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
-      let handler = getOnEventSpyHandler();
+      const handler = getOnEventSpyHandler();
       handler(this.results);
 
       expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
@@ -336,7 +336,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       stubReadLoadBalancerFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
-      let handler = getOnEventSpyHandler();
+      const handler = getOnEventSpyHandler();
       handler(emptyFileResults);
 
       expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
@@ -356,7 +356,7 @@ describe("addCypressLoadBalancerPlugin", function () {
           stubReadLoadBalancerFile(sandbox);
 
           addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
-          let handler = getOnEventSpyHandler();
+          const handler = getOnEventSpyHandler();
           handler(this.results);
           expect(stub).to.have.been.calledWith(sinon.match.any, `spec-map-${called.replace("/", "-")}.json`);
           expect(stub).to.not.have.been.calledWith(sinon.match.any, `spec-map-${notCalled.replace("/", "-")}.json`);

@@ -24,6 +24,14 @@ class Utils {
     return ["e2e", "component"];
   }
 
+  get EMPTY_FILE_NAME_REGEXP(): RegExp {
+    return /clb-empty-\d+-\d+.cy.js/;
+  }
+
+  get EMPTY_FILE_NAME(): string {
+    return "empty.cy.js";
+  }
+
   /**
    * Adds a new filepath entry to the load balancing map
    * @param loadBalancingMap {LoadBalancingMap}
