@@ -298,12 +298,25 @@ describe("addCypressLoadBalancerPlugin", function () {
       expect(stub).to.not.have.been.called;
     });
 
-    //TODO
+    it("is not called if Cypress failed to execute", function () {
+      const updatedConfigFile = { ...this.cypressConfigFile, env: { runner: "1/2" } };
+      const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
+      const failedResults = { ...this.results, status: "failed" };
+
+      stubReadLoadBalancerFile(sandbox);
+      addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
+      let handler = getOnEventSpyHandler();
+      handler(failedResults);
+
+      expect(updateFileStatsStub).to.not.have.been.called;
+    });
+
     it("is skipped if env.skipCypressLoadBalancingResults is true", function () {
       const updatedConfigFile = {
         ...this.cypressConfigFile,
         env: { runner: "1/2", skipCypressLoadBalancingResults: true }
       };
+      const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
       const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
 
       stubReadLoadBalancerFile(sandbox);
@@ -311,6 +324,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       let handler = getOnEventSpyHandler();
       handler(this.results);
 
+      expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
       expect(updateFileStatsStub).to.not.have.been.called;
     });
 
@@ -323,6 +337,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         ...this.cypressConfigFile,
         env: { runner: "1/2" }
       };
+      const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
       const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
 
       stubReadLoadBalancerFile(sandbox);
@@ -331,6 +346,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       let handler = getOnEventSpyHandler();
       handler(emptyFileResults);
 
+      expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
       expect(updateFileStatsStub).to.not.have.been.called;
     });
 

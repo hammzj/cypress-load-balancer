@@ -61,52 +61,64 @@ export default function addCypressLoadBalancerPlugin(
   config: Cypress.PluginConfigOptions,
   testingType: TestingType
 ) {
+  const hasRunner = () => config.env?.runner != null;
+
   //TODO: allow skipping results collection
   on("after:run", (results: CypressCommandLine.CypressRunResult | CypressCommandLine.CypressFailedRunResult) => {
-    if ((results as CypressCommandLine.CypressFailedRunResult).status === "failed") {
-      console.error("cypress-load-balancer", "Cypress failed to execute, so load balancing is skipped");
-    } else {
-      if (config.env?.runner != null) {
-        const { runner, skipCypressLoadBalancingResults } = config.env;
-        const cypressRunResult = results as CypressCommandLine.CypressRunResult;
+    if (hasRunner()) {
+      if ((results as CypressCommandLine.CypressFailedRunResult).status === "failed") {
+        console.error("cypress-load-balancer", "Cypress failed to execute, so load balancing updates will be skipped");
+        return;
+      }
 
-        if (skipCypressLoadBalancingResults) {
-          debug("Skipping updating all file statistics, %o", { skipCypressLoadBalancingResults });
+      const { runner, skipCypressLoadBalancingResults } = config.env;
+      const cypressRunResult = results as CypressCommandLine.CypressRunResult;
+
+      //TODO: might want to instead check if the empty file exists in the test set. If so, skip the ENTIRE after:run
+      const hasOnlyEmptyFile =
+        cypressRunResult.runs.length === 1 &&
+        cypressRunResult.runs.some((r) => {
+          return r.spec.relative.match(EMPTY_FILE_NAME_REGEXP);
+        });
+
+      if (skipCypressLoadBalancingResults || hasOnlyEmptyFile) {
+        debug("Skipping updating all file statistics on runner %s, %o", runner, {
+          skipCypressLoadBalancingResults,
+          hasOnlyEmptyFile
+        });
+        return;
+      }
+
+      //Prep load balancing file if not existing and read it
+      utils.initializeLoadBalancingFiles();
+      const loadBalancingMap = JSON.parse(
+        fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString()
+      ) as LoadBalancingMap;
+
+      for (const run of cypressRunResult.runs) {
+        const fileName = run.spec.relative;
+
+        //This line should never be true, but is here just-in-case
+        //We should never save the results of empty files generated from this process
+        if (fileName.match(EMPTY_FILE_NAME_REGEXP)) {
           return;
         }
 
-        //Prep load balancing file if not existing and read it
-        utils.initializeLoadBalancingFiles();
-        const loadBalancingMap = JSON.parse(
-          fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString()
-        ) as LoadBalancingMap;
-
-        for (const run of cypressRunResult.runs) {
-          const fileName = run.spec.relative;
-
-          //TODO: skip based on env var and handle better for empty file
-          const isEmptyFile = fileName.match(EMPTY_FILE_NAME_REGEXP);
-          if (isEmptyFile) {
-            debug("%s Skipping file updates due to empty file on runner %s: %s", "Plugin", runner, fileName);
-            continue;
-          }
-
-          utils.createNewEntry(loadBalancingMap, testingType, fileName);
-          utils.updateFileStats(loadBalancingMap, testingType, fileName, run.stats.duration);
-        }
-
-        //Overwrite load balancing file for runner
-        const fileNameForRunner = `spec-map-${config.env.runner.replace("/", "-")}.json`;
-        utils.saveMapFile(loadBalancingMap, fileNameForRunner);
-        debug("%s Saved load balancing map with new file stats for runner %s", "Plugin", runner);
-        debug("Load balancing map name: %s", fileNameForRunner);
+        utils.createNewEntry(loadBalancingMap, testingType, fileName);
+        utils.updateFileStats(loadBalancingMap, testingType, fileName, run.stats.duration);
       }
+
+      //Overwrite load balancing file for runner
+      const fileNameForRunner = `spec-map-${config.env.runner.replace("/", "-")}.json`;
+      utils.saveMapFile(loadBalancingMap, fileNameForRunner);
+      debug("%s Saved load balancing map with new file stats for runner %s", "Plugin", runner);
+      debug("Load balancing map name: %s", fileNameForRunner);
     }
   });
 
-  if (config.env?.runner != null) {
+  if (hasRunner()) {
     const { runner, cypressLoadBalancerAlgorithm } = config.env;
-    debug('Starting up load balancing process as "env.runner" has been declared: %o', {
+    debug("Starting up load balancing process as \"env.runner\" has been declared: %o", {
       runner,
       cypressLoadBalancerAlgorithm
     });
