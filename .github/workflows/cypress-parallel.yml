@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - id: generate-runners
-        run: npx generate-runners ${{ inputs.runner_count || env.runner_count }} --gha
+        run: npx cypress-load-balancer generate-runners ${{ inputs.runner_count || env.runner_count }} --gha
 
   cypress_run_e2e:
     runs-on: ubuntu-22.04
