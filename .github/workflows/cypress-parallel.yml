@@ -87,7 +87,7 @@ jobs:
       # Artifacts cannot be saved with a forward slash ( / ), so this converts it from X/Y to X-Y
       - id: standardize-runner-name-for-artifacts
         run: |
-          runner_name="${${{ matrix.runner }}//\//-}"
+          runner_name=${${{martrix.runner}}/\//-}
           echo "runner_name=$runner_name" >> "$GITHUB_OUTPUT"
 
       - name: Upload temp load balancer map
