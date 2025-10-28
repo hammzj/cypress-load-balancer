@@ -87,6 +87,7 @@ describe("Load balancing", function () {
         expect(output).to.include("Using algorithm for load balancing: weighted-largest");
       });
     });
+
     it("throws an error on unknown algorithm", function () {
       const fixture = getFixture<LoadBalancingMap>("spec-map/generic.json", { parseJSON: true });
       stubReadLoadBalancerFile(sandbox, fixture);
@@ -256,11 +257,20 @@ describe("Load balancing", function () {
 
       it("can handle a brand new map", function () {
         this.writeFileSyncStub = this.writeFileSyncStub.withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
-        const newFiles = ["newFile.1.test.ts", "newFile.2.test.ts", "newFile.3.test.ts", "newFile.4.test.ts"];
+        const newFiles = [
+          "newFile.1.test.ts",
+          "newFile.2.test.ts",
+          "newFile.3.test.ts",
+          "newFile.4.test.ts",
+          "newFile.5.test.ts",
+          "newFile.6.test.ts",
+          "newFile.7.test.ts",
+          "newFile.8.test.ts"
+        ];
         const runners = performLoadBalancing(2, "e2e", newFiles, "weighted-largest");
         expect(runners).to.deep.equal([
-          ["newFile.4.test.ts", "newFile.2.test.ts"],
-          ["newFile.3.test.ts", "newFile.1.test.ts"]
+          ["newFile.8.test.ts", "newFile.6.test.ts", "newFile.4.test.ts", "newFile.2.test.ts"],
+          ["newFile.7.test.ts", "newFile.5.test.ts", "newFile.3.test.ts", "newFile.1.test.ts"]
         ]);
         expect(this.writeFileSyncStub.calledOnce).to.be.true;
 

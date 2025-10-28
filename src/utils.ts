@@ -122,6 +122,8 @@ class Utils {
       loadBalancingMap[testingType][fileName].stats.durations
     );
 
+    debug("MAXIMUM_DURATIONS_ALLOWED: %d", this.MAX_DURATIONS_ALLOWED);
+
     debug(
       `%s test file stats updated for "%s": %O`,
       testingType,

@@ -56,6 +56,20 @@ const getRunnerArgs = (runner: string): [number, number] => {
   return [runnerIndex - 1, runnerCount];
 };
 
+//This assumes that `config.env` exists!
+const getAllEnvVariables = (config: Cypress.PluginConfigOptions) => {
+  return {
+    //config.env is required!
+    runner: config.env.runner,
+    cypressLoadBalancerSkipResults: config.env.cypressLoadBalancerSkipResults,
+    cypressLoadBalancerAlgorithm: config.env.cypressLoadBalancerAlgorithm,
+    cypressLoadBalancerDisableWarnings: config.env.cypressLoadBalancerDisableWarnings,
+
+    //process.env vars
+    CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED: process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED
+  };
+};
+
 export default function addCypressLoadBalancerPlugin(
   on: Cypress.PluginEvents,
   config: Cypress.PluginConfigOptions,
@@ -71,19 +85,18 @@ export default function addCypressLoadBalancerPlugin(
         return;
       }
 
-      const { runner, skipCypressLoadBalancingResults } = config.env;
+      const { runner, cypressLoadBalancerSkipResults } = getAllEnvVariables(config);
       const cypressRunResult = results as CypressCommandLine.CypressRunResult;
 
-      //TODO: might want to instead check if the empty file exists in the test set. If so, skip the ENTIRE after:run
       const hasOnlyEmptyFile =
         cypressRunResult.runs.length === 1 &&
         cypressRunResult.runs.some((r) => {
           return r.spec.relative.match(EMPTY_FILE_NAME_REGEXP);
         });
 
-      if (skipCypressLoadBalancingResults || hasOnlyEmptyFile) {
+      if (cypressLoadBalancerSkipResults || hasOnlyEmptyFile) {
         debug("Skipping updating all file statistics on runner %s, %o", runner, {
-          skipCypressLoadBalancingResults,
+          cypressLoadBalancerSkipResults,
           hasOnlyEmptyFile
         });
         return;
@@ -117,11 +130,22 @@ export default function addCypressLoadBalancerPlugin(
   });
 
   if (hasRunner()) {
-    const { runner, cypressLoadBalancerAlgorithm } = config.env;
+    const {
+      runner,
+      cypressLoadBalancerAlgorithm,
+      CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED,
+      cypressLoadBalancerDisableWarnings
+    } = getAllEnvVariables(config);
     debug('Starting up load balancing process as "env.runner" has been declared: %o', {
       runner,
       cypressLoadBalancerAlgorithm
     });
+
+    if (CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED == null && !cypressLoadBalancerDisableWarnings) {
+      console.warn(
+        "It is advised to set process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED, unless 10 durations are enough per test file."
+      );
+    }
 
     const [runnerIndex, runnerCount] = getRunnerArgs(runner);
 

@@ -221,31 +221,24 @@ describe("addCypressLoadBalancerPlugin", function () {
         });
       });
 
-      context("specPattern overriding", function () {
-        afterEach(function () {
-          delete process.env.SPEC;
-          delete process.env.spec;
-        });
+      it("defaults to use the config specPattern defined for that testing type", function () {
+        let updatedConfigFile = addCypressLoadBalancerPlugin(
+          onEventSpy,
+          {
+            ...this.cypressConfigFile,
+            env: { runner: "1/1" }
+          },
+          "component"
+        );
 
-        it("defaults to use the config specPattern defined for that testing type", function () {
-          let updatedConfigFile = addCypressLoadBalancerPlugin(
-            onEventSpy,
-            {
-              ...this.cypressConfigFile,
-              env: { runner: "1/1" }
-            },
-            "component"
-          );
+        expect(this.getSpecsStub).to.have.been.calledWith(sinon.match(this.cypressConfigFile), "component");
 
-          expect(this.getSpecsStub).to.have.been.calledWith(sinon.match(this.cypressConfigFile), "component");
-
-          expect(updatedConfigFile.specPattern).to.deep.equal([
-            "cypress/tests/TestFunction.cy.ts",
-            "cypress/tests/TestFunction.2.cy.ts",
-            "cypress/tests/TestFunction.3.cy.ts",
-            "cypress/tests/TestFunction.4.cy.ts"
-          ]);
-        });
+        expect(updatedConfigFile.specPattern).to.deep.equal([
+          "cypress/tests/TestFunction.cy.ts",
+          "cypress/tests/TestFunction.2.cy.ts",
+          "cypress/tests/TestFunction.3.cy.ts",
+          "cypress/tests/TestFunction.4.cy.ts"
+        ]);
       });
     });
   });
@@ -311,10 +304,10 @@ describe("addCypressLoadBalancerPlugin", function () {
       expect(updateFileStatsStub).to.not.have.been.called;
     });
 
-    it("is skipped if env.skipCypressLoadBalancingResults is true", function () {
+    it("is skipped if env.cypressLoadBalancerSkipResults is true", function () {
       const updatedConfigFile = {
         ...this.cypressConfigFile,
-        env: { runner: "1/2", skipCypressLoadBalancingResults: true }
+        env: { runner: "1/2", cypressLoadBalancerSkipResults: true }
       };
       const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
       const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");

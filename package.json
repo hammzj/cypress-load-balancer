@@ -26,6 +26,8 @@
     "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup",
     "cypress:open": "cypress open --e2e",
     "cypress:run": "cypress run --e2e",
+    "cypress:run:1/2": "cypress run --e2e --env runner=1/2",
+    "cypress:run:2/2": "cypress run --e2e --env runner=2/2",
     "merge-maps": "npx cypress-load-balancer merge -G \".cypress_load_balancer/spec-map-*-*.json\"",
     "dev:check": "tsc -p tsconfig.json",
     "dev:check:tests": "tsc -p tsconfig.test.json",

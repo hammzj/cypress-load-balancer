@@ -55,7 +55,7 @@ jobs:
             cypress-load-balancer-map-${{ github.base_ref }}-
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -G "./temp/.cypress_load_balancer/spec-map.json"
+        run: npx cypress-load-balancer merge -G "./temp/.cypress_load_balancer/spec-map-*.json"
 
       - name: Save merged load-balancing map
         uses: actions/cache/save@v4
