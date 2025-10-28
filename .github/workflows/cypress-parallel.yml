@@ -84,24 +84,19 @@ jobs:
         env:
           CYPRESS_runner: ${{ matrix.runner }}
 
-      # Artifacts cannot be saved with a forward slash ( / ), so this generates a UUID instead
-      - id: artifact-uuid
-        run: |
-          uuid=$(uuidgen)
-          echo "uuid=$uuid" >> "$GITHUB_OUTPUT"
-
       - name: Upload temp load balancer map
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
-          name: spec-map-${{ steps.artifact-uuid.outputs.uuid }}
+          # Artifacts cannot be saved with a forward slash ( / ), so using runner.name as it is unique
+          name: spec-map-${{ runner-name }}
           path: .cypress_load_balancer/spec-map-*.json
           include-hidden-files: true
           if-no-files-found: "error"
 
   merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
-    needs: [cypress_run_e2e]
+    needs: [ cypress_run_e2e ]
     if: (!cancelled())
     steps:
       - name: Checkout
@@ -140,14 +135,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: spec-map-*
-          path: .cypress_load_balancer/temp
+          path: temp
           merge-multiple: false
 
           #TODO: TEMPORARY
       - run: ls -al
 
       - name: Merge files
-        run: npx cypress-load-balancer merge -G ".cypress_load_balancer/temp/spec-map-*.json" --HE error
+        run: npx cypress-load-balancer merge -G "/temp/spec-map-*.json" --HE error
 
       - name: Save overwritten cached load-balancing map
         id: cache-save-load-balancing-map
