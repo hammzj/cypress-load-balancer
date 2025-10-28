@@ -218,6 +218,20 @@ describe("Executables", function () {
             const { error } = await runArgvCmd(cli, `generate-runners -1`);
             expect(error?.message).to.contain("The runner count must be greater than 0");
           });
+
+          it("can set the Github Actions output to `runner-variables`", async function () {
+            const cmdOutput = await new Promise((resolve) => {
+              cli.parse(
+                `generate-runners 4 --gha`,
+                //@ts-expect-error ignore
+                (_err, _argv, _output) => {
+                  resolve(output);
+                }
+              );
+            });
+            expect(output).to.eq(cmdOutput);
+            expect(output).to.contain("name=runner-variables");
+          });
         });
       });
     });
