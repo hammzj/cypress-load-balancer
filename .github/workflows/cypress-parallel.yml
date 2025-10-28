@@ -135,16 +135,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: spec-map-*
-          path: temp
+          path: .cypress_load_balancer/temp
           merge-multiple: false
 
           #TODO: TEMPORARY
       - run: ls -al
       - run: cd temp && ls -al
 
-
       - name: Merge files
-        run: npx cypress-load-balancer merge -G "/temp/spec-map-*.json" --HE error
+        run: npx cypress-load-balancer merge -G "./.cypress_load_balancer/temp/spec-map-*.json" --HE error
 
       - name: Save overwritten cached load-balancing map
         id: cache-save-load-balancing-map
