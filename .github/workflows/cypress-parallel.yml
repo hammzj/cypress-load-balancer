@@ -37,6 +37,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      # "yarn build" is only needed for this project to build the CLI ! It shouldn't be required in other projects as the CLI scripts should be installed normally
+      - name: Install dependencies
+        run: |
+          yarn install
+          yarn build 
+
       - id: generate-runners
         run: npx cypress-load-balancer generate-runners ${{ inputs.runner_count || env.runner_count }} --gha
 
