@@ -33,7 +33,8 @@ export default [
   {
     rules: {
       "@typescript-eslint/no-unused-expressions": 1,
-      "@typescript-eslint/no-namespace": 0
+      "@typescript-eslint/no-namespace": 0,
+      "no-useless-escape": 0
     }
   },
   {

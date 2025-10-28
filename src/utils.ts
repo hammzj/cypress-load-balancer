@@ -24,6 +24,14 @@ class Utils {
     return ["e2e", "component"];
   }
 
+  get EMPTY_FILE_NAME_REGEXP(): RegExp {
+    return /clb-empty-\d+-\d+.cy.js/;
+  }
+
+  get EMPTY_FILE_NAME(): string {
+    return "empty.cy.js";
+  }
+
   /**
    * Adds a new filepath entry to the load balancing map
    * @param loadBalancingMap {LoadBalancingMap}
@@ -89,6 +97,7 @@ class Utils {
       isDirectoryCreated = true;
     }
 
+    //This is for the MAIN map! Not the current runner map!
     if (!fs.existsSync(this.MAIN_LOAD_BALANCING_MAP_FILE_PATH) || opts.forceCreateMainLoadBalancingMap === true) {
       this.saveMapFile({ e2e: {}, component: {} });
       debug("Load balancing map file initialized", `Forced initialization?`, opts.forceCreateMainLoadBalancingMap);
@@ -120,6 +129,8 @@ class Utils {
     loadBalancingMap[testingType][fileName].stats.median = this.calculateMedianDuration(
       loadBalancingMap[testingType][fileName].stats.durations
     );
+
+    debug("MAXIMUM_DURATIONS_ALLOWED: %d", this.MAX_DURATIONS_ALLOWED);
 
     debug(
       `%s test file stats updated for "%s": %O`,

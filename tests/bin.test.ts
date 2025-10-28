@@ -1,15 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 //TODO: has a lot of issues on GHA. Using husky to run tests on pre-commit now
 
 //Before you run this file, run an `npm run build` or `yarn build`
 import { exec } from "node:child_process";
 import fs from "node:fs";
+import path from "path";
 import { expect } from "chai";
 import sinon from "sinon";
-//@ts-expect-error No types exist
-import findCypressSpecs from "find-cypress-specs";
-import { stubReadLoadBalancerFile, runCmd } from "./support/utils";
-import { glob } from "glob";
+import { stubReadLoadBalancerFile, runArgvCmd } from "./support/utils";
 import cli from "../src/cli";
 import utils from "../src/utils";
 
@@ -31,15 +29,15 @@ describe("Executables", function () {
     context("client", function () {
       context("commands", function () {
         describe("initialize", function () {
-          it("can initialize the file", async function () {
+          it("can initialize the main file", async function () {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([false, false]);
-            await runCmd(cli, `initialize`);
+            await runArgvCmd(cli, `initialize`);
             expect(stub).to.have.been.called;
           });
 
           it("can force re-create the directory", async function () {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([true, false]);
-            await runCmd(cli, `initialize --force-dir`);
+            await runArgvCmd(cli, `initialize --force-dir`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: true,
               forceCreateMainLoadBalancingMap: false
@@ -48,220 +46,10 @@ describe("Executables", function () {
 
           it("can force re-create the file", async function () {
             const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([false, true]);
-            await runCmd(cli, `initialize --force`);
+            await runArgvCmd(cli, `initialize --force`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: false,
               forceCreateMainLoadBalancingMap: true
-            });
-          });
-        });
-
-        describe("balance", function () {
-          beforeEach(function () {
-            sandbox.stub(fs, "writeFileSync");
-          });
-
-          const requiredArgs = ["runners", "testing-type"];
-          requiredArgs.map((a) => {
-            it(`requires ${a} as an argument`, async function () {
-              const { output } = await runCmd(cli, ``);
-              const required = output.split("\n").find((e) => e.match(/^Missing required arguments/));
-              expect(required).to.include(a);
-            });
-          });
-
-          it("runs load balancing", async function () {
-            stubReadLoadBalancerFile(sandbox, {
-              e2e: {},
-              component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
-            });
-            const { argv } = await runCmd(
-              cli,
-              `-r 3 -t component -a round-robin -F "foo.test.ts" --removeEmptyRunners=false`
-            );
-            expect(JSON.parse(argv.output)).to.deep.eq([["foo.test.ts"], [], []]);
-          });
-
-          ["weighted-total", "round-robin"].map((algorithm) => {
-            it(`can accept a choice of which algorithm to use: ${algorithm}`, async function () {
-              stubReadLoadBalancerFile(sandbox, {
-                e2e: {},
-                component: { ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
-              });
-              const { argv } = await runCmd(cli, `-r 3 -t component -F "foo.test.ts" -a ${algorithm}`);
-              expect(argv.algorithm).to.deep.eq(algorithm);
-            });
-          });
-
-          it("throws an error on unknown algorithm selection", async function () {
-            const { error } = await runCmd(cli, `-r 3 -t component -F "foo.test.ts" -a FAKE`);
-            expect(error).to.not.be.null;
-          });
-
-          it("can format the output as a comma-delimited string", async function () {
-            stubReadLoadBalancerFile(sandbox, {
-              e2e: {},
-              component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
-                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
-                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
-              }
-            });
-            const { argv } = await runCmd(
-              cli,
-              `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
-            );
-            expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts,baz.test.ts", "bar.test.ts"]);
-          });
-
-          it("can format the output in spec format", async function () {
-            stubReadLoadBalancerFile(sandbox, {
-              e2e: {},
-              component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
-                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
-                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
-              }
-            });
-            const { argv } = await runCmd(
-              cli,
-              `-r 2 -t component --fm spec -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
-            );
-            expect(JSON.parse(argv.output)).to.deep.eq(["--spec foo.test.ts,baz.test.ts", "--spec bar.test.ts"]);
-          });
-
-          it("can format the output as a newline-delimited string", async function () {
-            stubReadLoadBalancerFile(sandbox, {
-              e2e: {},
-              component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
-                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
-                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
-              }
-            });
-            const { argv } = await runCmd(
-              cli,
-              `-r 2 -t component --fm newline -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
-            );
-            expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts\nbaz.test.ts", "bar.test.ts"]);
-          });
-
-          it("can find files by glob patterns", async function () {
-            stubReadLoadBalancerFile(sandbox, {
-              e2e: {},
-              component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
-                ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
-                ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
-              }
-            });
-            const stub = sandbox.stub(glob, "globSync").returns(["foo.test.ts", "bar.test.ts"]);
-            await runCmd(
-              cli,
-              `-r 2 -t component --format string -G "**/foo.test.ts" -G "**/bar.test.ts" -a round-robin`
-            );
-            expect(stub).to.have.been.calledOnceWith(["**/foo.test.ts", "**/bar.test.ts"]);
-          });
-
-          it("uses getSpecs if no other file options are provided", async function () {
-            const stub = sandbox.stub(findCypressSpecs, "getSpecs").returns(["foo.test.ts"]);
-            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            sandbox
-              .stub(glob, "globSync")
-              .withArgs([])
-              .returns([])
-              .withArgs(["**/foo.test.ts"])
-              .returns(["foo.test.ts"]);
-
-            //Call stub when not files are not provided
-            await runCmd(cli, `-r 2 -t component`);
-            //Should not be called when files are provided
-            await runCmd(
-              cli,
-              `-r 2 -t component --format string -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`
-            );
-
-            //Should not be called when globs are provided
-            await runCmd(cli, `-r 2 -t component --format string -G "**/foo.test.ts"`);
-
-            expect(stub).to.have.been.calledOnce;
-          });
-
-          it("defaults to filters out empty runners", async function () {
-            const specMap = {
-              e2e: {},
-              component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } }
-              }
-            };
-            stubReadLoadBalancerFile(sandbox, specMap);
-            //Runner count is greater than the total files
-            const runnerCount = Object.keys(specMap.component).length + 1;
-
-            const { argv } = await runCmd(
-              cli,
-              `-r ${runnerCount} -t component --format string -F "foo.test.ts" -a round-robin`
-            );
-            expect(JSON.parse(argv.output)).to.have.lengthOf(1);
-            expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts"]);
-          });
-
-          it("can skip filtering out empty runners with an option", async function () {
-            const specMap = {
-              e2e: {},
-              component: {
-                ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } }
-              }
-            };
-            stubReadLoadBalancerFile(sandbox, specMap);
-            //Runner count is greater than the total files
-            const runnerCount = Object.keys(specMap.component).length + 1;
-
-            const { argv } = await runCmd(
-              cli,
-              `-r ${runnerCount} -t component --format string -F "foo.test.ts" -a round-robin --removeEmptyRunners=false`
-            );
-            expect(JSON.parse(argv.output)).to.have.lengthOf(2);
-            expect(JSON.parse(argv.output)).to.deep.eq(["foo.test.ts", ""]);
-          });
-
-          context("setting GitHub Actions outputs", function () {
-            let output: string, write;
-            //eslint-disable-next-line prefer-const
-            write = process.stdout.write;
-
-            beforeEach(function () {
-              output = "";
-              //@ts-expect-error Ignore
-              process.stdout.write = function (str) {
-                output += str;
-              };
-            });
-
-            afterEach(function () {
-              process.stdout.write = write;
-            });
-
-            it("can set the Github Actions output", async function () {
-              stubReadLoadBalancerFile(sandbox, {
-                e2e: {},
-                component: {
-                  ["foo.test.ts"]: { stats: { durations: [3000], average: 3000, median: 3000 } },
-                  ["bar.test.ts"]: { stats: { durations: [2000], average: 2000, median: 2000 } },
-                  ["baz.test.ts"]: { stats: { durations: [100], average: 100, median: 100 } }
-                }
-              });
-              //Can't use helper function here for this
-              const cmdOutput = await new Promise((resolve) => {
-                cli.parse(
-                  `-r 2 -t component --format string --gha -F "foo.test.ts" -F "bar.test.ts" -F "baz.test.ts" -a round-robin`,
-                  //@ts-expect-error ignore
-                  (_err, _argv, _output) => {
-                    resolve(output);
-                  }
-                );
-              });
-              expect(output).to.eq(cmdOutput);
             });
           });
         });
@@ -273,19 +61,19 @@ describe("Executables", function () {
 
           it("requires either a glob pattern or a list of files", async function () {
             stubReadLoadBalancerFile(sandbox);
-            const { error } = await runCmd(cli, `merge`);
+            const { error } = await runArgvCmd(cli, `merge`);
             expect(error?.message).to.contain("At least one file path or a glob pattern must be provided.");
           });
 
           it(`defaults the original to the "./cypress_load_balancer/spec-map.json"`, async function () {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            const { argv } = await runCmd(cli, `merge -G **/files/*.json`);
+            const { argv } = await runArgvCmd(cli, `merge -G **/files/*.json`);
             expect(argv.original).to.eq(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
           });
 
           it("can have a different original file specified", async function () {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            const { argv } = await runCmd(cli, `merge -F fake1.json --og foo.json`);
+            const { argv } = await runArgvCmd(cli, `merge -F fake1.json --og foo.json`);
             expect(argv.original).to.eq("foo.json");
           });
 
@@ -298,7 +86,7 @@ describe("Executables", function () {
               .withArgs("/files/fake2.json")
               .returns(JSON.stringify({ e2e: { "bar.test.ts": { stats: { durations: [100], average: 100 } } } }));
             const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
-            const { argv } = await runCmd(cli, `merge -F fake1.json -F /files/fake2.json`);
+            const { argv } = await runArgvCmd(cli, `merge -F fake1.json -F /files/fake2.json`);
             expect(saveMapFileStub).to.have.been.calledOnce.and.calledWithMatch(
               {
                 e2e: {
@@ -310,22 +98,20 @@ describe("Executables", function () {
             );
           });
 
-          it("defaults to overwrite the original file", function (done) {
+          it("defaults to overwrite the original file", async function () {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            runCmd(cli, `merge -F fake1.json`);
+            await runArgvCmd(cli, `merge -F fake1.json`);
             expect(this.writeFileSyncStub).to.have.been.calledWithMatch(
               utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH,
               sinon.match.any
             );
-            done();
           });
 
-          it("can have a different output file specified for saving", function (done) {
+          it("can have a different output file specified for saving", async function () {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
-            runCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
+            await runArgvCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
             expect(saveMapFileStub).to.have.been.calledWithMatch(sandbox.match.any, `/files/alternate.json`);
-            done();
           });
 
           it("can have input files specified for merging", async function () {
@@ -336,7 +122,7 @@ describe("Executables", function () {
               })
             );
             const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
-            await runCmd(cli, `merge -F fake1.json -F /files/fake2.json`);
+            await runArgvCmd(cli, `merge -F fake1.json -F /files/fake2.json`);
             expect(readFileSyncStub.args.some((a: any[]) => a[0].includes("fake1.json"))).to.be.true;
             expect(readFileSyncStub.args.some((a: any[]) => a[0].includes("/files/fake2.json"))).to.be.true;
             expect(saveMapFileStub).to.have.been.calledOnce;
@@ -344,17 +130,103 @@ describe("Executables", function () {
 
           it("can use a glob pattern to find input files", async function () {
             const stub = sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            await runCmd(cli, `merge -G tests/fixtures/spec-map/**.json`);
+            await runArgvCmd(cli, `merge -G tests/fixtures/spec-map/**.json`);
             expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/spec-map/generic.json"))).to.be.true;
             expect(stub.args.some((a: any[]) => a[0].includes("/tests/fixtures/spec-map/all-equal-time.json"))).to.be
               .true;
           });
 
-          it("skips merging if no files are found", function (done) {
+          it(`The glob pattern for merging runners works with \".cypress_load_balancer/spec-map-*-*.json\"`, async function () {
+            const tempFileNames = [
+              "/.cypress_load_balancer/spec-map-1-4.json",
+              "/.cypress_load_balancer/spec-map-2-4.json",
+              "/.cypress_load_balancer/spec-map-3-4.json",
+              "/.cypress_load_balancer/spec-map-4-4.json"
+            ];
+            this.writeFileSyncStub.restore();
+            tempFileNames.map((f) => {
+              fs.writeFileSync(
+                path.join(process.cwd(), f),
+                JSON.stringify({
+                  e2e: {},
+                  component: {}
+                })
+              );
+            });
+
+            this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
+            sandbox.stub(utils, "saveMapFile");
+            const stub = sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+
+            //Because this is being executed in a sub-directory,
+            // we need to treat the glob with the path from the base directory
+            const tempGlob = path.join(process.cwd(), "/.cypress_load_balancer/spec-map-*-*.json");
+
+            await runArgvCmd(cli, `merge -G "${tempGlob}"`);
+
+            tempFileNames.map((f) => {
+              expect(stub.args.some((a: any[]) => a[0].includes(f))).to.be.true;
+            });
+          });
+
+          it("skips merging if no files are found", async function () {
             const stub = sandbox.stub(utils, "saveMapFile");
-            runCmd(cli, `merge -G fakeDir/**.json`);
+            await runArgvCmd(cli, `merge -G fakeDir/**.json`);
             expect(stub).to.not.have.been.called;
-            done();
+          });
+
+          it("can delete temp files", async function () {
+            const stub = sandbox.stub(fs, "unlinkSync");
+            await runArgvCmd(cli, `merge -G tests/fixtures/spec-map/**.json --rm`);
+            expect(stub).to.have.been.called;
+          });
+        });
+
+        describe("generate-runners", function () {
+          let output: string, write;
+          //eslint-disable-next-line prefer-const
+          write = process.stdout.write;
+
+          beforeEach(function () {
+            output = "";
+            //@ts-expect-error Ignore
+            process.stdout.write = function (str) {
+              output += str;
+            };
+          });
+
+          afterEach(function () {
+            process.stdout.write = write;
+          });
+
+          it("can generate an array of runner values to pass to CYPRESS_runner or --env runner", async function () {
+            await runArgvCmd(cli, `generate-runners 4`);
+            expect(output).to.contain("[ '1/4', '2/4', '3/4', '4/4' ]");
+          });
+
+          it("requires a count of runners", async function () {
+            const { error } = await runArgvCmd(cli, `generate-runners`);
+            expect(error?.message).to.contain("Not enough non-option arguments: got 0, need at least 1");
+          });
+
+          it("cannot have the count as 0", async function () {
+            const { error } = await runArgvCmd(cli, `generate-runners 0`);
+            expect(error?.message).to.contain("The runner count must be greater than 0");
+          });
+
+          it("cannot have the count less than 0", async function () {
+            const { error } = await runArgvCmd(cli, `generate-runners -1`);
+            expect(error?.message).to.contain("The runner count must be greater than 0");
+          });
+
+          it("can set the Github Actions output to `runner-variables`", async function () {
+            const cmdOutput = await new Promise((resolve) => {
+              cli.parse(`generate-runners 4 --gha`, () => {
+                resolve(output);
+              });
+            });
+            expect(output).to.eq(cmdOutput);
+            expect(output).to.contain("name=runner-variables");
           });
         });
       });
@@ -363,9 +235,7 @@ describe("Executables", function () {
     it(`can be executed with "npx"`, function (done) {
       if (IS_ON_GHA) this.skip();
       exec("npx cypress-load-balancer", (err) => {
-        expect((err as Error).message)
-          .to.contain(`cypress-load-balancer`)
-          .and.contain(`Performs load balancing against a set of runners and Cypress specs`);
+        expect((err as Error).message).to.contain(`cypress-load-balancer`);
         done();
       });
     });

@@ -15,9 +15,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
           scope: "@hammzj"
+          cache: yarn
       - run: |
           yarn
           yarn build
           yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

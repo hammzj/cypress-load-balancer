@@ -44,21 +44,15 @@ describe("Load balancing", function () {
     });
   });
 
-  it("can remove empty runners if there are no files", function () {
-    stubReadLoadBalancerFile(sandbox);
-    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest", { removeEmptyRunners: true });
-    expect(runners).to.have.lengthOf(0);
-  });
-
-  it("defaults to remove empty runners", function () {
+  it("defaults to keep empty runners (needed for consistency's sake)", function () {
     stubReadLoadBalancerFile(sandbox);
     const runners = performLoadBalancing(3, "e2e", []);
-    expect(runners).to.have.lengthOf(0);
+    expect(runners).to.have.lengthOf(3);
   });
 
-  it("can keep empty runners when the option is specified", function () {
+  it("can retains empty runners when there are no files", function () {
     stubReadLoadBalancerFile(sandbox);
-    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest", { removeEmptyRunners: false });
+    const runners = performLoadBalancing(3, "e2e", [], "weighted-largest");
     expect(runners).to.have.lengthOf(3);
   });
 
@@ -93,6 +87,7 @@ describe("Load balancing", function () {
         expect(output).to.include("Using algorithm for load balancing: weighted-largest");
       });
     });
+
     it("throws an error on unknown algorithm", function () {
       const fixture = getFixture<LoadBalancingMap>("spec-map/generic.json", { parseJSON: true });
       stubReadLoadBalancerFile(sandbox, fixture);
@@ -262,11 +257,20 @@ describe("Load balancing", function () {
 
       it("can handle a brand new map", function () {
         this.writeFileSyncStub = this.writeFileSyncStub.withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
-        const newFiles = ["newFile.1.test.ts", "newFile.2.test.ts", "newFile.3.test.ts", "newFile.4.test.ts"];
+        const newFiles = [
+          "newFile.1.test.ts",
+          "newFile.2.test.ts",
+          "newFile.3.test.ts",
+          "newFile.4.test.ts",
+          "newFile.5.test.ts",
+          "newFile.6.test.ts",
+          "newFile.7.test.ts",
+          "newFile.8.test.ts"
+        ];
         const runners = performLoadBalancing(2, "e2e", newFiles, "weighted-largest");
         expect(runners).to.deep.equal([
-          ["newFile.4.test.ts", "newFile.2.test.ts"],
-          ["newFile.3.test.ts", "newFile.1.test.ts"]
+          ["newFile.8.test.ts", "newFile.6.test.ts", "newFile.4.test.ts", "newFile.2.test.ts"],
+          ["newFile.7.test.ts", "newFile.5.test.ts", "newFile.3.test.ts", "newFile.1.test.ts"]
         ]);
         expect(this.writeFileSyncStub.calledOnce).to.be.true;
 
