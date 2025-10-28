@@ -35,6 +35,13 @@ export default {
           type: "array",
           default: []
         })
+        .option("handle-empty-files", {
+          alias: "HE",
+          type: "string",
+          choices: ["ignore", "warn", "error"],
+          default: "warn",
+          description: "What should the script do when it has no files to merge?"
+        })
         .option("removeExtraMaps", {
           alias: "rm",
           type: "boolean",
@@ -89,7 +96,15 @@ export default {
         console.log("Removed temporary files", fileNames);
       }
     } else {
-      console.warn("cypress-load-balancer", "No input files found, so skipping merging of maps");
+      switch (argv["handle-empty-files"]) {
+        case "warn":
+          console.warn("cypress-load-balancer", "No input files found, so skipping merging of maps");
+          break;
+        case "error":
+          throw Error("No input files provided or found for the merge command to use!");
+        default:
+          break;
+      }
     }
   }
 };

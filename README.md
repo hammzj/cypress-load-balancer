@@ -346,30 +346,34 @@ cypress-load-balancer merge
 Merges load balancing map files together back to an original map.
 
 Options:
-      --help                   Show help                               [boolean]
-      --version                Show version number                     [boolean]
-      --original, --og         The JSON file path of the original load balancing
-                               map into which to merge other files.
-                               Defaulted to exist within the current working
-                               directory at
-                               "./cypress_load_balancer/spec-map.json"
+      --help                       Show help                           [boolean]
+      --version                    Show version number                 [boolean]
+      --original, --og             The JSON file path of the original load
+                                   balancing map into which to merge other
+                                   files.
+                                   Defaulted to exist within the current working
+                                   directory at
+                                   "./cypress_load_balancer/spec-map.json"
   [string] [default: "/Users/hammzj/Documents/GitHub/hammzj/cypress-load-balance
                                         r/.cypress_load_balancer/spec-map.json"]
-  -F, --files                  A list of other files to load and merge back to
-                               the original                [array] [default: []]
-  -G, --glob                   One or more glob patterns to match for load
-                               balancing maps to merge.Make sure to wrap in
-                               quotes for the glob to work correctly.
-                               NOTE: If merging maps from multiple runners, use
-                               the pattern
-                               ".cypress_load_balancer/spec-map-*-*.json"
+  -F, --files                      A list of other files to load and merge back
+                                   to the original         [array] [default: []]
+  -G, --glob                       One or more glob patterns to match for load
+                                   balancing maps to merge.Make sure to wrap in
+                                   quotes for the glob to work correctly.
+                                   NOTE: If merging maps from multiple runners,
+                                   use the pattern
+                                   ".cypress_load_balancer/spec-map-*-*.json"
                                                            [array] [default: []]
-      --removeExtraMaps, --rm  If true, it will delete all input files while
-                               keeping the original map. This only works if in
-                               the default ".cypress_load_balancer" directory.
-                                                      [boolean] [default: false]
-  -o, --output                 An output file path to which to save. If not
-                               provided, uses the original file path    [string]
+      --handle-empty-files, --hef  What should the script do when it has no
+                                   files to merge?
+                 [string] [choices: "ignore", "warn", "error"] [default: "warn"]
+      --removeExtraMaps, --rm      If true, it will delete all input files while
+                                   keeping the original map. This only works if
+                                   in the default ".cypress_load_balancer"
+                                   directory.         [boolean] [default: false]
+  -o, --output                     An output file path to which to save. If not
+                                   provided, uses the original file path[string]
 ```
 
 ### `generate-runners`
