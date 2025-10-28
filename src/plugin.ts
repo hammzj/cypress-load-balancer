@@ -23,12 +23,17 @@ const createEmptyFileForEmptyRunner = (runnerIndex: number, runnerCount: number)
   const tempFileNameToUse = path.join(os.tmpdir(), `clb-empty-${userInputtedRunnerIndex}-${runnerCount}.cy.js`);
   fs.copyFileSync(emptyFilename, tempFileNameToUse);
 
+  console.warn(
+    "Runner %d/%d is empty! Running an empty spec instead to prevent Cypress producing an error.",
+    userInputtedRunnerIndex,
+    runnerCount
+  );
   debug("Empty file created for runner %d/%d: %s", userInputtedRunnerIndex, runnerCount, tempFileNameToUse);
   return tempFileNameToUse;
 };
 
-const getRunnerEnv = (envRunner: string): [number, number] => {
-  const [runnerIndex, runnerCount] = envRunner.split("/").map(Number);
+const getRunnerArgs = (runner: string): [number, number] => {
+  const [runnerIndex, runnerCount] = runner.split("/").map(Number);
   const hasIncorrectFormat = [runnerIndex, runnerCount].some((v) => Number.isNaN(v) || v == null);
 
   //Error handling
@@ -41,9 +46,7 @@ const getRunnerEnv = (envRunner: string): [number, number] => {
   } else if (runnerCount <= 0) {
     throw Error("env.runner count cannot be 0! Runner count must begin at 1");
   } else if (runnerIndex > runnerCount) {
-    throw Error(
-      `env.runner is incorrect! The runner index cannot be greater than the total runner count: ${envRunner}`
-    );
+    throw Error(`env.runner is incorrect! The runner index cannot be greater than the total runner count: ${runner}`);
   }
 
   //Runner index must begin at "1" when declared by a user, but we need to subtract 1 from it for the actual method.
@@ -51,22 +54,6 @@ const getRunnerEnv = (envRunner: string): [number, number] => {
   //User declares runnerIndex 1, but it needs to be returned as 0. This is expected.
   //User declares runnerIndex as 2, then it is returned as 1.
   return [runnerIndex - 1, runnerCount];
-};
-
-/**
- * In regular Cypress space, `--spec` overrides the config's `specPattern`.
- * However, plugins cannot access `--spec`, but they can access `SPEC` or `env.spec`.
- * If a plugin performs filtering against the `specPattern`, then passing in `--spec` may result
- * in an error if `--spec` does not match the filtered `specPattern`.
- *
- * This function will get the appropriate spec pattern to use in the `getSpecs` method
- *
- * Prefer `env.spec` when defining individual spec patterns to perform additional filtering.
- * @param config { Cypress.PluginConfigOptions,}
- * @returns {string[]}
- */
-const getSpecPatternOverride = (config: Cypress.PluginConfigOptions): string[] => {
-  return [process.env.SPEC || process.env.spec || config.env?.SPEC || config.env?.spec || config.specPattern].flat();
 };
 
 export default function addCypressLoadBalancerPlugin(
@@ -124,19 +111,9 @@ export default function addCypressLoadBalancerPlugin(
       cypressLoadBalancerAlgorithm
     });
 
-    const [runnerIndex, runnerCount] = getRunnerEnv(runner);
+    const [runnerIndex, runnerCount] = getRunnerArgs(runner);
 
-    //This will appropriately update the `specPattern` if an override is declared
-    const specPatternOverride = getSpecPatternOverride(config);
-    debug("specPatternOverride: %s", specPatternOverride);
-
-    const getSpecsOptions = {
-      ...config,
-      specPattern: specPatternOverride.length > 0 ? specPatternOverride : config.specPattern
-    };
-
-    const filePaths = getSpecs(getSpecsOptions, testingType);
-
+    const filePaths = getSpecs({ ...config }, testingType);
     const runners = performLoadBalancing(
       runnerCount,
       testingType,

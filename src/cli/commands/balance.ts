@@ -54,11 +54,12 @@ export default {
             `\nweighted-largest:  Attempts to get a uniform total run time between all runners by separating the longest-running tests into their own runners first, and attempting to keep all other runners equal to or lower than its time. If there are more tests than runners, it will repeat based against the newest highest run time from the runners.` +
             `\nround-robin: Balances the runners based on a modulo-index approach, where the X-indexed runner will get the X-indexed test file after performing a modulo operation on the index against the total runner count.`
         })
-        .option("spec", {
+        .option("specPattern", {
+          alias: "sp",
           type: "string",
           demandOption: false,
           description:
-            'Declare "--spec" if you wish to override the Cypress configuration `specPattern`. This is assumed to match what can be input as `cypress run --env spec={your-pattern}`'
+            'Declare "--specPattern"  or "--sp" if you wish to override the Cypress configuration `specPattern`. This is assumed to match what can be input as `cypress run --config specPattern="{your-pattern}"`'
         })
         .option("removeEmptyRunners", {
           type: "boolean",
@@ -120,8 +121,8 @@ export default {
     try {
       const config = findCypressSpecs.getConfig();
       const getSpecsOptions = { ...config };
-      if (argv.spec != null) {
-        debug("argv.spec provided, so overriding base Cypress configuration specPattern");
+      if (argv.specPattern != null) {
+        debug("argv.specPattern provided, so overriding base Cypress configuration specPattern");
         debug("Base config spec pattern: %s", config[testingType]?.specPattern);
         getSpecsOptions[testingType].specPattern = argv.spec;
         getSpecsOptions.specPattern = argv.spec;

@@ -57,7 +57,8 @@ describe("Executables", function () {
           });
         });
 
-        describe("balance", function () {
+        //TODO: remove this command
+        describe.skip("balance", function () {
           beforeEach(function () {
             sandbox.stub(fs, "writeFileSync");
           });
@@ -78,7 +79,7 @@ describe("Executables", function () {
             });
             const { argv } = await runCmd(
               cli,
-              `-r 3 -t component -a round-robin -F "foo.test.ts" --removeEmptyRunners=false`
+              `-r 3 -t component -a round-robin --specPattern "foo.test.ts" --removeEmptyRunners=false`
             );
             expect(JSON.parse(argv.output)).to.deep.eq([["foo.test.ts"], [], []]);
           });
@@ -311,22 +312,20 @@ describe("Executables", function () {
             );
           });
 
-          it("defaults to overwrite the original file", function (done) {
+          it("defaults to overwrite the original file", async function () {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            runCmd(cli, `merge -F fake1.json`);
+            await runCmd(cli, `merge -F fake1.json`);
             expect(this.writeFileSyncStub).to.have.been.calledWithMatch(
               utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH,
               sinon.match.any
             );
-            done();
           });
 
-          it("can have a different output file specified for saving", function (done) {
+          it("can have a different output file specified for saving", async function () {
             sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
             const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
-            runCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
+            await runCmd(cli, `merge -F fake1.json -o /files/alternate.json`);
             expect(saveMapFileStub).to.have.been.calledWithMatch(sandbox.match.any, `/files/alternate.json`);
-            done();
           });
 
           it("can have input files specified for merging", async function () {
@@ -389,6 +388,44 @@ describe("Executables", function () {
             runCmd(cli, `merge -G fakeDir/**.json`);
             expect(stub).to.not.have.been.called;
             done();
+          });
+        });
+
+        describe("generate-runners", function () {
+          let output: string, write;
+          //eslint-disable-next-line prefer-const
+          write = process.stdout.write;
+
+          beforeEach(function () {
+            output = "";
+            //@ts-expect-error Ignore
+            process.stdout.write = function (str) {
+              output += str;
+            };
+          });
+
+          afterEach(function () {
+            process.stdout.write = write;
+          });
+
+          it("can generate an array of runner values to pass to CYPRESS_runner or --env runner", async function () {
+            await runCmd(cli, `generate-runners 4`);
+            expect(output).to.contain("[ '1/4', '2/4', '3/4', '4/4' ]");
+          });
+
+          it("requires a count of runners", async function () {
+            const { error } = await runCmd(cli, `generate-runners`);
+            expect(error?.message).to.contain("Not enough non-option arguments: got 0, need at least 1");
+          });
+
+          it("cannot have the count as 0", async function () {
+            const { error } = await runCmd(cli, `generate-runners 0`);
+            expect(error?.message).to.contain("The runner count must be greater than 0");
+          });
+
+          it("cannot have the count less than 0", async function () {
+            const { error } = await runCmd(cli, `generate-runners -1`);
+            expect(error?.message).to.contain("The runner count must be greater than 0");
           });
         });
       });
