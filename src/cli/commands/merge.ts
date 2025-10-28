@@ -31,9 +31,16 @@ export default {
           description:
             "One or more glob patterns to match for load balancing maps to merge." +
             "Make sure to wrap in quotes for the glob to work correctly." +
-            '\nNOTE: If merging maps from multiple runners, use the pattern "./cypress_load_balancer/spec-map-*-*.json"',
+            '\nNOTE: If merging maps from multiple runners, use the pattern ".cypress_load_balancer/spec-map-*-*.json"',
           type: "array",
           default: []
+        })
+        .option("removeExtraMaps", {
+          alias: "rm",
+          type: "boolean",
+          default: false,
+          description:
+            'If true, it will delete all input files while keeping the original map. This only works if in the default ".cypress_load_balancer" directory.'
         })
         .option("output", {
           alias: "o",
@@ -59,17 +66,28 @@ export default {
     const orig = JSON.parse(fs.readFileSync(argv.original).toString());
     const others: LoadBalancingMap[] = [];
 
-    //Collect data from files found by glob
-    globSync(argv.glob, { dot: true, absolute: true, ignore: argv.original }).map(loadFile);
+    const fileNames = [
+      //Collect data from files found by glob
+      globSync(argv.glob, { dot: true, absolute: true, ignore: argv.original }),
+      //Collect data from explicit file names
+      argv.files
+    ].flat();
 
-    //Collect data from explicit file names
-    argv.files.map(loadFile);
+    fileNames.map(loadFile);
 
     debug("spec-maps to merge to original: %o", others);
     if (others.length > 0) {
       const merged = mergeLoadBalancingMapFiles(orig, others);
       utils.saveMapFile(merged, argv.output);
       console.log("cypress-load-balancer", "map merge complete");
+
+      if (argv.removeExtraMaps) {
+        fileNames.map((f) => {
+          fs.unlinkSync(f);
+          debug("Removed temp map file: %s", f);
+        });
+        console.log("Removed temporary files", fileNames);
+      }
     } else {
       console.warn("cypress-load-balancer", "No input files found, so skipping merging of maps");
     }

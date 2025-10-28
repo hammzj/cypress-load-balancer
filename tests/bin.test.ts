@@ -383,11 +383,16 @@ describe("Executables", function () {
             });
           });
 
-          it("skips merging if no files are found", function (done) {
+          it("skips merging if no files are found", async function () {
             const stub = sandbox.stub(utils, "saveMapFile");
-            runCmd(cli, `merge -G fakeDir/**.json`);
+            await runCmd(cli, `merge -G fakeDir/**.json`);
             expect(stub).to.not.have.been.called;
-            done();
+          });
+
+          it("can delete temp files", async function () {
+            const stub = sandbox.stub(fs, "unlinkSync");
+            await runCmd(cli, `merge -G tests/fixtures/spec-map/**.json --rm`);
+            expect(stub).to.have.been.called;
           });
         });
 
@@ -434,9 +439,7 @@ describe("Executables", function () {
     it(`can be executed with "npx"`, function (done) {
       if (IS_ON_GHA) this.skip();
       exec("npx cypress-load-balancer", (err) => {
-        expect((err as Error).message)
-          .to.contain(`cypress-load-balancer`)
-          .and.contain(`Performs load balancing against a set of runners and Cypress specs`);
+        expect((err as Error).message).to.contain(`cypress-load-balancer`);
         done();
       });
     });

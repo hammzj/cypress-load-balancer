@@ -30,7 +30,7 @@ Add the following to your `.gitignore` and other ignore files:
 .cypress_load_balancer
 ```
 
-In your Cypress configuration file, add the plugin separately to your `e2e` configuration and also `component`
+In your Cypress configuration file, add the plugin separately to your `e2e` configuration and `component`, if declared.
 configuration, if you have one. It must come after any other plugins that can mutate the `config.specPattern`. It is
 best to register it as the last plugin.
 
