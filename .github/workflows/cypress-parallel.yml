@@ -91,7 +91,7 @@ jobs:
           name: spec-map-${{ matrix.runner }}
           path: .cypress_load_balancer/spec-map-*.json
           include-hidden-files: true
-          if-no-files-found: 'error'
+          if-no-files-found: "error"
 
   merge_cypress_load_balancing_maps:
     runs-on: ubuntu-22.04
