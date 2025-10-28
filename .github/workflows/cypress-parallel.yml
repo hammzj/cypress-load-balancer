@@ -77,7 +77,7 @@ jobs:
           # Fix for https://github.com/cypress-io/github-action/issues/480
           config: videosFolder=/tmp/cypress-videos
           env:
-            runner: ${{ matrix.runner }}
+            CYPRESS_runner: ${{ matrix.runner }}
 
       - name: Upload temp load balancer map
         if: (!cancelled())
