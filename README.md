@@ -303,7 +303,7 @@ defineConfig({
 
 ## Command-line interface commands
 
-[//]: # "ALWAYS UPDATE THIS WHEN THE COMMAND LINE INTERFACE NEEDS UPDATED "
+[//]: <> "ALWAYS UPDATE THIS WHEN THE COMMAND LINE INTERFACE NEEDS UPDATED"
 
 This package also includes a command line interface for some additional helpers.
 
