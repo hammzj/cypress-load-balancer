@@ -26,17 +26,14 @@
     "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup",
     "cypress:open": "cypress open --e2e",
     "cypress:run": "cypress run --e2e",
-    "cypress:run:1/2": "cypress run --e2e --env runner=1/2",
-    "cypress:run:2/2": "cypress run --e2e --env runner=2/2",
-    "cypress:run:specific:1/2": "cypress run --e2e --env runner=1/2 --config specPattern=\"cypress/e2e/2-advanced-examples/*.cy.js\"",
-    "cypress:run:specific:2/2": "cypress run --e2e --env runner=2/2 --config specPattern=\"cypress/e2e/2-advanced-examples/*.cy.js\"",
-    "clb:merge": "npx cypress-load-balancer merge -G \".cypress_load_balancer/spec-map-*-*.json\"",
+    "merge-maps": "npx cypress-load-balancer merge -G \".cypress_load_balancer/spec-map-*-*.json\"",
     "dev:check": "tsc -p tsconfig.json",
     "dev:check:tests": "tsc -p tsconfig.test.json",
     "dev:format": "prettier --write . && prettier --write \".github/**/*.yml\"",
     "dev:lint": "eslint . && prettier --check . && prettier --check \".github/**/*.yml\"",
     "test:mocha": "mocha",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prepublish": "yarn build"
   },
   "files": [
     "dist/cjs",

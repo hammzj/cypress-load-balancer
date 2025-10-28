@@ -1,3 +1,5 @@
+import { setOutput } from "@actions/core";
+
 export default {
   command: "generate-runners <count>",
   description: "Creates an array of runner patterns to pass to `--env runners` in a CI/CD workflow.",
@@ -9,9 +11,18 @@ export default {
           describe: "The count of runners to use",
           type: "number"
         })
+        .option("set-gha-output", {
+          alias: "gha",
+          type: "boolean",
+          description: `Sets the output to the GitHub Actions step output as "runner-variables"`
+        })
         .example(
           "npx cypress-load-balancer generate-runners 4",
-          'Returns [ "1/4", "2/4", "3/4", "4/4" ]. For example, in a GitHub Actions workflow job, this can be passed to \`strategy.matrix.runner\` and then to either ENV.CYPRESS_runner or to \`cypress run --env runner="\${{matrix.runner}}"\`'
+          'Returns [ "1/4", "2/4", "3/4", "4/4" ]. Then, each of these can be iterated over and passed to either ENV.CYPRESS_runner or to \`cypress run --env runner="\${{matrix.runner}}"\`'
+        )
+        .example(
+          "npx cypress-load-balancer generate-runners 4 --gha",
+          'Returns [ "1/4", "2/4", "3/4", "4/4" ] to `steps.{step-name}.outputs.runner-variables`'
         )
         //@ts-expect-error Need to fix type
         .check(function (argv) {
@@ -25,6 +36,11 @@ export default {
   //@ts-expect-error Need to fix type
   handler: function (argv) {
     const runnerValues = Array.from({ length: argv.count }, (_, i) => `${i + 1}/${argv.count}`);
+
+    if (argv[`set-gha-output`]) {
+      setOutput("runner-variables", argv.output);
+      if (!process.env.DEBUG) console.clear();
+    }
     console.log(runnerValues);
   }
 };

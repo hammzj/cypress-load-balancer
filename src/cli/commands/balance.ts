@@ -1,7 +1,7 @@
-//TODO: add type later
+//TODO: this has been deprecated. It will eventually be replaced with a "demo" command
+// to see the outputs and timings before actually running Cypress.
 //eslint-disable @typescript-eslint/no-explicit-any
 
-import { setOutput } from "@actions/core";
 // @ts-expect-error There are no types for this package
 import findCypressSpecs from "find-cypress-specs";
 import performLoadBalancing from "../../loadBalancer";
@@ -17,8 +17,6 @@ const formatOutput = (output: Runners, type?: FormatOutputOption) => {
       return output.map((runner) => (runner.length > 0 ? `--spec ${runner.join(",")}` : ""));
     case "string":
       return output.map((runner) => runner.join(","));
-    case "newline":
-      return output.map((runner) => runner.join("\n"));
     default:
       return output;
   }
@@ -61,11 +59,6 @@ export default {
           description:
             'Declare "--specPattern"  or "--sp" if you wish to override the Cypress configuration `specPattern`. This is assumed to match what can be input as `cypress run --config specPattern="{your-pattern}"`'
         })
-        .option("removeEmptyRunners", {
-          type: "boolean",
-          default: true,
-          description: `If true, will remove empty runners and only return the number of runners that have files. If false, retains any empty runner arrays. In most cases, this should remain as true as providing any empty buckets to "--spec" may inadvertently result in Cypress failures.`
-        })
         .option("format", {
           alias: "fm",
           choices: ["spec", "string", "newline"] as FormatOutputOption[],
@@ -74,11 +67,6 @@ export default {
             `\n"--transform spec": Converts the output of the load balancer to be as an array of "--spec {file}" formats` +
             `\n"--transform string": Spec files per runner are joined with a comma; example: "tests/spec.a.ts,tests/spec.b.ts"` +
             `\n"--transform newline": Spec files per runner are joined with a newline; example: \n\t"tests/spec.a.ts\ntests/spec.b.ts"`
-        })
-        .option("set-gha-output", {
-          alias: "gha",
-          type: "boolean",
-          description: `Sets the output to the GitHub Actions step output as "cypressLoadBalancerSpecs"`
         })
         //TODO: allow using other file names. This is useful when multiple cypress configurations exist
         // .option('loadBalancingMapFileName', {
@@ -141,18 +129,14 @@ export default {
       argv.runners,
       testingType as TestingType,
       [...new Set(files)],
-      argv.algorithm,
-      { removeEmptyRunners: argv.removeEmptyRunners }
+      argv.algorithm
     );
 
-    argv.output = JSON.stringify(formatOutput(output, argv.format));
-
-    if (argv[`set-gha-output`]) {
-      setOutput("cypressLoadBalancerSpecs", argv.output);
-    }
+    argv.output =
+      argv.format === "newline" ? JSON.stringify(output, null, 2) : JSON.stringify(formatOutput(output, argv.format));
     if (process.env.DEBUG != null) {
       console.clear();
     }
-    console.log(argv.output);
+    console.table(argv.output);
   }
 };
