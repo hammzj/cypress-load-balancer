@@ -84,17 +84,17 @@ jobs:
         env:
           CYPRESS_runner: ${{ matrix.runner }}
 
-      # Artifacts cannot be saved with a forward slash ( / ), so this converts it from X/Y to X-Y
-      - id: standardize-runner-name-for-artifacts
+      # Artifacts cannot be saved with a forward slash ( / ), so this generates a UUID instead
+      - id: artifact-uuid
         run: |
-          runner_name=${${{martrix.runner}}/\//-}
-          echo "runner_name=$runner_name" >> "$GITHUB_OUTPUT"
+          uuid=$(uuidgen)
+          echo "uuid=$uuid" >> "$GITHUB_OUTPUT"
 
       - name: Upload temp load balancer map
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
-          name: spec-map-${{ steps.standardize-runner-name-for-artifacts.outputs.runner_name }}
+          name: spec-map-${{ steps.artifact-uuid.outputs.uuid }}
           path: .cypress_load_balancer/spec-map-*.json
           include-hidden-files: true
           if-no-files-found: "error"
