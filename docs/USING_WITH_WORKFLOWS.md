@@ -88,23 +88,34 @@ Caches cannot be accessed across feature branches.
 > release-b with the base main.
 >
 > When a cache is created by a workflow run triggered on a pull request, the cache is created for the merge ref (
-> `refs/pull/.../merge`). Because of this, the cache will have a limited scope and can only be restored by re-runs of the
+> `refs/pull/.../merge`). Because of this, the cache will have a limited scope and can only be restored by re-runs of
+> the
 > pull request. It cannot be restored by the base branch or other pull requests targeting that base branch.
 >
 > Multiple workflow runs in a repository can share caches. A cache created for a branch in a workflow run can be
 > accessed and restored from another workflow run for the same repository and branch.
+
+Furthermore, GitHub Actions does not allow restoring from cache if the workflow is run with `on.pull_request`:
+
+> When a cache is created by a workflow run triggered on a pull request, the cache is created for the merge ref (
+> refs/pull/.../merge). Because of this, the cache will have a limited scope and can only be restored by re-runs of the
+> pull request. It cannot be restored by the base branch or other pull requests targeting that base branch.
 
 ---
 
 There are some ways to get around this.
 
 First, when you need to update the load balancing map on your default trunk branch, you must run the
-test workflows on both the current PR head branch **and** the base branch when merging is complete, and ensure that the load balancing
+test workflows on both the current PR head branch **and** the base branch when merging is complete, and ensure that the
+load balancing
 map is uploaded as an artifact to the workflow!
 
-Next, when merging them together in a separate workflow, instead of restoring them from cache, use [`dawidd6/action-download-artifact@v8`](https://github.com/dawidd6/action-download-artifact)
-to download each load balancing map. Then, you can merge them, and save it to cache (and potentially upload it to the workflow.)
+Next, when merging them together in a separate workflow, instead of restoring them from cache, use [
+`dawidd6/action-download-artifact@v8`](https://github.com/dawidd6/action-download-artifact)
+to download each load balancing map. Then, you can merge them, and save it to cache (and potentially upload it to the
+workflow.)
 
 - See for more details.
   - https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache
   - https://github.com/actions/cache/blob/main/tips-and-workarounds.md#use-cache-across-feature-branches
+  - https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
