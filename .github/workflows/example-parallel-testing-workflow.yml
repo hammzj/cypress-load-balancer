@@ -6,6 +6,7 @@
 # 6. **Merge the temporary maps back to the original load balancing map.** ("merge_cypress_load_balancing_maps")
 # 7. **Save the updated main load balancing map back to its persisted location.** ("merge_cypress_load_balancing_maps")
 name: Example workflow | Load balancing of Cypress E2E tests
+
 on:
   pull_request:
   push:
