@@ -58,7 +58,9 @@ see [save-map-to-base-branch-on-pr-merge.yml](../.github/workflows/save-map-to-b
 This is the general process in GitHub Actions, for example:
 
 - When a pull request (PR) is closed AND also merged, then begin.
-- Download the load balancing map saved from the **head branch/branch-being-merged** test run. _(Note: you must upload the map to that workflow run first!)_
-- Restore the main load balancing map from the **base/target** branch.
-- Merge them together using `npx cypress-load-balancer merge`.
+- Download the load balancing map saved from the **head branch/branch-being-merged** test run to the folder of
+  `.cypress_load_balancer`.
+  - _(Note: you must upload the map to that workflow run first!)_
+- Restore the main load balancing map from the **base/target** branch to `temp` folder.
+- Merge them together using `npx cypress-load-balancer merge -G "./temp/**/spec-map.json"`.
 - Save the merged load balancing map to the cache of the **base** branch.
