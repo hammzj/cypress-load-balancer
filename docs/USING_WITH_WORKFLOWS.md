@@ -2,6 +2,8 @@
 
 I will improve on this documentation later, but for now, this is the main process.
 
+## Running parallelized tests
+
 The process is as such:
 
 - **Generate runner variables:** There are two ways to do this:
@@ -32,3 +34,33 @@ The process is as such:
     needed. It is wise to default to the trunk branch's mapping file, if it exists, and only update the trunk's branch
     when either a workflow is run against it, or the current branch is merged down to the trunk, where the trunk
     branch's map can be replaced by one existing in the merged branch's stored location.
+
+This is an example image of what a basic parallelized Cypress testing workflow will look like:
+
+- `generate_runner_variables` creates the `--env runner` inputs
+- `Cypress e2e tests (X/Y)` runs the subset of tests in parallel
+- `merge_cypress_load_balancing_maps` collects the temporary spec maps and merges them back to the branch's load
+  balancing map so new timings are collected.
+
+![This is an example image of what a basic parallelized Cypress testing workflow will look like](img/parallel-testing-workflow.png)
+
+    ***
+
+## Saving the map from a pull request to the base branch
+
+If running tests on pull requests, then it is important to merge the load balancing map created from it back down to the
+map existing on the base branch of the pull request. Then, this merged map can be cached as the one to use for all new
+test runs.
+
+For instance,
+see [save-map-to-base-branch-on-pr-merge.yml](../.github/workflows/save-map-to-base-branch-on-pr-merge.yml).
+
+This is the general process in GitHub Actions, for example:
+
+- When a pull request (PR) is closed AND also merged, then begin.
+- Download the load balancing map saved from the **head branch/branch-being-merged** test run to the folder of
+  `.cypress_load_balancer`.
+  - _(Note: you must upload the map to that workflow run first!)_
+- Restore the main load balancing map from the **base/target** branch to `temp` folder.
+- Merge them together using `npx cypress-load-balancer merge -G "./temp/**/spec-map.json"`.
+- Save the merged load balancing map to the cache of the **base** branch.
