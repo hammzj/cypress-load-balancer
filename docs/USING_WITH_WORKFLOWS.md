@@ -61,6 +61,50 @@ This is the general process in GitHub Actions, for example:
 - Download the load balancing map saved from the **head branch/branch-being-merged** test run to the folder of
   `.cypress_load_balancer`.
   - _(Note: you must upload the map to that workflow run first!)_
-- Restore the main load balancing map from the **base/target** branch to `temp` folder.
+- Download the main load balancing map from the **base/target** branch to `temp` folder.
 - Merge them together using `npx cypress-load-balancer merge -G "./temp/**/spec-map.json"`.
-- Save the merged load balancing map to the cache of the **base** branch.
+- Save the merged load balancing map to the cache of the **base** branch. Potentially upload it to the workflow as well.
+
+### Notice on GitHub Actions and caching
+
+For GitHub Actions, the tests must be run on the base and head branches and upload their load balancer maps!
+Caches cannot be accessed across feature branches.
+
+> Access restrictions provide cache isolation and security by creating a logical boundary between different branches or
+> tags. Workflow runs can restore caches created in either the current branch or the default branch (usually `main`). If
+> a
+> workflow run is triggered for a pull request, it can also restore caches created in the base branch, including base
+> branches of forked repositories. For example, if the branch feature-b has the base branch feature-a, a workflow run
+> triggered on a pull request would have access to caches created in the default main branch, the base feature-a branch,
+> and the current feature-b branch.
+>
+> Workflow runs cannot restore caches created for child branches or sibling branches. For example, a cache created for
+> the child `feature-b` branch would not be accessible to a workflow run triggered on the parent `main` branch.
+> Similarly,
+> a cache created for the feature-a branch with the base `main` would not be accessible to its sibling `feature-c`
+> branch
+> with the base main. Workflow runs also cannot restore caches created for different tag names. For example, a cache
+> created for the tag release-a with the base main would not be accessible to a workflow run triggered for the tag
+> release-b with the base main.
+>
+> When a cache is created by a workflow run triggered on a pull request, the cache is created for the merge ref (
+> `refs/pull/.../merge`). Because of this, the cache will have a limited scope and can only be restored by re-runs of the
+> pull request. It cannot be restored by the base branch or other pull requests targeting that base branch.
+>
+> Multiple workflow runs in a repository can share caches. A cache created for a branch in a workflow run can be
+> accessed and restored from another workflow run for the same repository and branch.
+
+---
+
+There are some ways to get around this.
+
+First, when you need to update the load balancing map on your default trunk branch, you must run the
+test workflows on both the current PR head branch **and** the base branch when merging is complete, and ensure that the load balancing
+map is uploaded as an artifact to the workflow!
+
+Next, when merging them together in a separate workflow, instead of restoring them from cache, use [`dawidd6/action-download-artifact@v8`](https://github.com/dawidd6/action-download-artifact)
+to download each load balancing map. Then, you can merge them, and save it to cache (and potentially upload it to the workflow.)
+
+- See for more details.
+  - https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache
+  - https://github.com/actions/cache/blob/main/tips-and-workarounds.md#use-cache-across-feature-branches
