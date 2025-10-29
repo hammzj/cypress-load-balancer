@@ -9,6 +9,9 @@ name: Example workflow | Load balancing of Cypress E2E tests
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       runner_count:
@@ -16,13 +19,17 @@ on:
         description: Number of runners to use for parallelization
         required: false
         default: 4
-      debug:
+      DEBUG:
         type: choice
         description: Enables debugging on the job and on the cypress-load-balancer script.
         options:
           - ""
           - "*"
           - "cypress-load-balancer"
+
+concurrency:
+  group: tests
+  cancel-in-progress: false
 
 env:
   runner_count: ${{ inputs.runner_count || 4}}
@@ -59,7 +66,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Get cached load-balancing map
+      - name: Restore cached load-balancing map
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
         with:
@@ -83,6 +90,7 @@ jobs:
           config: videosFolder=/tmp/cypress-videos
         env:
           CYPRESS_runner: ${{ matrix.runner }}
+          DEBUG: ${{ inputs.DEBUG || '' }}
 
       - name: Upload temp load balancer map
         if: (!cancelled())
@@ -110,7 +118,7 @@ jobs:
           yarn install
           yarn build
 
-      - name: Get cached load-balancing map
+      - name: Restore cached load-balancing map
         id: cache-restore-load-balancing-map
         uses: actions/cache/restore@v4
         with:

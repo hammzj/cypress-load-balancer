@@ -1,8 +1,19 @@
+# For GitHub Actions, the tests must be run on the base and head branches and upload their load balancer maps!
+# Caches cannot be accessed across feature branches:
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache
+# See https://github.com/actions/cache/blob/main/tips-and-workarounds.md#use-cache-across-feature-branches
+
+# Additionally,
 # See https://github.com/brennerm/github-actions-pr-close-showcase/
 name: Save load balancing map from head branch to base branch on pull request merge
 on:
+  #This isn't perfect -- it needs to run when the PR is closed and the tests have completed on the base branch
   pull_request:
     types: [closed]
+
+concurrency:
+  group: tests
+  cancel-in-progress: false
 
 jobs:
   save:
@@ -19,9 +30,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - run: |
-          yarn install
-          yarn build
+      - run: yarn install && yarn build
 
       # Until I can figure out a better way to access cache on head branch, we will need to download it as an artifact
       #      - name: Restore cached load-balancing map on head branch
@@ -34,7 +43,19 @@ jobs:
       #          restore-keys: |
       #            cypress-load-balancer-map-${{ github.head_ref }}-
 
-      - name: Download load-balancing map from head branch using "cross-workflow" tooling
+      # Until I can figure out a better way to access cache on base branch, we will need to download it as an artifact
+      # Which means running the tests on the base branch!
+      #      - name: Restore cached load-balancing map on head branch
+      #        id: cache-restore-load-balancing-map-head-branch
+      #        uses: actions/cache/restore@v4
+      #        with:
+      #          fail-on-cache-miss: true
+      #          path: .cypress_load_balancer/spec-map.json
+      #          key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+      #          restore-keys: |
+      #            cypress-load-balancer-map-${{ github.base_ref }}-
+
+      - name: Download load-balancing map from HEAD branch using "cross-workflow" tooling
         id: download-load-balancing-map-head-branch
         uses: dawidd6/action-download-artifact@v8
         with:
@@ -44,22 +65,25 @@ jobs:
           name: cypress-load-balancer-map
           path: .cypress_load_balancer
 
-      # The map on the base branch will be merged into the map from the merged head branch
-      - name: Restore cached load-balancing map on base branch
-        id: cache-restore-load-balancing-map-base-branch
-        uses: actions/cache/restore@v4
+      - name: Download load-balancing map from BASE branch using "cross-workflow" tooling
+        id: download-load-balancing-map-base-branch
+        uses: dawidd6/action-download-artifact@v8
         with:
-          fail-on-cache-miss: false
-          path: /temp/spec-map.json
-          key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            cypress-load-balancer-map-${{ github.base_ref }}-
+          workflow: example-parallel-testing-workflow.yml
+          branch: ${{ github.base_ref }}
+          name: cypress-load-balancer-map
+          path: .cypress_load_balancer
 
       - name: Merge files (Using two different glob patterns)
         run: npx cypress-load-balancer merge -G ./temp/**/spec-map-*.json"  -G "./temp/**/spec-map.json" --HE error
 
-      - name: Save merged load-balancing map
+      - name: Save cache of merged load-balancing map
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/spec-map.json
           key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cypress-load-balancer-map
+          path: .cypress_load_balancer/spec-map.json
