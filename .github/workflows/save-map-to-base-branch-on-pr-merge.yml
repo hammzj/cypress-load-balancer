@@ -81,7 +81,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .cypress_load_balancer/spec-map.json
-          key: cypress-load-balancer-map-${{ github.base_ref }}
+          key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - uses: actions/upload-artifact@v4
         with:
