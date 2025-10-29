@@ -27,10 +27,6 @@ on:
           - "*"
           - "cypress-load-balancer"
 
-concurrency:
-  group: tests
-  cancel-in-progress: false
-
 env:
   runner_count: ${{ inputs.runner_count || 4}}
 
