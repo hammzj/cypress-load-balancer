@@ -11,10 +11,6 @@ on:
   pull_request:
     types: [closed]
 
-concurrency:
-  group: tests
-  cancel-in-progress: false
-
 jobs:
   save:
     # this job will only run if the PR has been merged
