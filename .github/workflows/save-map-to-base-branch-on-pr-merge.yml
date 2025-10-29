@@ -72,10 +72,10 @@ jobs:
           workflow: example-parallel-testing-workflow.yml
           branch: ${{ github.base_ref }}
           name: cypress-load-balancer-map
-          path: .cypress_load_balancer
+          path: temp
 
       - name: Merge files (Using two different glob patterns)
-        run: npx cypress-load-balancer merge -G ./temp/**/spec-map-*.json"  -G "./temp/**/spec-map.json" --HE error
+        run: npx cypress-load-balancer merge -G "./temp/**/spec-map-*.json" -G "./temp/**/spec-map.json" --HE error
 
       - name: Save cache of merged load-balancing map
         uses: actions/cache/save@v4
