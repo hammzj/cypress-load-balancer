@@ -388,17 +388,21 @@ Positionals:
   count  The count of runners to use                         [number] [required]
 
 Options:
-  --help     Show help                                                 [boolean]
-  --version  Show version number                                       [boolean]
+  --help                   Show help                                   [boolean]
+  --version                Show version number                         [boolean]
+  --set-gha-output, --gha  Sets the output to the GitHub Actions step output as
+                           "runner-variables"                          [boolean]
 
 Examples:
   npx cypress-load-balancer                 Returns [ "1/4", "2/4", "3/4", "4/4"
-  generate-runners 4                        ]. For example, in a GitHub Actions
-                                            workflow job, this can be passed to
-                                            `strategy.matrix.runner` and then to
-                                            either ENV.CYPRESS_runner or to
-                                            `cypress run --env
+  generate-runners 4                        ]. Then, each of these can be
+                                            iterated over and passed to either
+                                            ENV.CYPRESS_runner or to `cypress
+                                            run --env
                                             runner="${{matrix.runner}}"`
+  npx cypress-load-balancer                 Returns [ "1/4", "2/4", "3/4", "4/4"
+  generate-runners 4 --gha                  ] to `steps.{step-name}.outputs.runn
+                                            er-variables`
 ```
 
 ## Configuring for CI/CD
