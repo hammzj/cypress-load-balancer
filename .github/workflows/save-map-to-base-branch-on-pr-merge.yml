@@ -38,7 +38,7 @@ jobs:
         id: download-load-balancing-map-head-branch
         uses: dawidd6/action-download-artifact@v8
         with:
-          workflow: cypress-parallel.yml
+          workflow: example-parallel-testing-workflow.yml
           # Optional, will get head commit SHA
           pr: ${{ github.event.pull_request.number }}
           name: cypress-load-balancer-map
