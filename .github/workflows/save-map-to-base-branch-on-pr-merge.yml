@@ -44,18 +44,19 @@ jobs:
           name: cypress-load-balancer-map
           path: .cypress_load_balancer
 
+      # The map on the base branch will be merged into the map from the merged head branch
       - name: Restore cached load-balancing map on base branch
         id: cache-restore-load-balancing-map-base-branch
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: false
-          path: /temp/.cypress_load_balancer/spec-map.json
+          path: /temp/spec-map.json
           key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             cypress-load-balancer-map-${{ github.base_ref }}-
 
-      - name: Merge files
-        run: npx cypress-load-balancer merge -G "./temp/.cypress_load_balancer/spec-map-*.json"
+      - name: Merge files (Using two different glob patterns)
+        run: npx cypress-load-balancer merge -G ./temp/**/spec-map-*.json"  -G "./temp/**/spec-map.json" --HE error
 
       - name: Save merged load-balancing map
         uses: actions/cache/save@v4
