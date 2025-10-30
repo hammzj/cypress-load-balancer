@@ -10,7 +10,13 @@
   "private": false,
   "keywords": [
     "cypress",
-    "load-balancing"
+    "ci",
+    "continuous-integration",
+    "load-balancing",
+    "parallel",
+    "parallelization",
+    "testing",
+    "sharding"
   ],
   "main": "dist/cjs/index.js",
   "module": "dist/mjs/index.js",
