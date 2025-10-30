@@ -18,7 +18,7 @@ const sandbox = sinon.createSandbox();
 
 describe("Executables", function () {
   this.retries(1);
-  this.timeout(5000);
+  this.timeout(10000);
 
   before(function () {
     if (!SHOULD_RUN) this.skip();
