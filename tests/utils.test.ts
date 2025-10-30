@@ -2,11 +2,19 @@ import { expect } from "chai";
 import sinon from "sinon";
 import fs from "node:fs";
 import utils from "../src/utils";
+import path from "path";
 
 describe("Utils", function () {
   beforeEach(function () {});
   afterEach(function () {
     sinon.restore();
+  });
+
+  context("getRelativeFilePath", function () {
+    it("converts a full file path to its relative file path", function () {
+      const full = path.join(process.cwd(), "sub/my-file.txt");
+      expect(utils.getRelativeFilePath(full)).to.eq("sub/my-file.txt");
+    });
   });
 
   context("saveMapFile", function () {
@@ -124,6 +132,13 @@ describe("Utils", function () {
       });
     });
 
+    it("uses the relative file name", function () {
+      const full = path.join(process.cwd(), "tests/foo.spec.ts");
+      utils.createNewEntry(this.loadBalancerMap, "component", full);
+      expect(Object.keys(this.loadBalancerMap.component).length).to.eq(1);
+      expect(this.loadBalancerMap.component).to.have.key("tests/foo.spec.ts");
+    });
+
     it("skips creating a new file entry in the load balancer map if it exists", function () {
       utils.createNewEntry(this.loadBalancerMap, "component", "tests/foo.spec.ts");
       this.loadBalancerMap.component["tests/foo.spec.ts"].stats.durations = [300];
@@ -164,6 +179,17 @@ describe("Utils", function () {
       utils.updateFileStats(orig, "component", "tests/foo.spec.ts", 400);
       expect(orig.component["tests/foo.spec.ts"].stats.durations).to.have.length(3);
       expect(orig.component["tests/foo.spec.ts"].stats.durations).to.deep.eq([200, 300, 400]);
+    });
+
+    it("uses the relative file name", function () {
+      const full = path.join(process.cwd(), "tests/foo.spec.ts");
+      const orig = {
+        e2e: {},
+        component: { "tests/foo.spec.ts": { stats: { durations: [100], average: 200, median: 200 } } }
+      };
+
+      utils.updateFileStats(orig, "component", full, 400);
+      expect(orig.component["tests/foo.spec.ts"].stats.durations).to.have.length(2);
     });
 
     it("calculates the average duration as 0 if no durations are provided", function () {

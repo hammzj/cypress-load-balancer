@@ -1,1 +1,1 @@
-yarn dev:format && yarn test:mocha
+yarn dev:format && yarn test:skip-long-tests

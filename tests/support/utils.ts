@@ -3,6 +3,7 @@ import path from "node:path";
 import utils from "../../src/utils";
 import { LoadBalancingMap } from "../../src/types";
 import Sinon from "sinon";
+import stripAnsi from "strip-ansi";
 
 export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON?: boolean } = {}): T {
   const buffer = fs.readFileSync(path.resolve(path.join(`./tests/fixtures/${fileNameOrPath}`)));
@@ -23,9 +24,11 @@ export function stubReadLoadBalancerFile(
     .returns(JSON.stringify(returns));
 }
 
-//@ts-expect-error ignore
-//eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function runArgvCmd(argv: any, command: string): { error?: Error; argv: any; output: string } {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export async function runArgvCmdInCurrentProcess(
+  argv: any,
+  command: string
+): Promise<{ error?: Error; argv: any; output: string }> {
   return await new Promise((resolve) => {
     //@ts-expect-error ignore
     argv.parse(command, (error, argv, output) => {
@@ -33,3 +36,5 @@ export async function runArgvCmd(argv: any, command: string): { error?: Error; a
     });
   });
 }
+
+export const decodeStdout = (stdout: Buffer) => stripAnsi(Buffer.from(stdout).toString());

@@ -55,7 +55,7 @@ const getRunnerArgs = (runner: string): [number, number] => {
   //The method requires 0-based indexing.
   //User declares runnerIndex 1, but it needs to be returned as 0. This is expected.
   //User declares runnerIndex as 2, then it is returned as 1.
-  return [runnerIndex - 1, runnerCount];
+  return [Number(runnerIndex - 1), Number(runnerCount)];
 };
 
 //This assumes that `config.env` exists!
@@ -77,32 +77,50 @@ export default function addCypressLoadBalancerPlugin(
   config: Cypress.PluginConfigOptions,
   testingType: TestingType
 ) {
-  const hasRunner = () => config.env?.runner != null;
+  const hasRunner = config.env?.runner != null;
+  //Only register the plugin and hooks if it has a runner declared
+  if (hasRunner) {
+    debug("Runner declared so registering plugin: %s", config.env.runner);
+    const {
+      runner,
+      cypressLoadBalancerSkipResults,
+      cypressLoadBalancerAlgorithm,
+      cypressLoadBalancerDisableWarnings,
+      CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED
+    } = getAllEnvVariables(config);
+    const [runnerIndex, runnerCount] = getRunnerArgs(config.env.runner);
 
-  //TODO: allow skipping results collection
-  on("after:run", (results: CypressCommandLine.CypressRunResult | CypressCommandLine.CypressFailedRunResult) => {
-    if (hasRunner()) {
+    on("after:run", (results: CypressCommandLine.CypressRunResult | CypressCommandLine.CypressFailedRunResult) => {
       if ((results as CypressCommandLine.CypressFailedRunResult).status === "failed") {
         console.error("cypress-load-balancer", "Cypress failed to execute, so load balancing updates will be skipped");
         return;
       }
 
-      const { runner, cypressLoadBalancerSkipResults } = getAllEnvVariables(config);
       const cypressRunResult = results as CypressCommandLine.CypressRunResult;
-
       const hasOnlyEmptyFile =
         cypressRunResult.runs.length === 1 &&
         cypressRunResult.runs.some((r) => {
           return r.spec.relative.match(Utils.EMPTY_FILE_NAME_REGEXP);
         });
 
-      if (cypressLoadBalancerSkipResults || hasOnlyEmptyFile) {
-        debug("Skipping updating all file statistics on runner %s, %o", runner, {
+      //The Cucumber preprocessor MUST be registered BEFORE this plugin in the config file
+      //Don't run when if it is a Cucumber dry run
+      const isCucumberDryRun =
+        //AWFUL but only way to detect cross-plugin behavior, since "cypress_cucumber_preprocessor" injects keys into the env
+        Object.keys(config.env || {}).some((k) => k.includes("cypress_cucumber_preprocessor")) != null &&
+        config.env?.dryRun == true;
+
+      //Skip updating results for any of these reasons
+      if (cypressLoadBalancerSkipResults || hasOnlyEmptyFile || isCucumberDryRun) {
+        debug("Skipping updating all file statistics on runner %s due to one of these reasons: %o", runner, {
           cypressLoadBalancerSkipResults,
-          hasOnlyEmptyFile
+          hasOnlyEmptyFile,
+          isCucumberDryRun
         });
         return;
       }
+
+      debug("after:run will begin update file statistics for runner %s", runner);
 
       //Prep load balancing file if not existing and read it
       utils.initializeLoadBalancingFiles();
@@ -124,20 +142,13 @@ export default function addCypressLoadBalancerPlugin(
       }
 
       //Overwrite load balancing file for runner
-      const fileNameForRunner = `spec-map-${config.env.runner.replace("/", "-")}.json`;
+      //If there is only 1 runner, then set as undefined so it saves to `spec-map.json` instead
+      const fileNameForRunner = runnerCount === 1 ? undefined : `spec-map-${config.env.runner.replace("/", "-")}.json`;
       utils.saveMapFile(loadBalancingMap, fileNameForRunner);
       debug("%s Saved load balancing map with new file stats for runner %s", "Plugin", runner);
       debug("Load balancing map name: %s", fileNameForRunner);
-    }
-  });
+    });
 
-  if (hasRunner()) {
-    const {
-      runner,
-      cypressLoadBalancerAlgorithm,
-      CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED,
-      cypressLoadBalancerDisableWarnings
-    } = getAllEnvVariables(config);
     debug('Starting up load balancing process as "env.runner" has been declared: %o', {
       runner,
       cypressLoadBalancerAlgorithm
@@ -148,8 +159,6 @@ export default function addCypressLoadBalancerPlugin(
         "It is advised to set process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED, unless 10 durations are enough per test file."
       );
     }
-
-    const [runnerIndex, runnerCount] = getRunnerArgs(runner);
 
     const filePaths = getSpecs({ ...config }, testingType);
     const runners = performLoadBalancing(

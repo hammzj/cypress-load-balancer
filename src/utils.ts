@@ -1,4 +1,4 @@
-import path from "path";
+import path, { relative } from "path";
 import fs from "node:fs";
 import { FilePath, LoadBalancingMap, TestingType } from "./types";
 import { debug } from "./helpers";
@@ -33,6 +33,15 @@ class Utils {
   }
 
   /**
+   *  File paths must be converted from full paths to relative paths to work across machines!!!
+   * @param filePath {FilePath}
+   * @returns relativeFilePath {FilePath}
+   */
+  getRelativeFilePath(filePath: FilePath) {
+    return relative(process.cwd(), filePath);
+  }
+
+  /**
    * Adds a new filepath entry to the load balancing map
    * @param loadBalancingMap {LoadBalancingMap}
    * @param testingType {TestingType}
@@ -48,11 +57,12 @@ class Utils {
       force?: boolean;
     } = {}
   ) {
-    if (loadBalancingMap[testingType][filePath] == null || opts.force === true) {
-      loadBalancingMap[testingType][filePath] = { stats: { durations: [], average: 0, median: 0 } };
-      debug(`Added new entry for file in load balancer object for "%s" type tests: "%s"`, testingType, filePath);
+    const relativeFp = this.getRelativeFilePath(filePath);
+    if (loadBalancingMap[testingType][relativeFp] == null || opts.force === true) {
+      loadBalancingMap[testingType][relativeFp] = { stats: { durations: [], average: 0, median: 0 } };
+      debug(`Added new entry for file in load balancer object for "%s" type tests: "%s"`, testingType, relativeFp);
     } else {
-      debug(`File already exists in load balancer for "%s" type tests: "%s"`, testingType, filePath);
+      debug(`File already exists in load balancer for "%s" type tests: "%s"`, testingType, relativeFp);
     }
   }
 
@@ -115,19 +125,21 @@ class Utils {
    *  Calculates the average duration.
    * @param loadBalancingMap {LoadBalancingMap}
    * @param testingType {TestingType}
-   * @param fileName {string}
+   * @param filePath {string}
    * @param [duration=] {number} Only adds new duration if provided
    */
-  updateFileStats(loadBalancingMap: LoadBalancingMap, testingType: TestingType, fileName: string, duration?: number) {
-    if (duration != null) loadBalancingMap[testingType][fileName].stats.durations.push(duration);
-    this.shrinkToFit(loadBalancingMap[testingType][fileName].stats.durations);
+  updateFileStats(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePath: FilePath, duration?: number) {
+    //File paths must be converted from full paths to relative paths to work across machines!!!
+    const relativeFp = this.getRelativeFilePath(filePath);
+    if (duration != null) loadBalancingMap[testingType][relativeFp].stats.durations.push(duration);
+    this.shrinkToFit(loadBalancingMap[testingType][relativeFp].stats.durations);
 
-    loadBalancingMap[testingType][fileName].stats.average = this.calculateAverageDuration(
-      loadBalancingMap[testingType][fileName].stats.durations
+    loadBalancingMap[testingType][relativeFp].stats.average = this.calculateAverageDuration(
+      loadBalancingMap[testingType][relativeFp].stats.durations
     );
 
-    loadBalancingMap[testingType][fileName].stats.median = this.calculateMedianDuration(
-      loadBalancingMap[testingType][fileName].stats.durations
+    loadBalancingMap[testingType][relativeFp].stats.median = this.calculateMedianDuration(
+      loadBalancingMap[testingType][relativeFp].stats.durations
     );
 
     debug("MAXIMUM_DURATIONS_ALLOWED: %d", this.MAX_DURATIONS_ALLOWED);
@@ -135,8 +147,8 @@ class Utils {
     debug(
       `%s test file stats updated for "%s": %O`,
       testingType,
-      fileName,
-      loadBalancingMap[testingType][fileName].stats
+      relativeFp,
+      loadBalancingMap[testingType][relativeFp].stats
     );
   }
 
