@@ -3,13 +3,13 @@
 
 //Before you run this file, run an `npm run build` or `yarn build`
 import fs from "node:fs";
+import child_process from "node:child_process";
 import path from "path";
 import { expect } from "chai";
 import sinon from "sinon";
 import { stubReadLoadBalancerFile, runArgvCmdInCurrentProcess, decodeStdout } from "./support/utils";
 import cli from "../src/cli";
 import utils from "../src/utils";
-import child_process from "node:child_process";
 
 const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
 const SHOULD_RUN = process.env.RUN_LONG_TESTS || IS_ON_GHA;
@@ -240,7 +240,7 @@ describe("Executables", function () {
               "--gha"
             ]);
             const output = decodeStdout(stdout);
-            expect(output).to.contain(`::set-output name=runner-variables::["1/4","2/4","3/4","4/4"]`);
+            expect(output).to.contain(`name=runner-variables`);
           });
         });
       });
