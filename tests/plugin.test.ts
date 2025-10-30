@@ -66,6 +66,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
     it('only starts up when "env.runner" is specified', function () {
       debugInitializer.enable("cypress-load-balancer");
+      stubReadLoadBalancerFile(sandbox);
       addCypressLoadBalancerPlugin(
         onEventSpy,
         {
@@ -97,6 +98,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         this.getSpecsStub.restore();
         this.getSpecsStub = sandbox.stub(findCypressSpecs, "getSpecs").returns([]);
 
+        stubReadLoadBalancerFile(sandbox);
         const updatedConfigFile = addCypressLoadBalancerPlugin(
           onEventSpy,
           {
@@ -111,6 +113,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       });
 
       it("initializes a runner with an empty spec if the runner count is greater than the file count", function () {
+        stubReadLoadBalancerFile(sandbox);
         const updatedConfigFile = addCypressLoadBalancerPlugin(
           onEventSpy,
           {
@@ -128,6 +131,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     context("inputs", function () {
       context("env.runner", function () {
         it("runner must be in X/Y format", function () {
+          stubReadLoadBalancerFile(sandbox);
           expect(() =>
             addCypressLoadBalancerPlugin(
               onEventSpy,
@@ -193,6 +197,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         ];
         test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess.map(({ runner, expectedSpecPattern }) => {
           it("the runner index specifies the specs that will be run in the Cypress process", function () {
+            stubReadLoadBalancerFile(sandbox);
             const updatedConfigFile = addCypressLoadBalancerPlugin(
               onEventSpy,
               {
@@ -208,6 +213,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       context("cypressLoadBalancerAlgorithm", function () {
         it("can specify a different load balancing algorithm", function () {
+          stubReadLoadBalancerFile(sandbox);
           debugInitializer.enable("cypress-load-balancer");
           addCypressLoadBalancerPlugin(
             onEventSpy,
@@ -222,6 +228,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       });
 
       it("defaults to use the config specPattern defined for that testing type", function () {
+        stubReadLoadBalancerFile(sandbox);
         const updatedConfigFile = addCypressLoadBalancerPlugin(
           onEventSpy,
           {
@@ -276,6 +283,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     it(`adds an "after:run" event`, async function () {
+      stubReadLoadBalancerFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
       expect(onEventSpy.getCall(0).args[0]).to.eq("after:run");
     });

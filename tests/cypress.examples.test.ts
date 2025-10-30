@@ -2,11 +2,12 @@ import * as child_process from "node:child_process";
 import { expect } from "chai";
 import { debug as debugInitializer } from "debug";
 import Utils from "../src/utils";
+import fs from "node:fs";
 
 const decodeStdout = (stdout: Buffer) => Buffer.from(stdout).toString();
 
 const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
-const SHOULD_RUN = process.env.RUN_CYPRESS_EXAMPLES || IS_ON_GHA;
+const SHOULD_RUN = process.env.RUN_LONG_TESTS || IS_ON_GHA;
 
 describe("Actual Cypress examples with load balancing enabled", function () {
   this.retries(1);
@@ -27,6 +28,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
   afterEach(function () {
     process.env.CYPRESS_CONFIG_FILE = undefined;
     debugInitializer.disable();
+    try {
+      //DELETES THE LOAD BALANCER MAP TO PREVENT STATE LEAKAGE
+      fs.unlinkSync(".cypress_load_balancer/spec-map.json");
+    } catch (_err) {}
   });
 
   after(function () {
@@ -36,34 +41,41 @@ describe("Actual Cypress examples with load balancing enabled", function () {
 
   context("mocha e2e", function () {
     it("parallelization disabled", function () {
-      const exit = child_process.spawnSync("npx", [
+      const { stdout } = child_process.spawnSync("npx", [
         "cypress",
         "run",
         "--config",
         `specPattern="cypress/e2e/**/1.cy.js"`
       ]);
-      const stdout = decodeStdout(exit.stdout);
+      const output = decodeStdout(stdout);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(stdout).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
+      expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("balancing with only 1 runner", function () {
       const specPattern = '{"specPattern":["cypress/e2e/**/1.cy.js","cypress/e2e/**/2.cy.js"]}';
-      const exit = child_process.spawnSync("npx", ["cypress", "run", "--env", "runner=1/1", `--config`, specPattern]);
+      const { stdout, stderr } = child_process.spawnSync("npx", [
+        "cypress",
+        "run",
+        "--env",
+        "runner=1/1",
+        `--config`,
+        specPattern
+      ]);
 
-      const stdout = decodeStdout(exit.stdout);
-      const stderr = decodeStdout(exit.stderr);
+      const output = decodeStdout(stdout);
+      const stderrOutput = decodeStdout(stderr);
 
-      expect(stdout).to.contain(`(2 of 2)`).and.contain(`All specs passed!`);
-      expect(stderr).to.contain("Saved load balancing map with new file stats for runner 1/1");
+      expect(output).to.contain(`(2 of 2)`).and.contain(`All specs passed!`);
+      expect(stderrOutput).to.contain("Saved load balancing map with new file stats for runner 1/1");
     });
 
     const test_balancingWith2Runners = ["1/2", "2/2"];
     test_balancingWith2Runners.map((runner) => {
       it(`balancing with 2 runners: ${runner}`, function () {
-        const specPattern = `specPattern="cypress/e2e/example-blank-files/**.cy.js"`;
-        const exit = child_process.spawnSync("npx", [
+        const specPattern = `specPattern="cypress/e2e/example-blank-files/**/*.cy.js"`;
+        const { stdout, stderr } = child_process.spawnSync("npx", [
           "cypress",
           "run",
           "--env",
@@ -72,36 +84,50 @@ describe("Actual Cypress examples with load balancing enabled", function () {
           specPattern
         ]);
 
-        const stdout = decodeStdout(exit.stdout);
-        const stderr = decodeStdout(exit.stderr);
+        const output = decodeStdout(stdout);
+        const stderrOutput = decodeStdout(stderr);
 
-        expect(stdout).to.contain(`(2 of 2)`).and.contain(`All specs passed!`);
-        expect(stderr).to.contain(`Saved load balancing map with new file stats for runner ${runner}`);
+        expect(output).to.contain(`(2 of 2)`).and.contain(`All specs passed!`);
+        expect(stderrOutput).to.contain(`Saved load balancing map with new file stats for runner ${runner}`);
       });
     });
 
     it("empty runner due to more runners than files", function () {
       //There are only 4 files.
       const specPattern = `specPattern="cypress/e2e/example-blank-files/**.cy.js"`;
-      const exit = child_process.spawnSync("npx", ["cypress", "run", "--env", `runner=5/5`, `--config`, specPattern]);
+      const { stdout, stderr } = child_process.spawnSync("npx", [
+        "cypress",
+        "run",
+        "--env",
+        `runner=5/5`,
+        `--config`,
+        specPattern
+      ]);
 
-      const stdout = decodeStdout(exit.stdout);
-      const stderr = decodeStdout(exit.stderr);
+      const output = decodeStdout(stdout);
+      const stderrOutput = decodeStdout(stderr);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
-      expect(stderr).to.contain(`Skipping updating all file statistics on runner`);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(stderrOutput).to.contain(`Skipping updating all file statistics on runner`);
     });
 
     it("empty runner with updated specPattern", function () {
       //There are only 4 files.
       const specPattern = `specPattern="cypress/e2e/FAKE/FAKE.cy.js"`;
-      const exit = child_process.spawnSync("npx", ["cypress", "run", "--env", `runner=1/1`, `--config`, specPattern]);
+      const { stdout, stderr } = child_process.spawnSync("npx", [
+        "cypress",
+        "run",
+        "--env",
+        `runner=1/1`,
+        `--config`,
+        specPattern
+      ]);
 
-      const stdout = decodeStdout(exit.stdout);
-      const stderr = decodeStdout(exit.stderr);
+      const output = decodeStdout(stdout);
+      const stderrOutput = decodeStdout(stderr);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
-      expect(stderr).to.contain(`Skipping updating all file statistics on runner`);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(stderrOutput).to.contain(`Skipping updating all file statistics on runner`);
     });
   });
 
@@ -113,7 +139,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
     const test_allFeatureFilesOn2Runners = ["1/2", "2/2"];
     test_allFeatureFilesOn2Runners.map((runner) => {
       it(`all feature files on 2 runners: ${runner}`, function () {
-        const exit = child_process.spawnSync("npx", [
+        const { stdout, stderr } = child_process.spawnSync("npx", [
           "cypress",
           "run",
           "--config-file",
@@ -122,16 +148,16 @@ describe("Actual Cypress examples with load balancing enabled", function () {
           `runner=${runner}`
         ]);
 
-        const stdout = decodeStdout(exit.stdout);
-        const stderr = decodeStdout(exit.stderr);
+        const output = decodeStdout(stdout);
+        const stderrOutput = decodeStdout(stderr);
 
-        expect(stdout).to.contain(`(2 of 2)`).and.contain(`All specs passed!`);
-        expect(stderr).to.contain(`Saved load balancing map with new file stats for runner ${runner}`);
+        expect(output).to.contain(`(2 of 2)`).and.contain(`All specs passed!`);
+        expect(stderrOutput).to.contain(`Saved load balancing map with new file stats for runner ${runner}`);
       });
     });
 
     it("filtered feature files by tag pattern", function () {
-      const exit = child_process.spawnSync("npx", [
+      const { stdout } = child_process.spawnSync("npx", [
         "cypress",
         "run",
         "--config-file",
@@ -140,13 +166,12 @@ describe("Actual Cypress examples with load balancing enabled", function () {
         `runner=1/1,tags="@tag"`
       ]);
 
-      const stdout = decodeStdout(exit.stdout);
-
-      expect(stdout).to.contain(`(3 of 3)`).and.contain(`All specs passed!`);
+      const output = decodeStdout(stdout);
+      expect(output).to.contain(`(3 of 3)`).and.contain(`All specs passed!`);
     });
 
     it("filtered feature files by updated specPattern", function () {
-      const exit = child_process.spawnSync("npx", [
+      const { stdout } = child_process.spawnSync("npx", [
         "cypress",
         "run",
         "--config-file",
@@ -157,14 +182,14 @@ describe("Actual Cypress examples with load balancing enabled", function () {
         `specPattern="**/features/a.feature"`
       ]);
 
-      const stdout = decodeStdout(exit.stdout);
+      const output = decodeStdout(stdout);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(stdout).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
+      expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("filtered feature files by tag pattern and updated specPattern", function () {
-      const exit = child_process.spawnSync("npx", [
+      const { stdout } = child_process.spawnSync("npx", [
         "cypress",
         "run",
         "--config-file",
@@ -175,32 +200,31 @@ describe("Actual Cypress examples with load balancing enabled", function () {
         `specPattern="**/features/a.feature"`
       ]);
 
-      const stdout = decodeStdout(exit.stdout);
+      const output = decodeStdout(stdout);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(stdout).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
+      expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("empty runner with --config specPattern", function () {
-      const exit = child_process.spawnSync("npx", [
+      const { stdout } = child_process.spawnSync("npx", [
         "cypress",
         "run",
         "--config-file",
         this.cypressConfigFile,
-        "--env",
-        `runner=2/2`,
         `--config`,
-        `specPattern="**/features/a.feature"`
+        `specPattern="e2e/**/features/a.feature"`,
+        `--env`,
+        `runner="2/2"`
       ]);
 
-      const stdout = decodeStdout(exit.stdout);
+      const output = decodeStdout(stdout);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(stdout).to.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("empty runner due to tag pattern", function () {
-      const exit = child_process.spawnSync("npx", [
+      const { stdout } = child_process.spawnSync("npx", [
         "cypress",
         "run",
         "--config-file",
@@ -209,14 +233,14 @@ describe("Actual Cypress examples with load balancing enabled", function () {
         `runner=1/1,tags="@FAKE"`
       ]);
 
-      const stdout = decodeStdout(exit.stdout);
+      const output = decodeStdout(stdout);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(stdout).to.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
+      expect(output).to.match(Utils.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("empty runner with tag pattern AND updated specPattern", function () {
-      const exit = child_process.spawnSync("npx", [
+      const { stdout } = child_process.spawnSync("npx", [
         "cypress",
         "run",
         "--config-file",
@@ -227,10 +251,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
         `specPattern="**/features/no-tags.feature"`
       ]);
 
-      const stdout = decodeStdout(exit.stdout);
+      const output = decodeStdout(stdout);
 
-      expect(stdout).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(stdout).to.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
+      expect(output).to.match(Utils.EMPTY_FILE_NAME_REGEXP);
     });
   });
 });

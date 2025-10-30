@@ -117,8 +117,15 @@ function balanceByWeightedLargestRunner(
   );
   debug(`%s Completed load balancing algorithm`, `weighted-largest`);
 
-  //Remove empty values just in case
-  return runners.map((r) => filterOutEmpties(r)) as Runners;
+  /*
+  Remove empty values just in case
+  Then, sort runners by highest time
+   This is to make sure if there is additional filtering that means less files than runners,
+   then the earlier runners will have files and the later runners are empty.
+   */
+  return runners
+    .map((r) => filterOutEmpties(r))
+    .sort((a, b) => getTotalTime(b as FilePath[]) - getTotalTime(a as FilePath[])) as Runners;
 }
 
 //TODO: this is not very efficient but can be improved.

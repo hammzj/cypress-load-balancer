@@ -12,7 +12,7 @@ import utils from "../src/utils";
 import child_process from "node:child_process";
 
 const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
-const SHOULD_RUN = process.env.RUN_CYPRESS_EXAMPLES || IS_ON_GHA;
+const SHOULD_RUN = process.env.RUN_LONG_TESTS || IS_ON_GHA;
 
 const sandbox = sinon.createSandbox();
 
@@ -178,18 +178,24 @@ describe("Executables", function () {
           });
 
           it("skips merging if no files are found", async function () {
+            child_process.spawnSync("npx", [`cypress-load-balancer`, "initialize"]);
+
             const stub = sandbox.stub(utils, "saveMapFile");
             await runArgvCmdInCurrentProcess(cli, `merge -G fakeDir/**.json`);
             expect(stub).to.not.have.been.called;
           });
 
           it("can delete temp files", async function () {
+            child_process.spawnSync("npx", [`cypress-load-balancer`, "initialize"]);
+
             const stub = sandbox.stub(fs, "unlinkSync");
             await runArgvCmdInCurrentProcess(cli, `merge -G tests/fixtures/spec-map/**.json --rm`);
             expect(stub).to.have.been.called;
           });
 
           it("can be set to throw an error if no files are found", async function () {
+            child_process.spawnSync("npx", [`cypress-load-balancer`, "initialize"]);
+
             const { stderr } = child_process.spawnSync("npx", [
               "cypress-load-balancer",
               `merge`,
