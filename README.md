@@ -153,13 +153,17 @@ example, `runner=2/4` will create a spec-map of `spec-map-2-4.json`. When tests 
 runner's load balancing map with statistics on the total file run. These statistics are used for the load balancing
 algorithms.
 
+However, if you are only using one runner (`runner=1/1`), then the results will be saved back to the main
+`spec-map.json` and you
+will not need to merge any other files!
+
 ### Merging results
 
 When all tests have completed, you will need to use `npx cypress-load-balancer merge` to merge the results. In MOST
 cases, you should use this command to correctly get all parallelized maps and then delete them:
 
 ```
-npx cypress-load-balancer -G "/.cypress_load_balancer/spec-map-*-*.json --rm"
+npx cypress-load-balancer -G "/.cypress_load_balancer/**/spec-map-*.json --rm"
 ```
 
 ### Usage with Cucumber

@@ -107,7 +107,7 @@ export default function addCypressLoadBalancerPlugin(
       //Don't run when if it is a Cucumber dry run
       const isCucumberDryRun =
         //AWFUL but only way to detect cross-plugin behavior, since "cypress_cucumber_preprocessor" injects keys into the env
-        Object.keys(config.env || {}).some(k => k.includes("cypress_cucumber_preprocessor")) != null &&
+        Object.keys(config.env || {}).some((k) => k.includes("cypress_cucumber_preprocessor")) != null &&
         config.env?.dryRun == true;
 
       //Skip updating results for any of these reasons
@@ -143,15 +143,13 @@ export default function addCypressLoadBalancerPlugin(
 
       //Overwrite load balancing file for runner
       //If there is only 1 runner, then set as undefined so it saves to `spec-map.json` instead
-      const fileNameForRunner = runnerCount === 1 ?
-        undefined :
-        `spec-map-${config.env.runner.replace("/", "-")}.json`;
+      const fileNameForRunner = runnerCount === 1 ? undefined : `spec-map-${config.env.runner.replace("/", "-")}.json`;
       utils.saveMapFile(loadBalancingMap, fileNameForRunner);
       debug("%s Saved load balancing map with new file stats for runner %s", "Plugin", runner);
       debug("Load balancing map name: %s", fileNameForRunner);
     });
 
-    debug("Starting up load balancing process as \"env.runner\" has been declared: %o", {
+    debug('Starting up load balancing process as "env.runner" has been declared: %o', {
       runner,
       cypressLoadBalancerAlgorithm
     });
