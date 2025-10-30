@@ -24,12 +24,11 @@ export function stubReadLoadBalancerFile(
     .returns(JSON.stringify(returns));
 }
 
-//@ts-expect-error ignore
-//eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function runArgvCmdInCurrentProcess(
   argv: any,
   command: string
-): { error?: Error; argv: any; output: string } {
+): Promise<{ error?: Error; argv: any; output: string }> {
   return await new Promise((resolve) => {
     //@ts-expect-error ignore
     argv.parse(command, (error, argv, output) => {
