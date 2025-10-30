@@ -232,32 +232,22 @@ describe("Executables", function () {
             expect(output).to.contain("The runner count must be greater than 0");
           });
 
-          //The only way to get these tests to pass on GHA is to redirect the stdout stream.
-          //Locally it is fine to just check `stdout`, but on GHA, it will not work.
           context("Setting GitHub Actions output", function () {
-            let output: string, write;
-            //eslint-disable-next-line prefer-const
-            write = process.stdout.write;
-
             beforeEach(function () {
-              output = "";
-              //@ts-expect-error Ignore
-              process.stdout.write = function (str) {
-                output += str;
-              };
+              if (IS_ON_GHA) {
+                console.warn("This test cannot run on GitHub Actions");
+                this.skip();
+              }
             });
 
-            afterEach(function () {
-              process.stdout.write = write;
-            });
-
-            it("can set the Github Actions output to `runner-variables`", async function () {
-              const cmdOutput = await new Promise((resolve) => {
-                cli.parse(`generate-runners 4 --gha`, () => {
-                  resolve(output);
-                });
-              });
-              expect(output).to.eq(cmdOutput);
+            it("can set the Github Actions output to `runner-variables`", function () {
+              const { stdout } = child_process.spawnSync("npx", [
+                "cypress-load-balancer",
+                "generate-runners",
+                "4",
+                "--gha"
+              ]);
+              const output = decodeStdout(stdout);
               expect(output).to.contain(`::set-output name=runner-variables::["1/4","2/4","3/4","4/4"]`);
             });
           });
