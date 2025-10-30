@@ -14,8 +14,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
 
   before(function () {
     if (!SHOULD_RUN) this.skip();
+    this.NO_COLOR = process.env.NO_COLOR;
+    this.FORCE_COLORS = process.env.FORCE_COLORS;
     process.env.NO_COLOR = "1";
-    process.env.FORCE_COLOR = "0";
+    process.env.FORCE_COLORS = "0";
   });
 
   beforeEach(function () {
@@ -28,8 +30,8 @@ describe("Actual Cypress examples with load balancing enabled", function () {
   });
 
   after(function () {
-    process.env.NO_COLOR = undefined;
-    process.env.FORCE_COLOR = undefined;
+    process.env.NO_COLOR = this.NO_COLOR;
+    process.env.FORCE_COLORS = this.FORCE_COLORS;
   });
 
   context("mocha e2e", function () {

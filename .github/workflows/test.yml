@@ -14,4 +14,4 @@ jobs:
       - run: |
           yarn install
           yarn run build
-          yarn run test:mocha
+          yarn run test

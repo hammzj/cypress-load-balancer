@@ -34,7 +34,8 @@
     "dev:check:tests": "tsc -p tsconfig.test.json",
     "dev:format": "prettier --write . && prettier --write \".github/**/*.yml\"",
     "dev:lint": "eslint . && prettier --check . && prettier --check \".github/**/*.yml\"",
-    "test:mocha": "NO_COLOR=1 FORCE_COLOR=0 mocha",
+    "test": "NO_COLOR=1 FORCE_COLOR=0 mocha",
+    "pretest": "yarn run build",
     "prepare": "husky",
     "prepublish": "yarn build"
   },
@@ -80,6 +81,7 @@
     "prettier": "^3.5.1",
     "sinon": "^19.0.2",
     "sinon-chai": "^4.0.0",
+    "strip-ansi": "^7.1.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.1"
