@@ -163,7 +163,7 @@ When all tests have completed, you will need to use `npx cypress-load-balancer m
 cases, you should use this command to correctly get all parallelized maps and then delete them:
 
 ```
-npx cypress-load-balancer -G "/.cypress_load_balancer/**/spec-map-*.json --rm"
+npx cypress-load-balancer -G "./.cypress_load_balancer/**/spec-map-*.json --rm"
 ```
 
 ### Usage with Cucumber
