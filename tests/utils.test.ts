@@ -216,6 +216,17 @@ describe("Utils", function () {
       //Should sort them first (2,4,5,6,6)
       expect(utils.calculateMedianDuration([6, 5, 4, 6, 2])).to.eq(5);
     });
+
+    it("shows a warning if the file does not exist in the map", function () {
+      const consoleSpy = sinon.stub(console, "warn");
+      const orig = {
+        e2e: {},
+        component: { "tests/foo.spec.ts": { stats: { durations: [100, 200, 300], average: 200, median: 200 } } }
+      };
+
+      utils.updateFileStats(orig, "component", "tests/FAKE.ts", 400);
+      expect(consoleSpy).to.have.been.calledWith("Relative file path does not exist in map for type component: ");
+    });
   });
 
   // context.skip("isValidLoadBalancerMap", function() {

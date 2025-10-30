@@ -131,25 +131,37 @@ class Utils {
   updateFileStats(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePath: FilePath, duration?: number) {
     //File paths must be converted from full paths to relative paths to work across machines!!!
     const relativeFp = this.getRelativeFilePath(filePath);
-    if (duration != null) loadBalancingMap[testingType][relativeFp].stats.durations.push(duration);
-    this.shrinkToFit(loadBalancingMap[testingType][relativeFp].stats.durations);
+    if (loadBalancingMap[testingType][relativeFp] == null) {
+      if (!process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS) {
+        console.warn(
+          `Relative file path does not exist in map for type ${testingType}: `,
+          relativeFp,
+          "\nOriginal path: ",
+          filePath
+        );
+      }
+      return;
+    } else {
+      if (duration != null) loadBalancingMap[testingType][relativeFp].stats.durations.push(duration);
+      this.shrinkToFit(loadBalancingMap[testingType][relativeFp].stats.durations);
 
-    loadBalancingMap[testingType][relativeFp].stats.average = this.calculateAverageDuration(
-      loadBalancingMap[testingType][relativeFp].stats.durations
-    );
+      loadBalancingMap[testingType][relativeFp].stats.average = this.calculateAverageDuration(
+        loadBalancingMap[testingType][relativeFp].stats.durations
+      );
 
-    loadBalancingMap[testingType][relativeFp].stats.median = this.calculateMedianDuration(
-      loadBalancingMap[testingType][relativeFp].stats.durations
-    );
+      loadBalancingMap[testingType][relativeFp].stats.median = this.calculateMedianDuration(
+        loadBalancingMap[testingType][relativeFp].stats.durations
+      );
 
-    debug("MAXIMUM_DURATIONS_ALLOWED: %d", this.MAX_DURATIONS_ALLOWED);
+      debug("MAXIMUM_DURATIONS_ALLOWED: %d", this.MAX_DURATIONS_ALLOWED);
 
-    debug(
-      `%s test file stats updated for "%s": %O`,
-      testingType,
-      relativeFp,
-      loadBalancingMap[testingType][relativeFp].stats
-    );
+      debug(
+        `%s test file stats updated for "%s": %O`,
+        testingType,
+        relativeFp,
+        loadBalancingMap[testingType][relativeFp].stats
+      );
+    }
   }
 
   // isValidLoadBalancerMap(obj: any): boolean {
