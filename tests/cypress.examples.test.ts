@@ -31,7 +31,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
     try {
       //DELETES THE LOAD BALANCER MAP TO PREVENT STATE LEAKAGE
       fs.unlinkSync(".cypress_load_balancer/spec-map.json");
-    } catch (_err) {}
+      //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      //eslint-disable-line no-empty
+    }
   });
 
   after(function () {
