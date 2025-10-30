@@ -240,7 +240,8 @@ describe("Executables", function () {
               "--gha"
             ]);
             const output = decodeStdout(stdout);
-            expect(output).to.contain(`name=runner-variables`);
+            console.log("Output?", output);
+            expect(output).to.contain(`::set-output name=runner-variables`);
           });
         });
       });
