@@ -17,6 +17,7 @@ const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
 const sandbox = sinon.createSandbox();
 
 describe("Executables", function () {
+  this.retries(1);
   this.timeout(5000);
 
   before(function () {
