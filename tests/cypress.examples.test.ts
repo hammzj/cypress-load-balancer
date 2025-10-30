@@ -3,11 +3,12 @@ import { expect } from "chai";
 import { debug as debugInitializer } from "debug";
 import Utils from "../src/utils";
 import fs from "node:fs";
+import path from "path";
 
 const decodeStdout = (stdout: Buffer) => Buffer.from(stdout).toString();
 
 const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
-const SHOULD_RUN = process.env.RUN_LONG_TESTS || IS_ON_GHA;
+const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
 
 describe("Actual Cypress examples with load balancing enabled", function () {
   this.retries(1);
@@ -171,6 +172,14 @@ describe("Actual Cypress examples with load balancing enabled", function () {
 
       const output = decodeStdout(stdout);
       expect(output).to.contain(`(3 of 3)`).and.contain(`All specs passed!`);
+
+      //Check load balancing map to make sure file exists
+      //Cucumber changes the path to be the full path; ensure it only gets the relative path
+      const file = fs.readFileSync(".cypress_load_balancer/spec-map.json").toString();
+      const specMap = JSON.parse(file);
+      expect(Object.keys(specMap.e2e))
+        .to.include(`cypress/cucumber/features/tagged.feature`)
+        .and.not.include(path.join(process.cwd(), `cypress/cucumber/features/tagged.feature`));
     });
 
     it("filtered feature files by updated specPattern", function () {
@@ -189,6 +198,14 @@ describe("Actual Cypress examples with load balancing enabled", function () {
 
       expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
       expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+
+      //Check load balancing map to make sure file exists
+      //Cucumber changes the path to be the full path; ensure it only gets the relative path
+      const file = fs.readFileSync(".cypress_load_balancer/spec-map.json").toString();
+      const specMap = JSON.parse(file);
+      expect(Object.keys(specMap.e2e))
+        .to.include(`cypress/cucumber/features/a.feature`)
+        .and.not.include(path.join(process.cwd(), `cypress/cucumber/features/a.feature`));
     });
 
     it("filtered feature files by tag pattern and updated specPattern", function () {
@@ -207,6 +224,14 @@ describe("Actual Cypress examples with load balancing enabled", function () {
 
       expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
       expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+
+      //Check load balancing map to make sure file exists
+      //Cucumber changes the path to be the full path; ensure it only gets the relative path
+      const file = fs.readFileSync(".cypress_load_balancer/spec-map.json").toString();
+      const specMap = JSON.parse(file);
+      expect(Object.keys(specMap.e2e))
+        .to.include(`cypress/cucumber/features/a.feature`)
+        .and.not.include(path.join(process.cwd(), `cypress/cucumber/features/a.feature`));
     });
 
     it("empty runner with --config specPattern", function () {

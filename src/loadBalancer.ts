@@ -8,7 +8,7 @@ const filterOutEmpties = (arr: unknown[]) => arr.filter((v) => v != null);
 
 function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePaths: Array<FilePath> = []) {
   if (filePaths.length > 0) {
-    filePaths.map((fp) => utils.createNewEntry(loadBalancingMap, testingType, fp));
+    filePaths.map((fp) => utils.createNewEntry(loadBalancingMap, testingType, utils.getRelativeFilePath(fp)));
     utils.saveMapFile(loadBalancingMap);
   }
 }
@@ -179,18 +179,21 @@ export default function performLoadBalancing(
   if (runnerCount < 1) throw Error("Runner count cannot be less than 1");
   debug(`Using algorithm for load balancing: %s`, algorithm);
   debug(`Runner count: %d`, runnerCount);
-  debug(`File paths provided: %o`, filePaths);
+  //File paths must be converted from full paths to relative paths to work across machines!!!
+  const relativeFilePaths = filePaths.map(utils.getRelativeFilePath);
+  debug(`Relative file paths provided: %o`, relativeFilePaths);
 
   utils.initializeLoadBalancingFiles();
   const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
-  prepareFiles(loadBalancingMap, testingType, filePaths);
+
+  prepareFiles(loadBalancingMap, testingType, relativeFilePaths);
 
   const getRunners = () => {
     switch (algorithm) {
       case "weighted-largest":
-        return balanceByWeightedLargestRunner(loadBalancingMap, testingType, runnerCount, filePaths);
+        return balanceByWeightedLargestRunner(loadBalancingMap, testingType, runnerCount, relativeFilePaths);
       case "round-robin":
-        return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, filePaths);
+        return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, relativeFilePaths);
       default:
         throw Error("Algorithm not known for " + algorithm);
     }

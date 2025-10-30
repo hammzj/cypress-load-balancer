@@ -12,7 +12,7 @@ import cli from "../src/cli";
 import utils from "../src/utils";
 
 const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
-const SHOULD_RUN = process.env.RUN_LONG_TESTS || IS_ON_GHA;
+const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
 
 const sandbox = sinon.createSandbox();
 

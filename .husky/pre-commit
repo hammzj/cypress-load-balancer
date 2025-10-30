@@ -1,1 +1,1 @@
-yarn dev:format && yarn test
+yarn dev:format && yarn test:skip-long-tests

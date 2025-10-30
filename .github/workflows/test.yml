@@ -16,5 +16,3 @@ jobs:
           yarn install
           yarn build
           yarn run test
-        env:
-          RUN_LONG_TESTS: 1

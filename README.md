@@ -445,7 +445,8 @@ requests with updated test results.
 Debug logs can be enabled for the plugin and CLI commands with the Node environment variable of
 `DEBUG=cypress-load-balancer`.
 
-You can run Cypress example scripts and bin scripts in mocha with `RUN_LONG_TESTS=true yarn run test:mocha`.
+By default, the Cypress example scripts and bin scripts in mocha, but take a long time to run.
+They can be skipped temporarily with `SKIP_LONG_TESTS=1 yarn run test`, or `yarn run test:skip-long-tests`.
 
 ## Publishing
 

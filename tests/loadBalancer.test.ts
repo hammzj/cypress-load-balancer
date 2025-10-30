@@ -7,6 +7,7 @@ import fs from "node:fs";
 import { getFixture, stubReadLoadBalancerFile } from "./support/utils";
 import { FilePath, LoadBalancingMap, TestingType } from "../src/types";
 import { debug as debugInitializer } from "debug";
+import path from "path";
 
 //eslint-disable-next-line prefer-const
 let sandbox = sinon.createSandbox();
@@ -41,6 +42,14 @@ describe("Load balancing", function () {
       stubReadLoadBalancerFile(sandbox);
       performLoadBalancing(3, "e2e", []);
       expect(this.initializeLoadBalancingFilesStub.calledOnce).to.be.true;
+    });
+
+    it("only uses the relative file path", function () {
+      stubReadLoadBalancerFile(sandbox);
+      const fileName = "test.1.ts";
+      const full = path.join(process.cwd(), fileName);
+      const runners = performLoadBalancing(1, "e2e", [full]);
+      expect(runners[0]).to.deep.eq([fileName]);
     });
   });
 
