@@ -11,11 +11,7 @@ import Utils from "./utils";
 
 //Thanks to Gleb Bahmutov with cypress-split -- this works very well
 //@see https://github.com/bahmutov/cypress-split for inspiration
-const createEmptyFileForEmptyRunner = (
-  runnerIndex: number,
-  runnerCount: number,
-  cypressLoadBalancerDisableWarnings: boolean
-) => {
+const createEmptyFileForEmptyRunner = (runnerIndex: number, runnerCount: number) => {
   const emptyFilename = path.resolve(__dirname, Utils.EMPTY_FILE_NAME);
 
   //Make the runnerIndex match the user input
@@ -23,7 +19,7 @@ const createEmptyFileForEmptyRunner = (
   const tempFileNameToUse = path.join(os.tmpdir(), `clb-empty-${userInputtedRunnerIndex}-${runnerCount}.cy.js`);
   fs.copyFileSync(emptyFilename, tempFileNameToUse);
 
-  if (!cypressLoadBalancerDisableWarnings) {
+  if (!process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS) {
     console.warn(
       "Runner %d/%d is empty! Running an empty spec instead to prevent Cypress producing an error.",
       userInputtedRunnerIndex,
@@ -65,7 +61,7 @@ const getAllEnvVariables = (config: Cypress.PluginConfigOptions) => {
     runner: config.env.runner,
     cypressLoadBalancerSkipResults: config.env.cypressLoadBalancerSkipResults,
     cypressLoadBalancerAlgorithm: config.env.cypressLoadBalancerAlgorithm,
-    cypressLoadBalancerDisableWarnings: config.env.cypressLoadBalancerDisableWarnings,
+    CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS: config.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS,
 
     //process.env vars
     CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED: process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED
@@ -85,7 +81,7 @@ export default function addCypressLoadBalancerPlugin(
       runner,
       cypressLoadBalancerSkipResults,
       cypressLoadBalancerAlgorithm,
-      cypressLoadBalancerDisableWarnings,
+      CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS,
       CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED
     } = getAllEnvVariables(config);
     const [runnerIndex, runnerCount] = getRunnerArgs(config.env.runner);
@@ -154,7 +150,7 @@ export default function addCypressLoadBalancerPlugin(
       cypressLoadBalancerAlgorithm
     });
 
-    if (CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED == null && !cypressLoadBalancerDisableWarnings) {
+    if (CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED == null && !CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS) {
       console.warn(
         "It is advised to set process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED, unless 10 durations are enough per test file."
       );
@@ -171,7 +167,7 @@ export default function addCypressLoadBalancerPlugin(
     const currentRunner = runners[runnerIndex];
     const isCurrentRunnerFilePatternEmpty = currentRunner == null || currentRunner.length === 0;
     config.specPattern = isCurrentRunnerFilePatternEmpty
-      ? [createEmptyFileForEmptyRunner(runnerIndex, runnerCount, cypressLoadBalancerDisableWarnings)]
+      ? [createEmptyFileForEmptyRunner(runnerIndex, runnerCount)]
       : currentRunner;
 
     //Add 1 to match user input for runner index
