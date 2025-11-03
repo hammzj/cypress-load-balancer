@@ -44,7 +44,6 @@ This is an example image of what a basic parallelized Cypress testing workflow w
 
 ![This is an example image of what a basic parallelized Cypress testing workflow will look like](img/parallel-testing-workflow.png)
 
-    ***
 
 ## Saving the map from a pull request to the base branch
 
