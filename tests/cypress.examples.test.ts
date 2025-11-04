@@ -34,7 +34,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       fs.unlinkSync(".cypress_load_balancer/spec-map.json");
       //eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_err) {
-       console.log('ignore')
+      console.log("ignore");
     }
   });
 
