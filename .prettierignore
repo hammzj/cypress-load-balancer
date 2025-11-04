@@ -10,3 +10,6 @@ cypress
 .cypress-load-balancer
 .cypress_load_balancer
 .idea
+
+#Ignore MD files
+**/*.md
