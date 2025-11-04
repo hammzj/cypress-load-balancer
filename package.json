@@ -1,12 +1,13 @@
 {
   "name": "cypress-load-balancer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "Zachary J. Hamm",
   "license": "MIT",
   "repository": "https://github.com/hammzj/cypress-load-balancer/",
   "bugs": {
     "url": "https://github.com/hammzj/cypress-load-balancer/issues"
   },
+  "homepage": "https://github.com/hammzj/cypress-load-balancer#readme",
   "private": false,
   "keywords": [
     "cypress",
