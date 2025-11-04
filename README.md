@@ -83,24 +83,22 @@ To enable, you need to declare `runner` in your Cypress environment variables. T
 
 1. Cypress CLI `--env runner` option: `cypress run --env runner="1/2"` (the first of two runners)
    Note:
-2. Node environment variables in `CYPRESS_runner` format: `CYPRESS_runner=1/2 cypress run`
+2. Node environment variable with `CYPRESS_` formatting: `CYPRESS_runner=1/2 cypress run`
 
-However, the runners WILL affect the specs displayed in `cypress open`, so do NOT declare `--env runner` for "open"
-mode!
+**Note: do NOT declare the `runner` within your configuration file as it may permanently filter out your test files!
+Only declare it from the command line when you need to use parallel processes. As well, do not declare it
+for `cypress open` mode or you will filter out specs in the testrunner UI.**
 
 ### Inputs
 
-| Input                                                     | Type                                | Required | Default            | Description                                                                                                                                                                                                       |
-| --------------------------------------------------------- | ----------------------------------- | -------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `config.env.runner`                                       | string                              | true     |                    | To enable load balancing, you must provide a runner in `"index/total"` format. For an example of two runners in separate processes, you would supply `"1/2" for the first runner and "2/2" for the second runner. |
-| `config.env.cypressLoadBalancerAlgorithm`                 | "weighted-largest" \| "round-robin" | false    | "weighted-largest" | Allows selecting a different algorithm for load balancing, if desired.                                                                                                                                            |
-| `config.env.cypressLoadBalancerSkipResults`               | boolean                             | false    | false              | Set this if you need to temporarily disable collecting duration statistics from test files.                                                                                                                       |
-| `process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS`      | boolean                             | false    | false              | Disables warning logs when produced.                                                                                                                                                                              |
-| `process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED` | Number                              | false    | 10                 | This is the maximum number of durations allowed in the map file. **It must be set statically as a Node environment variable in order to work for both the merge process and the Cypress plugin!**                 |
-| `process.env.DEBUG`                                       | string                              | false    |                    | Set to `cypress-load-balancer` to enable debug logging.                                                                                                                                                           |
-
-**Note: do NOT declare the runner count within your configuration file as it may permanently filter out your test files!
-Only declare it from the command line when you need to use parallel processes.**
+| Input                                                     | Type                                | Required | Default            | Description                                                                                                                                                                                                                                                              |
+|-----------------------------------------------------------|-------------------------------------|----------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `config.env.runner`                                       | string                              | true     |                    | To enable load balancing, you must provide a runner in `"index/total"` format. For an example of two runners in separate processes, you would supply `"1/2" for the first runner and "2/2" for the second runner. You can also use `process.env.CYPRESS_runner` instead. |
+| `config.env.cypressLoadBalancerAlgorithm`                 | "weighted-largest" \| "round-robin" | false    | "weighted-largest" | Allows selecting a different algorithm for load balancing, if desired.                                                                                                                                                                                                   |
+| `config.env.cypressLoadBalancerSkipResults`               | boolean                             | false    | false              | Set this if you need to temporarily disable collecting duration statistics from test files.                                                                                                                                                                              |
+| `process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS`      | boolean                             | false    | false              | Node ENV variable. Disables warning logs when produced.                                                                                                                                                                                                                  |
+| `process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED` | Number                              | false    | 10                 | Node ENV variable. This is the maximum number of durations allowed in the map file. **It must be set statically as a Node environment variable in order to work for both the merge process and the Cypress plugin!**                                                     |
+| `process.env.DEBUG`                                       | string                              | false    |                    | Node ENV variable. Set to `cypress-load-balancer` to enable debug logging.                                                                                                                                                                                               |
 
 ### Using a different configuration file
 
@@ -123,25 +121,23 @@ so.
 Examples:
 
 ```
-# Run a single file (on the first runner; the second runner is empty!_
-cypress run --env runner=1/2 --config specPattern="cypress/e2e/**/actions.cy.js"
+# Run a single file (on the first runner; the second runner is empty!)
+## Runs the "actions.cy.js" spec
+cypress run --env runner=1/2 --config specPattern="cypress/e2e/**/actions.cy.js" 
+## Runs an empty file instead
+cypress run --env runner=2/2 --config specPattern="cypress/e2e/**/actions.cy.js"
 
-
-# Run a set of multiple files (both runners have files!)
+# Run a set of multiple files across balanced runners
 cypress run  --env runner=1/2 --config '{"specPattern":["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]}'
 cypress run  --env runner=2/2 --config '{"specPattern":["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]}'
 
-# These may also work for multiple files
+# These patterns may also work for multiple files
 cypress run  --env runner=1/2 --config specPattern='["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]'
 cypress run  --env runner=1/2 --config specPattern=["cypress/e2e/**/actions.cy.js","cypress/e2e/**/window.cy.js"]
-
-
-
-
 ```
 
-**Warning: do not use `cypress run --spec "{FILE_PATTERN}` as it may produce Cypress errors with an empty fileset!
-Use `--config specPattern` instead.**
+**Warning: do not use `cypress run --spec "{FILE_PATTERN}"` as it does not work with this plugin. It may produce Cypress
+errors with an empty fileset. Use `--config specPattern` format instead.**
 
 ### Result collection
 
@@ -149,13 +145,12 @@ Results are only collected in `cypress run` mode. They are not collected when us
 `cypress open`.
 
 Each separate runner will create its own load balancing map in the format of `spec-map-{index}-{total}.json`. For
-example, `runner=2/4` will create a spec-map of `spec-map-2-4.json`. When tests have finished, they will update that
+example, `runner="2/4"` will create a spec-map of `spec-map-2-4.json`. When tests have finished, they will update that
 runner's load balancing map with statistics on the total file run. These statistics are used for the load balancing
 algorithms.
 
-However, if you are only using one runner (`runner=1/1`), then the results will be saved back to the main
-`spec-map.json` and you
-will not need to merge any other files!
+However, if you are only using one runner (`runner="1/1"`), then the results will be saved back to the main
+`spec-map.json` and you will not need to merge any other files!
 
 ### Merging results
 
@@ -163,7 +158,7 @@ When all tests have completed, you will need to use `npx cypress-load-balancer m
 cases, you should use this command to correctly get all parallelized maps and then delete them:
 
 ```
-npx cypress-load-balancer -G "./.cypress_load_balancer/**/spec-map-*.json --rm"
+npx cypress-load-balancer -G "./.cypress_load_balancer/**/spec-map-*.json" --rm
 ```
 
 ### Usage with Cucumber
@@ -174,10 +169,10 @@ works by filtering Cucumber tags!
 
 ```
 # This example works by filtering ALL features with tags!
-cypress run --env tags="@smoke",runner=2/2
+cypress run --env tags="@smoke",runner="2/2"
 
 # This example works by filtering only specific features with tags!
-cypress run --env tags="@smoke",runner=2/2 --config specPattern="my-other-features/**/*.feature"
+cypress run --env tags="@smoke",runner="2/2" --config specPattern="my-other-features/**/*.feature"
 
 ```
 
@@ -277,7 +272,7 @@ defineConfig({
         }
       });
 
-      on("after:run", async function () {
+      on("after:run", async function() {
         //@see https://github.com/badeball/cypress-cucumber-preprocessor/blob/master/docs/event-handlers.md
         try {
           await cucumberPreprocessor.afterRunHandler(config);
@@ -287,7 +282,7 @@ defineConfig({
         }
       });
 
-      on("after:screenshot", async function (details) {
+      on("after:screenshot", async function(details) {
         await cucumberPreprocessor.afterScreenshotHandler(config, details);
         //Put any additional handlers as needed
       });
@@ -419,7 +414,8 @@ This is the basic idea of steps that need to occur in order to use load balancin
 needs to saved and persisted throughout all runs in a stable, base location. After all parallel test runs complete,
 their results can be merged back to the main file, which can be consumed on the next test runs, and so on.
 
-1. **Set a number of runners in `X/Y` format.** For example, 2 runners would mean saving `"1/2"`, `"2/2"`, for later.
+1. **Set a number of runners in `"X/Y"` format.** For example, 2 runners would mean saving two runner strings of
+   `"1/2"` & `"2/2"` to use in a later job.
 2. **Restore the load balancer main map file from a persisted location.**
 3. **Execute each Cypress `run` process in parallel using the `runner` variables.**
 4. **Wait for each Cypress process to fully complete.**
@@ -464,7 +460,7 @@ manually.
 - Increment the version in the `package.json` according to [semantic versions](https://semver.org/).
 - Run `yarn run build`
 - Run `npm publish`
-- Login to NPM with an OTP and it should complete!
+- Login to NPM with an OTP and it should complete.
 
 ### Creating a hybrid package for ESM and CommonJS
 
