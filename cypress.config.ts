@@ -3,7 +3,7 @@ import { addCypressLoadBalancerPlugin } from "./";
 
 export default defineConfig({
   e2e: {
-    reporter: "list",
+    reporter: "dot",
     specPattern: "cypress/e2e/**/*.cy.{js,ts}",
     video: false,
     retries: 1,
