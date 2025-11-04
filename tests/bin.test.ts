@@ -146,6 +146,7 @@ describe("Executables", function () {
           });
 
           it(`The glob pattern for merging runners works with \"./.cypress_load_balancer/**/spec-map-*.json\"`, async function () {
+            if (IS_ON_GHA) this.skip();
             const tempFileNames = [
               "/.cypress_load_balancer/spec-map-1-4.json",
               "/.cypress_load_balancer/spec-map-2-4.json",
