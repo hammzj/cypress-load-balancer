@@ -27,7 +27,7 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
  */
 function balanceByFileName(runnerCount: number, filePaths: FilePath[]): Runners {
   debug("filePaths unsorted: %s", filePaths);
-  const sortedFiles = filePaths.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'}))
+  const sortedFiles = filePaths.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   debug("filePaths sorted ascending: %s", sortedFiles);
 
   const runners: Runners = [];
