@@ -21,4 +21,4 @@ export type FilePath = string;
 
 export type Runners = FilePath[][];
 
-export type Algorithms = "weighted-largest" | "round-robin";
+export type Algorithms = "weighted-largest" | "round-robin" | "file-name";
