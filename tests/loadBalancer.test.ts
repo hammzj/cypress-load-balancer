@@ -880,48 +880,46 @@ describe("Load balancing", function () {
         this.filePaths = Object.keys(this.loadBalancingMap.e2e);
       });
 
-      context("simple balancing cases", function () {
-        it("balances for 1 runner", function () {
-          const filePaths = this.filePaths;
-          const runners = performLoadBalancing(1, "e2e", filePaths, "file-name");
-          expect(runners).to.deep.equal([
-            [
-              "a.test.ts",
-              "b.test.ts",
-              "c.test.ts",
-              "d.test.ts",
-              "e.test.ts",
-              "f.test.ts",
-              "g.test.ts",
-              "h.test.ts",
-              "i.test.ts",
-              "j.test.ts",
-              "k.test.ts",
-              "l.test.ts"
-            ]
-          ]);
-        });
+      it("balances for 1 runner", function () {
+        const filePaths = this.filePaths;
+        const runners = performLoadBalancing(1, "e2e", filePaths, "file-name");
+        expect(runners).to.deep.equal([
+          [
+            "a.test.ts",
+            "b.test.ts",
+            "c.test.ts",
+            "d.test.ts",
+            "e.test.ts",
+            "f.test.ts",
+            "g.test.ts",
+            "h.test.ts",
+            "i.test.ts",
+            "j.test.ts",
+            "k.test.ts",
+            "l.test.ts"
+          ]
+        ]);
+      });
 
-        it("can balance for 2 runners", function () {
-          const filePaths = this.filePaths;
-          const runners = performLoadBalancing(2, "e2e", filePaths, "file-name");
-          expect(runners).to.deep.equal([
-            ["a.test.ts", "b.test.ts", "c.test.ts", "d.test.ts", "e.test.ts", "f.test.ts"],
-            ["g.test.ts", "h.test.ts", "i.test.ts", "j.test.ts", "k.test.ts", "l.test.ts"]
-          ]);
-        });
+      it("can balance for 2 runners", function () {
+        const filePaths = this.filePaths;
+        const runners = performLoadBalancing(2, "e2e", filePaths, "file-name");
+        expect(runners).to.deep.equal([
+          ["a.test.ts", "b.test.ts", "c.test.ts", "d.test.ts", "e.test.ts", "f.test.ts"],
+          ["g.test.ts", "h.test.ts", "i.test.ts", "j.test.ts", "k.test.ts", "l.test.ts"]
+        ]);
+      });
 
-        it("can balance for an uneven runners to files", function () {
-          const filePaths = this.filePaths;
-          const runners = performLoadBalancing(5, "e2e", filePaths, "file-name");
-          expect(runners).to.deep.equal([
-            ["a.test.ts", "b.test.ts", "c.test.ts"],
-            ["d.test.ts", "e.test.ts", "f.test.ts"],
-            ["g.test.ts", "h.test.ts"],
-            ["i.test.ts", "j.test.ts"],
-            ["k.test.ts", "l.test.ts"]
-          ]);
-        });
+      it("can balance for an uneven runners to files", function () {
+        const filePaths = this.filePaths;
+        const runners = performLoadBalancing(5, "e2e", filePaths, "file-name");
+        expect(runners).to.deep.equal([
+          ["a.test.ts", "b.test.ts", "c.test.ts"],
+          ["d.test.ts", "e.test.ts", "f.test.ts"],
+          ["g.test.ts", "h.test.ts"],
+          ["i.test.ts", "j.test.ts"],
+          ["k.test.ts", "l.test.ts"]
+        ]);
       });
 
       it("sorts files by file name", function () {
@@ -942,6 +940,11 @@ describe("Load balancing", function () {
             "l.test.ts"
           ]
         ]);
+      });
+
+      it("treats file names case-insensitively", function () {
+        const runners = performLoadBalancing(1, "e2e", ["a.test.ts", "Z.test.ts"], "file-name");
+        expect(runners[0]).to.deep.eq(["a.test.ts", "Z.test.ts"]);
       });
 
       it("balances files per runner so files are evenly spread across runner", function () {

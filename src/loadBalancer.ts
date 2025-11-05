@@ -15,7 +15,7 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
 
 /**
  * This runs a generic sorting method to get file paths listed alphabetically by file name, and then divided amongst
- * each runner. The load balancing file is not used here.
+ * each runner. File names are treated case-insensitively. The load balancing file is not used here.
  * Instead, this algorithm is for setting a consistent experience with the same test files,
  * when automatic balancing is not preferred.
  *
@@ -27,7 +27,7 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
  */
 function balanceByFileName(runnerCount: number, filePaths: FilePath[]): Runners {
   debug("filePaths unsorted: %s", filePaths);
-  const sortedFiles = filePaths.sort();
+  const sortedFiles = filePaths.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   debug("filePaths sorted ascending: %s", sortedFiles);
 
   const runners: Runners = [];
