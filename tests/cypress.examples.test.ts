@@ -102,7 +102,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       { runner: "3/3", specsCount: "(1 of 1)" }
     ];
     test_balancingByFileNameWithMultipleRunners.map(({ runner, specsCount }) => {
-      it("balancing by file name across multiple runners", function () {
+      it(`balancing by file name across multiple runners: ${runner}`, function () {
         const specPattern = `specPattern="cypress/e2e/example-blank-files/*.cy.js"`;
         const { stdout, stderr } = child_process.spawnSync("npx", [
           "cypress",
