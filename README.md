@@ -175,8 +175,8 @@ Choices:
   longest runtime, and compare other runners to stay under or near that limit.
 * `round-robin`: Basic "round-robin" approach.
 * `file-name`: This runs a generic sorting method to get file paths listed alphabetically by file name, and then divided
-  amongst
-  each runner. The load balancing file is not used here. Instead, this algorithm is for setting a consistent experience
+  amongst each runner. File names are treated case-insensitively. The load balancing file is not used here. Instead,
+  this algorithm is for setting a consistent experience
   with the same test files,
   when automatic balancing is not preferred.
 
