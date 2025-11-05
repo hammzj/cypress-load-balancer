@@ -91,14 +91,14 @@ for `cypress open` mode or you will filter out specs in the testrunner UI.**
 
 ### Inputs
 
-| Input                                                     | Type                                | Required | Default            | Description                                                                                                                                                                                                                                                              |
-|-----------------------------------------------------------|-------------------------------------|----------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `config.env.runner`                                       | string                              | true     |                    | To enable load balancing, you must provide a runner in `"index/total"` format. For an example of two runners in separate processes, you would supply `"1/2" for the first runner and "2/2" for the second runner. You can also use `process.env.CYPRESS_runner` instead. |
-| `config.env.cypressLoadBalancerAlgorithm`                 | "weighted-largest" \| "round-robin" | false    | "weighted-largest" | Allows selecting a different algorithm for load balancing, if desired.                                                                                                                                                                                                   |
-| `config.env.cypressLoadBalancerSkipResults`               | boolean                             | false    | false              | Set this if you need to temporarily disable collecting duration statistics from test files.                                                                                                                                                                              |
-| `process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS`      | boolean                             | false    | false              | Node ENV variable. Disables warning logs when produced.                                                                                                                                                                                                                  |
-| `process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED` | Number                              | false    | 10                 | Node ENV variable. This is the maximum number of durations allowed in the map file. **It must be set statically as a Node environment variable in order to work for both the merge process and the Cypress plugin!**                                                     |
-| `process.env.DEBUG`                                       | string                              | false    |                    | Node ENV variable. Set to `cypress-load-balancer` to enable debug logging.                                                                                                                                                                                               |
+| Input                                                                                  | Type                                                 | Required | Default            | Description                                                                                                                                                                                                                                                              |
+|----------------------------------------------------------------------------------------|------------------------------------------------------|----------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `config.env.runner` / `CYPRESS_runner`                                                 | string                                               | true     |                    | To enable load balancing, you must provide a runner in `"index/total"` format. For an example of two runners in separate processes, you would supply `"1/2" for the first runner and "2/2" for the second runner. You can also use `process.env.CYPRESS_runner` instead. |
+| `config.env.cypressLoadBalancerAlgorithm` / `CYPRESS_cypressLoadBalancerAlgorithm`     | [Algorithm](./README.md#using-a-different-algorithm) | false    | "weighted-largest" | Allows selecting a different algorithm for load balancing, if desired.                                                                                                                                                                                                   |
+| `config.env.cypressLoadBalancerSkipResults` / `CYPRESS_cypressLoadBalancerSkipResults` | boolean                                              | false    | false              | Set this if you need to temporarily disable collecting duration statistics from test files.                                                                                                                                                                              |
+| `process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS`                                   | boolean                                              | false    | false              | Node ENV variable. Disables warning logs when produced.                                                                                                                                                                                                                  |
+| `process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED`                              | Number                                               | false    | 10                 | Node ENV variable. This is the maximum number of durations allowed in the map file. **It must be set statically as a Node environment variable in order to work for both the merge process and the Cypress plugin!**                                                     |
+| `process.env.DEBUG`                                                                    | string                                               | false    |                    | Node ENV variable. Set to `cypress-load-balancer` to enable debug logging.                                                                                                                                                                                               |
 
 ### Using a different configuration file
 
@@ -160,6 +160,25 @@ cases, you should use this command to correctly get all parallelized maps and th
 ```
 npx cypress-load-balancer -G "./.cypress_load_balancer/**/spec-map-*.json" --rm
 ```
+
+### Using a different algorithm
+
+The algorithm can be changed with `config.env.cypressLoadBalancerAlgorithm`, if needed. It is recommended to not set
+this unless you have a specific reason for another algorithm.
+
+Choices:
+
+* (Default) `weighted-largest`:  Attempts to get a uniform total run time between all runners by separating the
+  longest-running
+  tests into their own runners first, and attempting to keep all other runners equal to or lower than its time. If there
+  are more tests than runners, then it will continually keep a check of the total run time of the runner with the
+  longest runtime, and compare other runners to stay under or near that limit.
+* `round-robin`: Basic "round-robin" approach.
+* `file-name`: This runs a generic sorting method to get file paths listed alphabetically by file name, and then divided
+  amongst
+  each runner. The load balancing file is not used here. Instead, this algorithm is for setting a consistent experience
+  with the same test files,
+  when automatic balancing is not preferred.
 
 ### Usage with Cucumber
 
@@ -445,8 +464,13 @@ requests with updated test results.
 Debug logs can be enabled for the plugin and CLI commands with the Node environment variable of
 `DEBUG=cypress-load-balancer`.
 
-By default, the Cypress example scripts and bin scripts in mocha, but take a long time to run.
-They can be skipped temporarily with `SKIP_LONG_TESTS=1 yarn run test`, or `yarn run test:skip-long-tests`.
+### Tests
+
+Unit tests can be run with `yarn run test`. These run all unit tests, but also local Cypress example scripts and CLI
+scripts in mocha, which can take a long time to run. The long running example and CLI scripts can be skipped temporarily
+with `SKIP_LONG_TESTS=1 yarn run test`, or `yarn run test:skip-long-tests`.
+
+There are also example scripts for running Cypress, and those scripts start with `example:`.
 
 ## Publishing
 

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import utils from "./utils";
-import { FilePath, Runners, TestingType, LoadBalancingMap, Algorithms } from "./types";
+import { Algorithms, FilePath, LoadBalancingMap, Runners, TestingType } from "./types";
 import { debug } from "./helpers";
 
 const sum = (arr: number[]) => arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
@@ -11,6 +11,31 @@ function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingTy
     filePaths.map((fp) => utils.createNewEntry(loadBalancingMap, testingType, utils.getRelativeFilePath(fp)));
     utils.saveMapFile(loadBalancingMap);
   }
+}
+
+/**
+ * This runs a generic sorting method to get file paths listed alphabetically by file name, and then divided amongst
+ * each runner. The load balancing file is not used here.
+ * Instead, this algorithm is for setting a consistent experience with the same test files,
+ * when automatic balancing is not preferred.
+ *
+ * @see Thanks to JohannaFalkowska for the StackOverflow answer on how to "splitToNChunks": https://stackoverflow.com/a/51514813.
+ * It's late, and I got tired of trying to split arrays.
+ * @param runnerCount {number}
+ * @param filePaths {FilePath[]}
+ * @returns {Runners}
+ */
+function balanceByFileName(runnerCount: number, filePaths: FilePath[]): Runners {
+  debug("filePaths unsorted: %s", filePaths);
+  const sortedFiles = filePaths.sort();
+  debug("filePaths sorted ascending: %s", sortedFiles);
+
+  const runners: Runners = [];
+  for (let i = runnerCount; i > 0; i--) {
+    const spliceCount = Math.ceil(sortedFiles.length / i);
+    runners.push(sortedFiles.splice(0, spliceCount));
+  }
+  return runners;
 }
 
 /**
@@ -194,6 +219,8 @@ export default function performLoadBalancing(
         return balanceByWeightedLargestRunner(loadBalancingMap, testingType, runnerCount, relativeFilePaths);
       case "round-robin":
         return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, relativeFilePaths);
+      case "file-name":
+        return balanceByFileName(runnerCount, relativeFilePaths);
       default:
         throw Error("Algorithm not known for " + algorithm);
     }

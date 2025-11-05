@@ -96,6 +96,31 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       });
     });
 
+    const test_balancingByFileNameWithMultipleRunners = [
+      { runner: "1/3", specsCount: "(2 of 2)" },
+      { runner: "2/3", specsCount: "(1 of 1)" },
+      { runner: "3/3", specsCount: "(1 of 1)" }
+    ];
+    test_balancingByFileNameWithMultipleRunners.map(({ runner, specsCount }) => {
+      it(`balancing by file name across multiple runners: ${runner}`, function () {
+        const specPattern = `specPattern="cypress/e2e/example-blank-files/*.cy.js"`;
+        const { stdout, stderr } = child_process.spawnSync("npx", [
+          "cypress",
+          "run",
+          "--env",
+          `runner=${runner}`,
+          `--config`,
+          specPattern
+        ]);
+
+        const output = decodeStdout(stdout);
+        const stderrOutput = decodeStdout(stderr);
+
+        expect(output).to.contain(specsCount).and.contain(`All specs passed!`);
+        expect(stderrOutput).to.contain(`Saved load balancing map with new file stats for runner ${runner}`);
+      });
+    });
+
     it("empty runner due to more runners than files", function () {
       //There are only 4 files.
       const specPattern = `specPattern="cypress/e2e/example-blank-files/**.cy.js"`;

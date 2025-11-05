@@ -869,5 +869,167 @@ describe("Load balancing", function () {
         });
       });
     });
+
+    context("file-name", function () {
+      beforeEach(function () {
+        sandbox.restore();
+        const fixture = getFixture<LoadBalancingMap>("spec-map/12-elements-alphabetical.json", { parseJSON: true });
+        stubReadLoadBalancerFile(sandbox, fixture);
+        this.loadBalancingMap = fixture;
+        this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
+        this.filePaths = Object.keys(this.loadBalancingMap.e2e);
+      });
+
+      context("simple balancing cases", function () {
+        it("balances for 1 runner", function () {
+          const filePaths = this.filePaths;
+          const runners = performLoadBalancing(1, "e2e", filePaths, "file-name");
+          expect(runners).to.deep.equal([
+            [
+              "a.test.ts",
+              "b.test.ts",
+              "c.test.ts",
+              "d.test.ts",
+              "e.test.ts",
+              "f.test.ts",
+              "g.test.ts",
+              "h.test.ts",
+              "i.test.ts",
+              "j.test.ts",
+              "k.test.ts",
+              "l.test.ts"
+            ]
+          ]);
+        });
+
+        it("can balance for 2 runners", function () {
+          const filePaths = this.filePaths;
+          const runners = performLoadBalancing(2, "e2e", filePaths, "file-name");
+          expect(runners).to.deep.equal([
+            ["a.test.ts", "b.test.ts", "c.test.ts", "d.test.ts", "e.test.ts", "f.test.ts"],
+            ["g.test.ts", "h.test.ts", "i.test.ts", "j.test.ts", "k.test.ts", "l.test.ts"]
+          ]);
+        });
+
+        it("can balance for an uneven runners to files", function () {
+          const filePaths = this.filePaths;
+          const runners = performLoadBalancing(5, "e2e", filePaths, "file-name");
+          expect(runners).to.deep.equal([
+            ["a.test.ts", "b.test.ts", "c.test.ts"],
+            ["d.test.ts", "e.test.ts", "f.test.ts"],
+            ["g.test.ts", "h.test.ts"],
+            ["i.test.ts", "j.test.ts"],
+            ["k.test.ts", "l.test.ts"]
+          ]);
+        });
+      });
+
+      it("sorts files by file name", function () {
+        const runners = performLoadBalancing(1, "e2e", this.filePaths, "file-name");
+        expect(runners).to.deep.equal([
+          [
+            "a.test.ts",
+            "b.test.ts",
+            "c.test.ts",
+            "d.test.ts",
+            "e.test.ts",
+            "f.test.ts",
+            "g.test.ts",
+            "h.test.ts",
+            "i.test.ts",
+            "j.test.ts",
+            "k.test.ts",
+            "l.test.ts"
+          ]
+        ]);
+      });
+
+      it("balances files per runner so files are evenly spread across runner", function () {
+        const runners = performLoadBalancing(3, "e2e", this.filePaths, "file-name");
+        expect(runners.every((r) => r.length === 4)).to.be.true;
+        expect(runners).to.deep.equal([
+          ["a.test.ts", "b.test.ts", "c.test.ts", "d.test.ts"],
+          ["e.test.ts", "f.test.ts", "g.test.ts", "h.test.ts"],
+          ["i.test.ts", "j.test.ts", "k.test.ts", "l.test.ts"]
+        ]);
+      });
+
+      it("can handle balancing runners when files cannot be evenly spread across them", function () {
+        const runners = performLoadBalancing(5, "e2e", this.filePaths, "file-name");
+        expect(runners).to.deep.equal([
+          ["a.test.ts", "b.test.ts", "c.test.ts"],
+          ["d.test.ts", "e.test.ts", "f.test.ts"],
+          ["g.test.ts", "h.test.ts"],
+          ["i.test.ts", "j.test.ts"],
+          ["k.test.ts", "l.test.ts"]
+        ]);
+      });
+
+      it("only includes files given to it and does not consider others in the load balancing map", function () {
+        const runners = performLoadBalancing(2, "e2e", ["a.test.ts", "b.test.ts", "c.test.ts"], "file-name");
+        expect(runners[0]).to.deep.eq(["a.test.ts", "b.test.ts"]);
+        expect(runners[1]).to.deep.eq(["c.test.ts"]);
+      });
+
+      it("can handle less files than runners", function () {
+        const filePaths = Object.keys(this.loadBalancingMap.e2e);
+        const runners = performLoadBalancing(filePaths.length + 1, "e2e", filePaths, "file-name");
+        expect(runners[0]).to.have.lengthOf(1);
+        expect(runners[runners.length - 1]).to.have.lengthOf(0);
+      });
+
+      it("can differentiate specs between e2e and component", function () {
+        const e2eRunners = performLoadBalancing(1, "e2e", Object.keys(this.loadBalancingMap.e2e), "file-name");
+        const componentRunners = performLoadBalancing(
+          1,
+          "component",
+          Object.keys(this.loadBalancingMap.component),
+          "file-name"
+        );
+        expect(e2eRunners[0]).to.deep.eq([
+          "a.test.ts",
+          "b.test.ts",
+          "c.test.ts",
+          "d.test.ts",
+          "e.test.ts",
+          "f.test.ts",
+          "g.test.ts",
+          "h.test.ts",
+          "i.test.ts",
+          "j.test.ts",
+          "k.test.ts",
+          "l.test.ts"
+        ]);
+        expect(componentRunners[0]).to.deep.eq(["a.ct.ts", "b.ct.ts", "c.ct.ts"]);
+      });
+
+      it("can handle files that have not been run (or do not exist in map) yet", function () {
+        const runners = performLoadBalancing(1, "e2e", ["a.test.ts", "z.test.ts"], "file-name");
+        expect(runners[0]).to.deep.eq(["a.test.ts", "z.test.ts"]);
+        expect(this.writeFileSyncStub.calledOnce).to.be.true;
+        expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty("z.test.ts");
+      });
+
+      it("can handle a brand new map", function () {
+        const newFiles = [
+          "newFile.1.test.ts",
+          "newFile.2.test.ts",
+          "newFile.3.test.ts",
+          "newFile.4.test.ts",
+          "newFile.5.test.ts",
+          "newFile.6.test.ts"
+        ];
+        const runners = performLoadBalancing(2, "e2e", newFiles, "file-name");
+        expect(runners).to.deep.equal([
+          ["newFile.1.test.ts", "newFile.2.test.ts", "newFile.3.test.ts"],
+          ["newFile.4.test.ts", "newFile.5.test.ts", "newFile.6.test.ts"]
+        ]);
+        expect(this.writeFileSyncStub.calledOnce).to.be.true;
+
+        newFiles.map((nf) => {
+          expect(JSON.parse(this.writeFileSyncStub.firstCall.args[1] as string).e2e).to.haveOwnProperty(nf);
+        });
+      });
+    });
   });
 });

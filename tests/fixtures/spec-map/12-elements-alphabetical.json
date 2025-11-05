@@ -1,0 +1,141 @@
+{
+  "e2e": {
+    "a.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "b.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "c.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "d.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "e.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "f.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "g.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "h.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "i.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "j.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "k.test.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "l.test.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    }
+  },
+  "component": {
+    "a.ct.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "b.ct.ts": {
+      "stats": {
+        "durations": [
+          0
+        ],
+        "average": 0,
+        "median": 0
+      }
+    },
+    "c.ct.ts": {
+      "stats": {
+        "durations": [
+          100
+        ],
+        "average": 100,
+        "median": 100
+      }
+    }
+  }
+}
