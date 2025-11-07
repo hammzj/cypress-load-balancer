@@ -87,6 +87,7 @@ export default function addCypressLoadBalancerPlugin(
     const [runnerIndex, runnerCount] = getRunnerArgs(config.env.runner);
 
     on("after:run", (results: CypressCommandLine.CypressRunResult | CypressCommandLine.CypressFailedRunResult) => {
+      debug("Cypress Load Balancer after:run event started");
       if ((results as CypressCommandLine.CypressFailedRunResult).status === "failed") {
         console.error("cypress-load-balancer", "Cypress failed to execute, so load balancing updates will be skipped");
         return;
@@ -116,10 +117,12 @@ export default function addCypressLoadBalancerPlugin(
         return;
       }
 
-      debug("after:run will begin update file statistics for runner %s", runner);
+      debug("Updating file statistics for runner %s", runner);
 
       //Prep load balancing file if not existing and read it
       utils.initializeLoadBalancingFiles();
+
+      //TODO: use stream for map
       const loadBalancingMap = JSON.parse(
         fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString()
       ) as LoadBalancingMap;
@@ -143,6 +146,7 @@ export default function addCypressLoadBalancerPlugin(
       utils.saveMapFile(loadBalancingMap, fileNameForRunner);
       debug("%s Saved load balancing map with new file stats for runner %s", "Plugin", runner);
       debug("Load balancing map name: %s", fileNameForRunner);
+      debug("Cypress Load Balancer after:run event finished");
     });
 
     debug('Starting up load balancing process as "env.runner" has been declared: %o', {
