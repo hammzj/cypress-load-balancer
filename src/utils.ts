@@ -1,3 +1,7 @@
+//TODO: investigate loading a map with a JSON Stream,
+// like BFJ: https://gitlab.com/philbooth/bfj
+// or stream-json: https://github.com/uhop/stream-json
+//TODO: also consider creating the LoadBalancerMap as a class
 import path, { relative } from "path";
 import fs from "node:fs";
 import { FilePath, LoadBalancingMap, TestingType } from "./types";
@@ -58,16 +62,19 @@ class Utils {
     } = {}
   ) {
     const relativeFp = this.getRelativeFilePath(filePath);
-    if (loadBalancingMap[testingType][relativeFp] == null || opts.force === true) {
+    const isExisting = loadBalancingMap[testingType][relativeFp] != null;
+    if (!isExisting || opts.force === true) {
       loadBalancingMap[testingType][relativeFp] = { stats: { durations: [], average: 0, median: 0 } };
       debug(`Added new entry for file in load balancer object for "%s" type tests: "%s"`, testingType, relativeFp);
+      debug("Forced creation? %s", opts.force);
     } else {
       debug(`File already exists in load balancer for "%s" type tests: "%s"`, testingType, relativeFp);
     }
   }
 
   calculateAverageDuration(durations: number[]): number {
-    return Math.ceil(durations.reduce((acc, t) => acc + Math.abs(t), 0) / (durations.length || 1));
+    const total = durations.length || 1;
+    return Math.ceil(durations.reduce((acc, t) => acc + Math.abs(t), 0) / total);
   }
 
   calculateMedianDuration(durations: number[]): number {
@@ -80,11 +87,13 @@ class Utils {
       fileName != null
         ? this.getPath(fileName.replace(/.json/g, ``) + ".json")
         : this.MAIN_LOAD_BALANCING_MAP_FILE_PATH;
+    //TODO: this would be much better with a stream
     fs.writeFileSync(file, JSON.stringify(loadBalancingMap));
     debug("Saved load balancing map file");
   }
 
   shrinkToFit(arr: number[]): number[] {
+    debug("MAXIMUM_DURATIONS_ALLOWED: %d", this.MAX_DURATIONS_ALLOWED);
     if (arr.length > this.MAX_DURATIONS_ALLOWED) {
       const length = arr.length - this.MAX_DURATIONS_ALLOWED;
       debug("Must shrink durations array to new length of %d", length);
@@ -113,6 +122,8 @@ class Utils {
       debug("Load balancing map file initialized", `Forced initialization?`, opts.forceCreateMainLoadBalancingMap);
       isFileCreated = true;
     }
+    debug([isDirectoryCreated, isFileCreated]);
+
     return [isDirectoryCreated, isFileCreated];
   }
 
@@ -127,11 +138,18 @@ class Utils {
    * @param testingType {TestingType}
    * @param filePath {string}
    * @param [duration=] {number} Only adds new duration if provided
+   * @returns {boolean} true if updated, false if not found
    */
-  updateFileStats(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePath: FilePath, duration?: number) {
+  updateFileStats(
+    loadBalancingMap: LoadBalancingMap,
+    testingType: TestingType,
+    filePath: FilePath,
+    duration?: number
+  ): boolean {
     //File paths must be converted from full paths to relative paths to work across machines!!!
     const relativeFp = this.getRelativeFilePath(filePath);
-    if (loadBalancingMap[testingType][relativeFp] == null) {
+    const fileStats = loadBalancingMap[testingType][relativeFp];
+    if (fileStats == null) {
       if (!process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS) {
         console.warn(
           `Relative file path does not exist in map for type ${testingType}: `,
@@ -140,27 +158,22 @@ class Utils {
           filePath
         );
       }
-      return;
+      return false;
     } else {
-      if (duration != null) loadBalancingMap[testingType][relativeFp].stats.durations.push(duration);
-      this.shrinkToFit(loadBalancingMap[testingType][relativeFp].stats.durations);
+      if (duration != null) fileStats.stats.durations.push(duration);
+      this.shrinkToFit(fileStats.stats.durations);
+      fileStats.stats.average = this.calculateAverageDuration(fileStats.stats.durations);
+      fileStats.stats.median = this.calculateMedianDuration(fileStats.stats.durations);
 
-      loadBalancingMap[testingType][relativeFp].stats.average = this.calculateAverageDuration(
-        loadBalancingMap[testingType][relativeFp].stats.durations
-      );
-
-      loadBalancingMap[testingType][relativeFp].stats.median = this.calculateMedianDuration(
-        loadBalancingMap[testingType][relativeFp].stats.durations
-      );
-
-      debug("MAXIMUM_DURATIONS_ALLOWED: %d", this.MAX_DURATIONS_ALLOWED);
-
+      //Update original entry with new stats
+      loadBalancingMap[testingType][relativeFp] = fileStats;
       debug(
         `%s test file stats updated for "%s": %O`,
         testingType,
         relativeFp,
         loadBalancingMap[testingType][relativeFp].stats
       );
+      return true;
     }
   }
 
