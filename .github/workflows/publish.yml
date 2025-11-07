@@ -20,8 +20,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
           scope: "@hammzj"
-      - name: Update npm to ensure npm 11.5.1 or later is installed
-        run: npm install -g npm@latest
+      #- name: Update npm to ensure npm 11.5.1 or later is installed
+      #  run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
       - run: npm publish
