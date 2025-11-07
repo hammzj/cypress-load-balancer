@@ -22,9 +22,8 @@ jobs:
           scope: "@hammzj"
       #- name: Update npm to ensure npm 11.5.1 or later is installed
       #  run: npm install -g npm@latest
-      - run: npm install
-      - run: npm ci
-      - run: npm run build
-      - run: npm publish
+      - run: yarn install --clean
+      - run: yarn run build
+      - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
