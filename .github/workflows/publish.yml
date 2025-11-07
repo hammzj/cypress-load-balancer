@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
 
+# See NPM docs: https://docs.npmjs.com/trusted-publishers#supported-cicd-providers
+permissions:
+  id-token: write # Required for OIDC
+  contents: read
+
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
@@ -15,11 +20,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
           scope: "@hammzj"
-          cache: yarn
-      - run: |
-          yarn
-          yarn build
-          yarn publish
+      - name: Update npm to ensure npm 11.5.1 or later is installed
+        run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
