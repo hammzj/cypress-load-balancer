@@ -23,7 +23,7 @@ jobs:
       #- name: Update npm to ensure npm 11.5.1 or later is installed
       #  run: npm install -g npm@latest
       - run: npm install --force --save-prod
-      - run: npm ci
+      - run: npm ci --force
       - run: npm run build
       - run: npm publish
         env:
