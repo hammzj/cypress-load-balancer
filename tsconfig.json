@@ -11,7 +11,7 @@
     "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {},
-    "types": ["cypress", "chai", "chai-string", "mocha", "node", "sinon", "sinon-chai"],
+    "types": ["cypress", "chai", "mocha", "node", "sinon", "sinon-chai"],
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": false,

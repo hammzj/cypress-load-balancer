@@ -46,7 +46,7 @@ describe("Utils", function () {
       const writeFileSyncStub = sinon.stub(fs, "writeFileSync");
       utils.saveMapFile({ e2e: {}, component: {} }, "alternate.json.json");
       expect(writeFileSyncStub).to.have.been.calledOnce;
-      expect(writeFileSyncStub.firstCall.args[0]).to.endWith(".cypress_load_balancer/alternate.json");
+      expect(writeFileSyncStub.firstCall.args[0]).to.match(new RegExp(".cypress_load_balancer/alternate.json" + "$"));
       expect(writeFileSyncStub.firstCall.args[1]).to.deep.eq(JSON.stringify({ e2e: {}, component: {} }));
     });
   });

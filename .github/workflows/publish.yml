@@ -1,30 +1,28 @@
+# See NPM docs: https://docs.npmjs.com/trusted-publishers#supported-cicd-providers
 name: Publish Package to registries
 on:
   workflow_dispatch:
   release:
     types: [published]
 
-# See NPM docs: https://docs.npmjs.com/trusted-publishers#supported-cicd-providers
 permissions:
   id-token: write # Required for OIDC
   contents: read
 
 jobs:
-  publish-npm:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Setup .npmrc file to publish to npm
+
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: "20"
           registry-url: "https://registry.npmjs.org"
-          scope: "@hammzj"
-      #- name: Update npm to ensure npm 11.5.1 or later is installed
-      #  run: npm install -g npm@latest
-      - run: npm install --force --save-prod
-      - run: npm ci --force
+
+      # Ensure npm 11.5.1 or later is installed
+      - name: Update npm
+        run: npm install -g npm@latest
+      - run: npm ci
       - run: npm run build
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
