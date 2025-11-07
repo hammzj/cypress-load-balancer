@@ -1,4 +1,4 @@
-export interface DurationStatistics {
+export interface FileStats {
   stats: {
     durations: number[];
     average: number;
@@ -6,13 +6,11 @@ export interface DurationStatistics {
   };
 }
 
+export type FileEntry = Record<FilePath, FileStats>;
+
 export interface LoadBalancingMap {
-  e2e: {
-    [relativeFileName: string]: DurationStatistics;
-  };
-  component: {
-    [relativeFileName: string]: DurationStatistics;
-  };
+  e2e: FileEntry;
+  component: FileEntry;
 }
 
 export type TestingType = Cypress.TestingType;

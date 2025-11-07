@@ -1,16 +1,34 @@
 import fs from "node:fs";
 import utils from "./utils";
-import { Algorithms, FilePath, LoadBalancingMap, Runners, TestingType } from "./types";
+import { Algorithms, FileEntry, FilePath, LoadBalancingMap, Runners, TestingType } from "./types";
 import { debug } from "./helpers";
 
 const sum = (arr: number[]) => arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
 const filterOutEmpties = (arr: unknown[]) => arr.filter((v) => v != null);
+
+//TODO: use stream instead. This is HIGHLY inefficient
+const readInLoadBalancingMap = (): LoadBalancingMap => {
+  return JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
+};
 
 function prepareFiles(loadBalancingMap: LoadBalancingMap, testingType: TestingType, filePaths: Array<FilePath> = []) {
   if (filePaths.length > 0) {
     filePaths.map((fp) => utils.createNewEntry(loadBalancingMap, testingType, utils.getRelativeFilePath(fp)));
     utils.saveMapFile(loadBalancingMap);
   }
+}
+
+function filterLoadBalancingMap(
+  loadBalancingMap: LoadBalancingMap,
+  testingType: TestingType,
+  relativeFilePaths: FilePath[]
+): FileEntry {
+  return Object.keys(loadBalancingMap[testingType])
+    .filter((key) => relativeFilePaths.includes(key))
+    .reduce((obj: FileEntry, rfp) => {
+      obj[rfp] = loadBalancingMap[testingType][rfp];
+      return obj;
+    }, {});
 }
 
 /**
@@ -66,26 +84,20 @@ function balanceByFileName(runnerCount: number, filePaths: FilePath[]): Runners 
  * still make the Cypress execution faster than the other algorithms.
  * **Tradeoffs**: Runner times are more uniform, but there could be a larger set of slow runners overall. Could be a slow O-time and memory heavy; has not been calculated.
  *
- * @param loadBalancingMap {LoadBalancingMap}
- * @param testingType {TestingType}
  * @param runnerCount {number}
- * @param filePaths {FilePath[]}
+ * @param fileEntries {FileEntry} file paths from load balancer map based on the relative file paths supplied
  */
-function balanceByWeightedLargestRunner(
-  loadBalancingMap: LoadBalancingMap,
-  testingType: TestingType,
-  runnerCount: number,
-  filePaths: FilePath[]
-): Runners {
-  if (runnerCount === 1) return [filePaths];
+function balanceByWeightedLargestRunner(runnerCount: number, fileEntries: FileEntry): Runners {
+  const relativeFilePaths = Object.keys(fileEntries);
+  if (runnerCount === 1) return [relativeFilePaths];
 
-  const getFile = (fp: FilePath) => loadBalancingMap[testingType][fp];
-  const getTotalTime = (fps: FilePath[]) => sum(fps.map((f) => getFile(f).stats.median));
+  const getTotalTime = (fps: FilePath[]) => sum(fps.map((f) => fileEntries[f].stats.median));
   const sortByLargestMedianTime = (fps: FilePath[]) =>
     fps.sort((a, b) => getTotalTime([a]) - getTotalTime([b])).reverse();
 
+  //TODO: move to top
   //Sort files from highest to lowest "expected run time" (median runtime)
-  const sortedFilePaths = [...sortByLargestMedianTime(filePaths)];
+  const sortedFilePaths = [...sortByLargestMedianTime(relativeFilePaths)];
   const addHighestFileToRunner = (runner: FilePath[]) => {
     const file = sortedFilePaths.shift();
     if (file == null) {
@@ -166,25 +178,20 @@ function balanceByWeightedLargestRunner(
  *
  * **Tradeoffs**: There will be outliers between the longest running job and the slowest.
  *
- * @param loadBalancingMap {LoadBalancingMap}
- * @param testingType {TestingType}
  * @param runnerCount {number}
- * @param filePaths {FilePath[]}
+ * @param fileEntries
  */
-const balanceByMatchingArrayIndices = (
-  loadBalancingMap: LoadBalancingMap,
-  testingType: TestingType,
-  runnerCount: number,
-  filePaths: FilePath[]
-): FilePath[][] => {
+const balanceByMatchingArrayIndices = (runnerCount: number, fileEntries: FileEntry): FilePath[][] => {
   const fillByMatchingIndex = (runners: FilePath[][], filePath: FilePath, filePathIndex: number) => {
     const i = filePathIndex % runners.length;
     runners[i].push(filePath);
   };
 
+  const relativeFilePaths = Object.keys(fileEntries);
+
   const runners: Runners = Array.from({ length: runnerCount }, () => []);
-  filePaths
-    .sort((a, b) => loadBalancingMap[testingType][a].stats.median - loadBalancingMap[testingType][b].stats.median)
+  relativeFilePaths
+    .sort((a, b) => fileEntries[a].stats.median - fileEntries[b].stats.median)
     .reverse() //Sort highest to lowest by median
     .map((filePath, filePathIndex) => fillByMatchingIndex(runners, filePath, filePathIndex));
 
@@ -204,21 +211,23 @@ export default function performLoadBalancing(
   if (runnerCount < 1) throw Error("Runner count cannot be less than 1");
   debug(`Using algorithm for load balancing: %s`, algorithm);
   debug(`Runner count: %d`, runnerCount);
+
   //File paths must be converted from full paths to relative paths to work across machines!!!
   const relativeFilePaths = filePaths.map(utils.getRelativeFilePath);
   debug(`Relative file paths provided: %o`, relativeFilePaths);
 
   utils.initializeLoadBalancingFiles();
-  const loadBalancingMap = JSON.parse(fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString());
 
+  const loadBalancingMap = readInLoadBalancingMap();
   prepareFiles(loadBalancingMap, testingType, relativeFilePaths);
 
   const getRunners = () => {
+    const filteredFileEntries = filterLoadBalancingMap(loadBalancingMap, testingType, relativeFilePaths);
     switch (algorithm) {
       case "weighted-largest":
-        return balanceByWeightedLargestRunner(loadBalancingMap, testingType, runnerCount, relativeFilePaths);
+        return balanceByWeightedLargestRunner(runnerCount, filteredFileEntries);
       case "round-robin":
-        return balanceByMatchingArrayIndices(loadBalancingMap, testingType, runnerCount, relativeFilePaths);
+        return balanceByMatchingArrayIndices(runnerCount, filteredFileEntries);
       case "file-name":
         return balanceByFileName(runnerCount, relativeFilePaths);
       default:
