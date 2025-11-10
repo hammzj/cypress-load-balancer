@@ -1,5 +1,5 @@
 # 1. **Set a number of runners in `X/Y` format.** For example, 2 runners would mean saving `"1/2"`, `"2/2"`, for later. (Job: "generate_runner_variables")
-# 2. **Restore the load balancer main map file from a persisted location.** (Jobs: needed for "cypress_run_e2e" for accurate balancing, and "merge_cypress_load_balancing_maps" for saving results)
+# 2. **Restore the same load balancer main map file from a persisted location, that will be used for every run attempt.** (Jobs: needed for "cypress_run_e2e" for accurate balancing, and "merge_cypress_load_balancing_maps" for saving results)
 # 3. **Execute each Cypress `run` process in parallel using the `runner` variables.** ("cypress_run_e2e")
 # 4. **Wait for each Cypress process to fully complete.**
 # 5. **Collect the load balancing maps from each completed runner process.** ("merge_cypress_load_balancing_maps")
@@ -28,9 +28,41 @@ on:
           - "cypress-load-balancer"
 
 env:
-  runner_count: ${{ inputs.runner_count || 4}}
+  runner_count: ${{ inputs.runner_count || 4 }}
 
 jobs:
+  # This job exists so that if any testing jobs fail, or the same workflow needs to be re-run, then the testing jobs
+  # will contain the same set testing files for all new run attempts of this workflow. This is necessary to ensure
+  # that the balancing occurs for the timings of files on its first run attempt as well as for all new run attempts,
+  # and will not consider any new timings until a new instance of the workflow is run.
+  save_original_map_for_all_attempts:
+    name: Save the original map to cache to use on all future run attempts of this workflow
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if ORIGINAL map exists, and if not, restore cache of the map from previous workflow runs
+        id: check-if-original-map-exists
+        uses: actions/cache/restore@v4
+        with:
+          fail-on-cache-miss: false
+          path: .cypress_load_balancer/spec-map.json
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
+          ## Static restore key:
+          ## - "ORIGINAL" key from first run attempt, which is used for all future run attempts
+          # Extra restore keys in order, if static is not hit:
+          ## - Key from this current branch
+          ## - Key from base branch or default branch; in this case, default branch is "main" (GitHub Actions does not provide a way to get the default_branch name easily)
+          restore-keys: |
+            cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
+            cypress-load-balancer-map-${{ github.base_ref || 'main' }}
+
+      - name: Cache "ORIGINAL" map for all future run attempts, if it does not already exist
+        if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
+          path: .cypress_load_balancer/spec-map.json
+
   generate_runner_variables:
     runs-on: ubuntu-22.04
     outputs:
@@ -51,7 +83,7 @@ jobs:
 
   cypress_run_e2e:
     runs-on: ubuntu-22.04
-    needs: generate_runner_variables
+    needs: [save_original_map_for_all_attempts, generate_runner_variables]
     strategy:
       fail-fast: false
       matrix:
@@ -62,21 +94,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore cached load-balancing map
-        id: cache-restore-load-balancing-map
+      - name: Restore ORIGINAL load-balancing map for this run attempt
         uses: actions/cache/restore@v4
         with:
-          fail-on-cache-miss: false
+          fail-on-cache-miss: true
           path: .cypress_load_balancer/spec-map.json
-          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-          # Restore keys:
-          ## 1. Same key from previous workflow run
-          ## 2. Key from pull request base branch most recent workflow. Used for the "base" map, if one exists
-          restore-keys: |
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
-            cypress-load-balancer-map-${{ github.base_ref }}-
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
 
       - name: Cypress e2e tests (${{ matrix.runner }})
         uses: cypress-io/github-action@v6
@@ -120,15 +143,16 @@ jobs:
         with:
           fail-on-cache-miss: false
           path: .cypress_load_balancer/spec-map.json
+          # Save with key for this current run attempt
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           # Restore keys:
-          ## 1. Same key from previous workflow run
-          ## 2. Key from pull request base branch most recent workflow
+          ## 1. Key for the ORIGINAL map for this run attempt
+          ## 2. Key from the head ref/current branch
+          ## 3. Key from base ref/default branch
           restore-keys: |
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-${{ github.run_id }}-
-            cypress-load-balancer-map-${{github.head_ref || github.ref_name }}-
-            cypress-load-balancer-map-${{ github.base_ref }}-
+            cypress-load-balancer-map-${{ github.head_ref ||  github.ref_name }}-${{ github.run_id }}-ORIGINAL
+            cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
+            cypress-load-balancer-map-${{ github.base_ref || 'main' }}-
 
       - name: If no map exists for either the base branch or the current branch, then initialize one
         id: initialize-map
