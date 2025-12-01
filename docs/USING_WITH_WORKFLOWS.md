@@ -5,7 +5,7 @@ I will improve on this documentation later, but for now, this is the main proces
 ## Running parallelized tests
 
 The process is as such:
-
+- **Find or initialize base map**: Check for a `spec-map.json` in a persisted location. If one does not exist, initialize it using `npx cypress-load-balancer initialize`.
 - **Generate runner variables:** There are two ways to do this:
     - Use `npx cypress-load-balancer generate-runners <count>`. This creates an array of runner variables to use for
       each parallel runner process to iterated over when selecting which test files to execute.

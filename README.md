@@ -114,7 +114,8 @@ If you wish to run any files or a different set of files than your configuration
 to `cypress run`: `--config specPattern="{FILE_PATTERN}"`.
 
 This is the only way to get the load balancer to handle a different pattern than what is specified in your configuration
-file. Please note you may need to also declare `--config excludeSpecPattern=""` to override your config file's default
+file. Please note you may need to also declare `--config excludeSpecPattern="{EXCLUSION_PATTERN}"` to override your
+config file's default
 option for that, if one is specified that may exclude your new spec pattern. In most cases, you should not need to do
 so.
 
@@ -137,7 +138,7 @@ cypress run  --env runner=1/2 --config specPattern=["cypress/e2e/**/actions.cy.j
 ```
 
 **Warning: do not use `cypress run --spec "{FILE_PATTERN}"` as it does not work with this plugin. It may produce Cypress
-errors with an empty fileset. Use `--config specPattern` format instead.**
+errors with an empty fileset. Use `--config specPattern="{FILE_PATTERN}"` format instead.**
 
 ### Result collection
 
@@ -168,7 +169,7 @@ this unless you have a specific reason for another algorithm.
 
 Choices:
 
-* (Default) `weighted-largest`:  Attempts to get a uniform total run time between all runners by separating the
+* `weighted-largest`: (Default) Attempts to get a uniform total run time between all runners by separating the
   longest-running
   tests into their own runners first, and attempting to keep all other runners equal to or lower than its time. If there
   are more tests than runners, then it will continually keep a check of the total run time of the runner with the
@@ -433,14 +434,15 @@ This is the basic idea of steps that need to occur in order to use load balancin
 needs to saved and persisted throughout all runs in a stable, base location. After all parallel test runs complete,
 their results can be merged back to the main file, which can be consumed on the next test runs, and so on.
 
-1. **Set a number of runners in `"X/Y"` format.** For example, 2 runners would mean saving two runner strings of
+1. **Check for a `spec-map.json` in a persisted location, but initialize it if it does not exist.**
+2. **Set a number of runners in `"X/Y"` format.** For example, 2 runners would mean saving two runner strings of
    `"1/2"` & `"2/2"` to use in a later job.
-2. **Restore the load balancer main map file from a persisted location.**
-3. **Execute each Cypress `run` process in parallel using the `runner` variables.**
-4. **Wait for each Cypress process to fully complete.**
-5. **Collect the load balancing maps from each completed runner process.**
-6. **Merge the temporary maps back to the original load balancing map.**
-7. **Save the updated main load balancing map back to its persisted location.**
+3. **Restore the load balancer main map file from a persisted location.**
+4. **Execute each Cypress `run` process in parallel using the `runner` variables.**
+5. **Wait for each Cypress process to fully complete.**
+6. **Collect the load balancing maps from each completed runner process.**
+7. **Merge the temporary maps back to the original load balancing map.**
+8. **Save the updated main load balancing map back to its persisted location.**
 
 #### GitHub Actions
 
@@ -450,8 +452,7 @@ There are example workflows here:
   perform load balancing and cache the files on runs. For pull requests, it will prepare the file to be saved when
   merging down to the base branch.
 - `.github/workflows/save-map-to-base-branch-on-pr-merge.yml`: when the pull request is merged, the load balancing file
-  from the test
-  runs on the PR will be saved to the base branch.
+  from the test runs on the PR will be saved to the base branch.
 
 When pull requests are merged, the latest load balancing map file is saved to the base branch so it can be used again.
 This allows the map to be saved on a trunk branch, so workflows can reuse and overwrite it when there are new pull
@@ -467,7 +468,7 @@ Debug logs can be enabled for the plugin and CLI commands with the Node environm
 ### Tests
 
 Unit tests can be run with `yarn run test`. These run all unit tests, but also local Cypress example scripts and CLI
-scripts in mocha, which can take a long time to run. The long running example and CLI scripts can be skipped temporarily
+scripts in mocha, which can take a long time to run. The long-running example and CLI scripts can be skipped temporarily
 with `SKIP_LONG_TESTS=1 yarn run test`, or `yarn run test:skip-long-tests`.
 
 There are also example scripts for running Cypress, and those scripts start with `example:`.
