@@ -57,19 +57,19 @@ jobs:
             cypress-load-balancer-map-${{ github.base_ref || 'main' }}
 
       - uses: actions/setup-node@v4
-        if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
+        if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Initialize "ORIGINAL" map if not existing
-        if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
+        if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
         run: |
           yarn install
           yarn build
           npx cypress-load-balancer initialize
 
       - name: Cache "ORIGINAL" map for all future run attempts, if not existing
-        if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
+        if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
         uses: actions/cache/save@v4
         with:
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
