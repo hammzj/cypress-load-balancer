@@ -40,7 +40,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Check if ORIGINAL map exists, and if not, restore cache of the map from previous workflow runs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Check if "ORIGINAL" map exists, and if not, restore cache of the map from previous workflow runs
         id: check-if-original-map-exists
         uses: actions/cache/restore@v4
         with:
@@ -55,11 +59,6 @@ jobs:
           restore-keys: |
             cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref || 'main' }}
-
-      - uses: actions/setup-node@v4
-        if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
-        with:
-          node-version: ${{ env.NODE_VERSION }}
 
       - name: Initialize "ORIGINAL" map, if not currently existing
         if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
