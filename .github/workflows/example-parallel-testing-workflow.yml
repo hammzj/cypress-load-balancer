@@ -40,7 +40,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Check if ORIGINAL map exists, and if not, restore cache of the map from previous workflow runs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Check if "ORIGINAL" map exists, and if not, restore cache of the map from previous workflow runs
         id: check-if-original-map-exists
         uses: actions/cache/restore@v4
         with:
@@ -56,19 +60,14 @@ jobs:
             cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref || 'main' }}
 
-      - uses: actions/setup-node@v4
-        if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Initialize "ORIGINAL" map if not existing
-        if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
+      - name: Initialize map if not present
+        if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
         run: |
           yarn install
           yarn build
           npx cypress-load-balancer initialize
 
-      - name: Cache "ORIGINAL" map for all future run attempts, if not existing
+      - name: Cache "ORIGINAL" map for all future run attempts on cache miss
         if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
@@ -106,7 +105,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore ORIGINAL load-balancing map for this run attempt
+      - name: Restore "ORIGINAL" load-balancing map for this run attempt
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: true
@@ -138,38 +137,20 @@ jobs:
     needs: [cypress_run_e2e]
     if: (!cancelled())
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - run: |
-          yarn install
-          yarn build
+      - run: yarn install && yarn build
 
-      - name: Restore cached load-balancing map
-        id: cache-restore-load-balancing-map
+      - name: Restore "ORIGINAL" load-balancing map for this run attempt
         uses: actions/cache/restore@v4
         with:
-          fail-on-cache-miss: false
+          fail-on-cache-miss: true
           path: .cypress_load_balancer/spec-map.json
-          # Save with key for this current run attempt
-          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-          # Restore keys:
-          ## 1. Key for the ORIGINAL map for this run attempt
-          ## 2. Key from the head ref/current branch
-          ## 3. Key from base ref/default branch
-          restore-keys: |
-            cypress-load-balancer-map-${{ github.head_ref ||  github.ref_name }}-${{ github.run_id }}-ORIGINAL
-            cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
-            cypress-load-balancer-map-${{ github.base_ref || 'main' }}-
-
-      - name: If no map exists for either the base branch or the current branch, then initialize one
-        id: initialize-map
-        run: npx cypress-load-balancer initialize
-        if: ${{ hashFiles('.cypress_load_balancer/spec-map.json') == '' }}
+          key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
 
       - name: Download temp maps
         uses: actions/download-artifact@v4
@@ -181,16 +162,17 @@ jobs:
       - name: Merge files
         run: npx cypress-load-balancer merge -G "./temp/**/spec-map-*.json" --HE error
 
-      - name: Save overwritten cached load-balancing map
+      - name: Save overwritten cached load-balancing map to workflow
         id: cache-save-load-balancing-map
         uses: actions/cache/save@v4
         with:
-          #This saves to the workflow run. To save to the base branch during pull requests, this needs to be uploaded on merge using a separate action
-          # @see `./save-map-on-to-base-branch-on-pr-merge.yml`
+          # This saves to the workflow run.
+          # To save to the base branch during pull requests, this needs to be uploaded on merge using a separate action.
+          # See `./save-map-on-to-base-branch-on-pr-merge.yml`
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .cypress_load_balancer/spec-map.json
 
-      # This is to get around the issue of not being able to access cache on the base_ref for a PR.
+      # This is to get around the issue of not being able to access cache on the base_ref for a pull request.
       # We can use this to download it in another workflow run: https://github.com/dawidd6/action-download-artifact
       # That way, we can merge the source (head) branch's load balancer map to the target (base) branch.
       - name: Upload main load balancer map
