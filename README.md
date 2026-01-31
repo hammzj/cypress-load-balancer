@@ -1,6 +1,6 @@
 # cypress-load-balancer
 
-A simple load balancer for Cypress tests.
+An easy-to-use load balancer for Cypress tests.
 
 Use this for parallelizing jobs across CI/CD solutions or locally in separate processes.
 
@@ -25,9 +25,9 @@ In your Cypress configuration file, add the plugin separately to your `e2e` conf
 configuration, if you have one. It must come after any other plugins that can mutate the `config.specPattern`. It is
 best to register it as the last plugin.
 
-Finally, return the `config` from `setupNodeEvents.
+Finally, return the `config` from `setupNodeEvents`.
 
-This will register load balancing for separate testing types:
+This will register the load balancing plugin for separate testing types:
 
 ```typescript
 import { addCypressLoadBalancerPlugin } from "cypress-load-balancer";
