@@ -80,9 +80,10 @@ For example, if you want to use 4 runners, you would execute each of these comma
 
 To enable, you need to declare `runner` in your Cypress environment variables. There are two ways:
 
-1. Cypress CLI `--env runner` option: `cypress run --env runner="1/2"` (the first of two runners)
+1. Cypress CLI `--env`: `cypress run --env runner="1/2"` (for example, this is the first of two runners)
    Note:
 2. Node environment variable with `CYPRESS_` formatting: `CYPRESS_runner=1/2 cypress run`
+
 
 **Note: do NOT declare the `runner` within your configuration file as it may permanently filter out your test files!
 Only declare it from the command line when you need to use parallel processes. As well, do not declare it
