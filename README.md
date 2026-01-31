@@ -37,7 +37,8 @@ defineConfig({
     setupNodeEvents(on, config) {
       //Any other plugins that mutate the config's specPattern
 
-      //This add this plugin
+      //This add this 
+
       addCypressLoadBalancerPlugin(on, config, "e2e");
 
       //Return the config as well!
@@ -63,8 +64,6 @@ Now, when you run your suite, it will calculate the average for each file based 
 
 **Currently, this file will place files from ALL configurations in it. I am investigating how to handle separate load
 balancing map files for use with multiple configs later on.**
-
-### Installing the plugin
 
 ## Usage
 
