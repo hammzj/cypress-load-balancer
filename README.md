@@ -87,7 +87,7 @@ To enable, you need to declare `runner` in your Cypress environment variables. T
 
 **Note: do NOT declare the `runner` within your configuration file as it may permanently filter out your test files!
 Only declare it from the command line when you need to use parallel processes. As well, do not declare it
-for `cypress open` mode or you will filter out specs in the testrunner UI.**
+for `cypress open` mode or you will filter out specs in the testrunner UI. If you must declare it this way, set to to "1/1" and dynamically handle it as needed.**
 
 ### Inputs
 
