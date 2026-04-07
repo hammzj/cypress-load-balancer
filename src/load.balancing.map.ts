@@ -1,8 +1,7 @@
 import fs from "node:fs";
 import path from "path";
 import { debug, warn } from "./helpers";
-import { FilePath, FileStats, LoadBalancingMapJSONFile, TestingType } from "./types";
-import utils from "./utils";
+import { FileStats, LoadBalancingMapJSONFile, TestingType } from "./types";
 
 function getRelativePath(filePath: string) {
   return path.relative(process.cwd(), filePath);
@@ -30,8 +29,12 @@ export class TestFile {
     this.calculateStatistics();
   }
 
-  public getStatistics(): FileStats {
-    return { stats: { durations: this.durations, average: this.average, median: this.median } };
+  public get stats() {
+    return { durations: this.durations, average: this.average, median: this.median };
+  }
+
+  public getMedian(): number {
+    return this.stats.median;
   }
 
   //@ts-expect-error Ignore -- might use later
@@ -184,7 +187,7 @@ export class LoadBalancingMap {
     testFile.addDurations(...durations);
     this.setTestFileEntry(testingType, testFile);
 
-    debug(`[%s] file "%s" stats updated to: %O`, testingType, testFile.relativePath, testFile.getStatistics());
+    debug(`[%s] file "%s" stats updated to: %O`, testingType, testFile.relativePath, testFile.stats);
 
     return true;
   }
@@ -221,7 +224,7 @@ export class LoadBalancingMap {
         .entries()
         .reduce(
           (acc, [relativePath, testFile]) => {
-            acc[relativePath] = testFile.getStatistics();
+            acc[relativePath] = { stats: testFile.stats };
             return acc;
           },
           {} as Record<string, FileStats>
