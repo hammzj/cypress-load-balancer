@@ -1,10 +1,12 @@
+//TODO: replace performLoadBalancing with correct commands
+
 //TODO: this has been deprecated. It will eventually be replaced with a "demo" command
 // to see the outputs and timings before actually running Cypress.
 //eslint-disable @typescript-eslint/no-explicit-any
 
 // @ts-expect-error There are no types for this package
 import findCypressSpecs from "find-cypress-specs";
-import performLoadBalancing from "../../loadBalancer";
+import performLoadBalancing from "../../_loadBalancer";
 import { Runners, TestingType } from "../../types";
 import { debug } from "../../helpers";
 import { GetSpecsError } from "../errors";

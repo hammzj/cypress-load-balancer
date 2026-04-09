@@ -1,4 +1,4 @@
-import utils from "../../utils";
+import { LoadBalancingMap } from "../../load.balancing.map";
 
 export default {
   command: "initialize",
@@ -11,7 +11,7 @@ export default {
         //   alias: "o",
         //   description: "An output file path to which to save. If not provided, uses the original file path",
         //   type: "string",
-        //   default: utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH
+        //   default: undefined
         // })
         .option("force", {
           description: "Forces re-initialization of file even if existing",
@@ -27,15 +27,11 @@ export default {
   },
   //@ts-expect-error Need to fix type
   handler: function (argv) {
-    const [isDirectoryCreated, isFileCreated] = utils.initializeLoadBalancingFiles({
+    const [isDirectoryCreated, isFileCreated] = new LoadBalancingMap().initializeSpecMapFile({
       forceCreateMainDirectory: argv["force-dir"],
-      forceCreateMainLoadBalancingMap: argv["force"]
+      forceCreateFile: argv["force"]
     });
-    if (isDirectoryCreated) {
-      console.log("cypress-load-balancer", "Created directory");
-    }
-    if (isFileCreated) {
-      console.log("cypress-load-balancer", "Created initial file");
-    }
+    if (isDirectoryCreated) console.log("cypress-load-balancer", "Created directory");
+    if (isFileCreated) console.log("cypress-load-balancer", "Created initial file");
   }
 };

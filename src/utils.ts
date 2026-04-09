@@ -1,7 +1,4 @@
-//TODO: investigate loading a map with a JSON Stream,
-// like BFJ: https://gitlab.com/philbooth/bfj
-// or stream-json: https://github.com/uhop/stream-json
-//TODO: also consider creating the LoadBalancerMap as a class
+//TODO: remove
 import path, { relative } from "path";
 import fs from "node:fs";
 import { FilePath, LoadBalancingMap, TestingType } from "./types";

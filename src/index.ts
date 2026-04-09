@@ -1,5 +1,6 @@
 import addCypressLoadBalancerPlugin from "./plugin";
-import performLoadBalancing from "./loadBalancer";
+//TODO: remove
+import performLoadBalancing from "./_loadBalancer";
 import mergeLoadBalancingMapFiles from "./merge";
 import { default as cli } from "./cli";
 
