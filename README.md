@@ -170,7 +170,7 @@ cases, you should use the command below to accurately collect all parallelized m
 merging:
 
 ```shell
-npx cypress-load-balancer -G "./.cypress_load_balancer/**/spec-map-*.json" --rm
+npx cypress-load-balancer merge -G "./.cypress_load_balancer/**/spec-map-*.json" --rm
 ```
 
 ### Using a different algorithm

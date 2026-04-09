@@ -20,7 +20,7 @@ export type TestingType = Cypress.TestingType;
 
 export type FilePath = string;
 
-export type Runners = FilePath[][];
+export type Runners = string[][];
 
 export type Algorithms = "weighted-largest" | "round-robin" | "file-name";
 export type LoadBalancingAlgorithm = "weighted-largest" | "round-robin" | "file-name";

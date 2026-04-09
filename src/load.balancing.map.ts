@@ -7,16 +7,22 @@ function getRelativePath(filePath: string) {
   return path.relative(process.cwd(), filePath);
 }
 
+function convertToPosixPath(filePath: string) {
+  return process.platform === "win32" ? filePath.replaceAll(path.sep, path.posix.sep) : filePath;
+}
+
+function convertToSystemPath(filePath: string) {
+  return process.platform === "win32" ? filePath.replaceAll(path.posix.sep, path.win32.sep) : filePath;
+}
+
 export class TestFile {
-  public relativePath: string;
+  private readonly path: string;
   private average: number;
   private median: number;
   protected durations: number[];
 
   constructor(filePath: string, durations: number[] = []) {
-    //TODO: make cross Linux/MacOS to Windows compatible
-    //convert windows to linux paths
-    this.relativePath = getRelativePath(filePath);
+    this.path = TestFile.convertToInternalPath(filePath);
     this.durations = [];
     this.average = 0;
     this.median = 0;
@@ -37,6 +43,28 @@ export class TestFile {
     return this.stats.median;
   }
 
+  /**
+   * External path used for Cypress input; system dependent.
+   * Paths are stored for TestFile in UNIX format.
+   * To ensure stability on Windows devices, the `systemPath` will be changed to reflect how the path appears on Windows systems.
+   */
+  public get systemPath() {
+    return convertToSystemPath(this.path);
+  }
+
+  public get internalPath() {
+    return this.path;
+  }
+
+  /**
+   * Returns a file path converted to the internal path format used for the TestFile.
+   * All internal paths are represented as relative UNIX system paths.
+   * @param filePath {string}
+   */
+  public static convertToInternalPath(filePath: string): string {
+    return convertToPosixPath(getRelativePath(filePath));
+  }
+
   //@ts-expect-error Ignore -- might use later
   private resetDurations() {
     this.durations = [];
@@ -44,12 +72,12 @@ export class TestFile {
 
   private calculateAverage() {
     const total = this.durations.length || 1;
-    this.average = Math.ceil(this.durations.reduce((acc, t) => acc + Math.abs(t), 0) / total);
+    this.average = Math.ceil(this.durations.reduce((acc: number, d: number) => acc + Math.abs(d), 0) / total);
   }
 
   private calculateMedian() {
     const middleIndex = Math.ceil(this.durations.length / 2) - 1;
-    this.median = this.durations.toSorted((a, b) => a - b)[middleIndex || 0];
+    this.median = this.durations.toSorted((a: number, b: number) => a - b)[middleIndex || 0];
   }
 
   private shrinkDurationsToMaximumSize(): void {
@@ -85,14 +113,20 @@ export class LoadBalancingMap {
     if (specMapFileName) this.customFileName = specMapFileName;
 
     this.map = new Map();
-    for (const testingType of LoadBalancingMap.TESTING_TYPES) this.map.set(testingType, new Map());
+    LoadBalancingMap.TESTING_TYPES.map((t) => this.map.set(t, new Map()));
 
-    this.loadJSON();
+    this.importFromJSON();
   }
 
   public prepareForLoadBalancing(testingType: TestingType, filePaths: string[] = []) {
     if (filePaths.length > 0) {
-      filePaths.map((fp) => this.addTestFileEntry(testingType, fp));
+      //Only attempt to create the spec-map file if there are test files to run
+      this.initializeSpecMapFile();
+
+      //Add new only files to the spec-map
+      filePaths.map((fp) => {
+        if (!this.doesFileExist(testingType, fp)) this.addTestFileEntry(testingType, fp);
+      });
 
       //TODO: do we need to do this, or can it wait until the process ends? I assume it is better to save on first step
       //If there are new files to be run, save them to the map file
@@ -100,15 +134,91 @@ export class LoadBalancingMap {
     }
   }
 
-  public static get MAX_DURATIONS_ALLOWED() {
-    return Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
+  public getTestFiles(testingType: TestingType, filePaths: string[]): TestFile[] {
+    return filePaths.map((fp) => this.getTestFileEntry(testingType, fp)).filter((fp) => fp != null);
+  }
+
+  private doesFileExist(testingType: TestingType, internalFilePath: string): boolean {
+    return this.getTestFileEntry(testingType, internalFilePath) != null;
+  }
+
+  private importFromJSON(): boolean {
+    if (!fs.existsSync(this.path)) {
+      debug(`JSON file not found at path "%s"; does it need initialized?`, this.path);
+      return false;
+    }
+
+    const file = fs.readFileSync(this.path).toString();
+    const json = JSON.parse(file);
+    //TODO: add this.validateJSONFile(jsonFile)
+    // if (!this.validateJSONFile(json)) {
+    //   warn("JSON file is invalid at path: ", this.path);
+    //   return false;
+    // }
+
+    for (const testingType of LoadBalancingMap.TESTING_TYPES) {
+      for (const [fileName, value] of Object.entries(json[testingType])) {
+        this.addTestFileEntry(testingType, fileName);
+        this.updateTestFileEntry(testingType, fileName, (value as FileStats).stats?.durations ?? []);
+      }
+    }
+
+    return true;
+  }
+
+  public addTestFileEntry(testingType: TestingType, filePath: string, opts: { force?: boolean } = {}): boolean {
+    const testFile = new TestFile(filePath);
+    const internalPath = testFile.internalPath;
+
+    //Create if not found, or if forced
+    if (!this.doesFileExist(testingType, internalPath) || opts.force === true) {
+      this.setTestFileEntry(testingType, testFile);
+
+      debug(`Added new entry for file in load balancer object for "%s" type tests: "%s"`, testingType, internalPath);
+      debug("Forced creation? %s", opts.force);
+      return true;
+    } else {
+      debug(`File already exists in load balancer for "%s" type tests: "%s"`, testingType, internalPath);
+      return false;
+    }
+  }
+
+  public updateTestFileEntry(testingType: TestingType, filePath: string, durations: number[] = []): boolean {
+    //Gracefully skip if no durations are provided
+    if (durations.length === 0) return false;
+
+    const testFile = this.getTestFileEntry(testingType, filePath);
+
+    if (!testFile) {
+      warn(`[%s]: Relative file path does not exist for %s`, testingType, filePath);
+      return false;
+    }
+
+    testFile.addDurations(...durations);
+    this.setTestFileEntry(testingType, testFile);
+
+    debug(`[%s] file "%s" stats updated to: %O`, testingType, testFile.internalPath, testFile.stats);
+
+    return true;
+  }
+
+  /**
+   * Warning: The map file can only be saved under the top-level directory named `".cypress_load_balancer"`
+   * @param outputFileName {string} Pass this in to save the file under a different name. Useful for making copies of the file without overwriting the original
+   */
+  public saveMapFile(outputFileName?: string) {
+    const fileName = outputFileName ? LoadBalancingMap.getPath(outputFileName) : this.path;
+
+    //TODO: this would be much better with a stream
+    fs.writeFileSync(fileName, JSON.stringify(this.toJSON()));
+    debug("Saved load balancing map file");
   }
 
   //TODO: I am not sure if I want to keep this as it is
-  public initializeMainSpecMapFile(
+  public initializeSpecMapFile(
     opts: {
       forceCreateMainDirectory?: boolean;
-      forceCreateMainLoadBalancingMap?: boolean;
+      forceCreateFile?: boolean;
     } = {}
   ): [boolean, boolean] {
     let [isDirectoryCreated, isFileCreated] = [false, false];
@@ -120,87 +230,30 @@ export class LoadBalancingMap {
       debug("Created directory for `/.cypress_load_balancer", `Force initialization?`, opts.forceCreateMainDirectory);
     }
 
-    if (opts.forceCreateMainLoadBalancingMap === true || !fs.existsSync(this.MAIN_MAP_PATH)) {
-      this.saveMapFile(this.MAIN_MAP_PATH);
-      debug("Load balancing map file initialized", `Forced initialization?`, opts.forceCreateMainLoadBalancingMap);
+    if (opts.forceCreateFile === true || !fs.existsSync(this.path)) {
+      this.saveMapFile();
+      debug("Load balancing map file initialized", `Forced initialization?`, opts.forceCreateFile);
       isFileCreated = true;
     }
+
     debug([isDirectoryCreated, isFileCreated]);
 
     return [isDirectoryCreated, isFileCreated];
   }
 
-  public getTestFiles(testingType: TestingType, filePaths: string[]): TestFile[] {
-    return filePaths.map((fp) => this.getTestFileEntry(testingType, fp)).filter((fp) => fp != null);
+  public static get MAX_DURATIONS_ALLOWED() {
+    return Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
   }
 
-  private loadJSON(): boolean {
-    const jsonFile = JSON.parse(fs.readFileSync(this.path).toString());
-    if (!jsonFile) {
-      debug("JSON file not found at path %s", this.path);
-      return false;
-    }
-
-    //TODO: add this.validateJSONFile(jsonFile)
-    // if (!this.validateJSONFile(jsonFile)) {
-    //   warn("JSON file is invalid at path: ", this.path);
-    //   return false;
-    // }
-
-    for (const testingType of LoadBalancingMap.TESTING_TYPES) {
-      for (const [fileName, value] of Object.entries(jsonFile[testingType])) {
-        this.addTestFileEntry(testingType, fileName);
-        this.updateTestFileEntry(testingType, fileName, (value as FileStats).stats?.durations ?? []);
-      }
-    }
-
-    return true;
-  }
-
-  public addTestFileEntry(testingType: TestingType, filePath: string, opts: { force?: boolean } = {}) {
-    const testFile = new TestFile(filePath);
-    const relativePath = testFile.relativePath;
-    const filesPerTestingType = this.map.get(testingType) as Map<string, TestFile>;
-
-    //Create if not found, or if forced
-    if (!filesPerTestingType.has(relativePath) || opts.force === true) {
-      this.setTestFileEntry(testingType, testFile);
-
-      debug(`Added new entry for file in load balancer object for "%s" type tests: "%s"`, testingType, relativePath);
-      debug("Forced creation? %s", opts.force);
-    } else {
-      debug(`File already exists in load balancer for "%s" type tests: "%s"`, testingType, relativePath);
-    }
-  }
-
-  public updateTestFileEntry(testingType: TestingType, filePath: string, durations: number[] = []): boolean {
-    //Gracefully skip if no durations are provided
-    if (durations.length === 0) return false;
-
-    const testFile = this.getTestFileEntry(testingType, filePath);
-
-    if (!testFile) {
-      warn(`[%s]: Relative file path does not exist for %s`, testingType, getRelativePath(filePath));
-      return false;
-    }
-
-    testFile.addDurations(...durations);
-    this.setTestFileEntry(testingType, testFile);
-
-    debug(`[%s] file "%s" stats updated to: %O`, testingType, testFile.relativePath, testFile.stats);
-
-    return true;
-  }
-
-  static get TESTING_TYPES(): TestingType[] {
+  public static get TESTING_TYPES(): TestingType[] {
     return ["e2e", "component"];
   }
 
-  static get EMPTY_FILE_NAME_REGEXP(): RegExp {
+  public static get EMPTY_FILE_NAME_REGEXP(): RegExp {
     return /clb-empty-\d+-\d+.cy.js/;
   }
 
-  static get EMPTY_FILE_NAME(): string {
+  public static get EMPTY_FILE_NAME(): string {
     return "empty.cy.js";
   }
 
@@ -217,50 +270,37 @@ export class LoadBalancingMap {
     this.path = LoadBalancingMap.getPath(formatted);
   }
 
-  private getMapAsJSON(): LoadBalancingMapJSONFile {
-    return this.map.keys().reduce((jsonMap, testingType) => {
-      jsonMap[testingType] = this.map
-        .get(testingType)!
-        .entries()
-        .reduce(
-          (acc, [relativePath, testFile]) => {
-            acc[relativePath] = { stats: testFile.stats };
-            return acc;
-          },
-          {} as Record<string, FileStats>
-        );
+  private toJSON(): LoadBalancingMapJSONFile {
+    return Array.from(this.map.keys()).reduce((jsonMap: LoadBalancingMapJSONFile, testingType: TestingType) => {
+      jsonMap[testingType] = Array.from(this.map.get(testingType)!.entries()).reduce(
+        (acc: Record<string, FileStats>, [relativePath, testFile]: [string, TestFile]) => {
+          acc[relativePath] = { stats: testFile.stats };
+          return acc;
+        },
+        {} as Record<string, FileStats>
+      );
       return jsonMap;
     }, {} as LoadBalancingMapJSONFile);
   }
 
   private setTestFileEntry(testingType: TestingType, testFile: TestFile) {
     const filesPerTestingType = this.map.get(testingType) as Map<string, TestFile>;
-    filesPerTestingType.set(testFile.relativePath, testFile);
+    filesPerTestingType.set(testFile.internalPath, testFile);
     this.map.set(testingType, filesPerTestingType);
   }
 
   private getTestFileEntry(testingType: TestingType, filePath: string): TestFile | undefined {
-    const relativePath = getRelativePath(filePath);
-    return this.map.get(testingType)!.get(relativePath);
-  }
-
-  /**
-   * Warning: The map file can only be saved under the top-level directory named `".cypress_load_balancer"`
-   * @param outputFileName {string} Pass this in to save the file under a different name
-   */
-  public saveMapFile(outputFileName?: string) {
-    const fileName = LoadBalancingMap.getPath(outputFileName || this.path);
-
-    //TODO: this would be much better with a stream
-    fs.writeFileSync(fileName, JSON.stringify(this.getMapAsJSON()));
-    debug("Saved load balancing map file");
+    //TODO: is there a better way to DRY this up and not make it dependent on the TestFile class?
+    const internalPath = TestFile.convertToInternalPath(filePath);
+    return this.map.get(testingType)!.get(internalPath);
   }
 
   //Map to MAIN container map, to which parallelized files are merged
-  private get MAIN_MAP_PATH() {
+  private get MAIN_MAP_PATH(): string {
     return LoadBalancingMap.getPath("spec-map.json");
   }
 
+  /*
   private validateJSONFile(jsonFile: never | LoadBalancingMapJSONFile): boolean {
     //Check for top level keys first
     if (Object.keys(jsonFile).length === 0) return false;
@@ -278,4 +318,5 @@ export class LoadBalancingMap {
     }
     return true;
   }
+  */
 }

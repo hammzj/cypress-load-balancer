@@ -11,6 +11,7 @@
     "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {},
+    "lib": ["es2023"],
     "types": ["cypress", "chai", "mocha", "node", "sinon", "sinon-chai"],
     "resolveJsonModule": true,
     "allowJs": true,
