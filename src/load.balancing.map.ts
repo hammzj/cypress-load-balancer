@@ -3,16 +3,10 @@ import path from "path";
 import { debug, warn } from "./helpers";
 import { FileStats, LoadBalancingMapJSONFile, TestingType } from "./types";
 
+const MAX_DURATIONS_ALLOWED = () => Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
+
 function getRelativePath(filePath: string) {
   return path.relative(process.cwd(), filePath);
-}
-
-function convertToPosixPath(filePath: string) {
-  return process.platform === "win32" ? filePath.replaceAll(path.sep, path.posix.sep) : filePath;
-}
-
-function convertToSystemPath(filePath: string) {
-  return process.platform === "win32" ? filePath.replaceAll(path.posix.sep, path.win32.sep) : filePath;
 }
 
 export class TestFile {
@@ -27,7 +21,6 @@ export class TestFile {
     this.average = 0;
     this.median = 0;
     this.addDurations(...durations);
-    this.calculateStatistics();
   }
 
   public addDurations(...durations: number[]) {
@@ -35,6 +28,7 @@ export class TestFile {
     this.calculateStatistics();
   }
 
+  //TODO: should this be private?
   public get stats() {
     return { durations: this.durations, average: this.average, median: this.median };
   }
@@ -49,7 +43,7 @@ export class TestFile {
    * To ensure stability on Windows devices, the `systemPath` will be changed to reflect how the path appears on Windows systems.
    */
   public get systemPath() {
-    return convertToSystemPath(this.path);
+    return process.platform === "win32" ? this.path.replaceAll(path.posix.sep, path.win32.sep) : this.path;
   }
 
   public get internalPath() {
@@ -62,7 +56,8 @@ export class TestFile {
    * @param filePath {string}
    */
   public static convertToInternalPath(filePath: string): string {
-    return convertToPosixPath(getRelativePath(filePath));
+    const relativePath = getRelativePath(filePath);
+    return process.platform === "win32" ? relativePath.replaceAll(path.sep, path.posix.sep) : relativePath;
   }
 
   //@ts-expect-error Ignore -- might use later
@@ -81,7 +76,7 @@ export class TestFile {
   }
 
   private shrinkDurationsToMaximumSize(): void {
-    const max = LoadBalancingMap.MAX_DURATIONS_ALLOWED;
+    const max = MAX_DURATIONS_ALLOWED();
 
     debug("MAXIMUM_DURATIONS_ALLOWED: %d", max);
 
@@ -101,19 +96,19 @@ export class TestFile {
     this.calculateMedian();
   }
 }
-
+//TODO: this should only reference the main map that exists. It should be allowed to save under a different name, but never change the name of the base map.
 export class LoadBalancingMap {
-  //Path to INDIVIDUAL map file: either a parallelized map, or the main map file itself
+  //TODO: this makes more sense as private readonly
   public path: string;
-  public map: Map<TestingType, Map<string, TestFile>>;
+  private internalMap: Map<TestingType, Map<string, TestFile>>;
 
   constructor(specMapFileName?: string) {
     //To get this to stop complaining
     this.path = this.MAIN_MAP_PATH;
     if (specMapFileName) this.customFileName = specMapFileName;
 
-    this.map = new Map();
-    LoadBalancingMap.TESTING_TYPES.map((t) => this.map.set(t, new Map()));
+    this.internalMap = new Map();
+    LoadBalancingMap.TESTING_TYPES.map((t) => this.internalMap.set(t, new Map()));
 
     this.importFromJSON();
   }
@@ -241,10 +236,6 @@ export class LoadBalancingMap {
     return [isDirectoryCreated, isFileCreated];
   }
 
-  public static get MAX_DURATIONS_ALLOWED() {
-    return Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
-  }
-
   public static get TESTING_TYPES(): TestingType[] {
     return ["e2e", "component"];
   }
@@ -271,8 +262,8 @@ export class LoadBalancingMap {
   }
 
   private toJSON(): LoadBalancingMapJSONFile {
-    return Array.from(this.map.keys()).reduce((jsonMap: LoadBalancingMapJSONFile, testingType: TestingType) => {
-      jsonMap[testingType] = Array.from(this.map.get(testingType)!.entries()).reduce(
+    return Array.from(this.internalMap.keys()).reduce((jsonMap: LoadBalancingMapJSONFile, testingType: TestingType) => {
+      jsonMap[testingType] = Array.from(this.internalMap.get(testingType)!.entries()).reduce(
         (acc: Record<string, FileStats>, [relativePath, testFile]: [string, TestFile]) => {
           acc[relativePath] = { stats: testFile.stats };
           return acc;
@@ -284,15 +275,15 @@ export class LoadBalancingMap {
   }
 
   private setTestFileEntry(testingType: TestingType, testFile: TestFile) {
-    const filesPerTestingType = this.map.get(testingType) as Map<string, TestFile>;
+    const filesPerTestingType = this.internalMap.get(testingType) as Map<string, TestFile>;
     filesPerTestingType.set(testFile.internalPath, testFile);
-    this.map.set(testingType, filesPerTestingType);
+    this.internalMap.set(testingType, filesPerTestingType);
   }
 
   private getTestFileEntry(testingType: TestingType, filePath: string): TestFile | undefined {
     //TODO: is there a better way to DRY this up and not make it dependent on the TestFile class?
     const internalPath = TestFile.convertToInternalPath(filePath);
-    return this.map.get(testingType)!.get(internalPath);
+    return this.internalMap.get(testingType)!.get(internalPath);
   }
 
   //Map to MAIN container map, to which parallelized files are merged

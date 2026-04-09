@@ -2,7 +2,7 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import utils from "../src/utils";
-import performLoadBalancing from "../src/loadBalancer";
+import performLoadBalancing from "../src/_loadBalancer";
 import fs from "node:fs";
 import { getFixture, stubReadLoadBalancerFile } from "./support/utils";
 import { FilePath, LoadBalancingMap, TestingType } from "../src/types";
