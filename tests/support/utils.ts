@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import utils from "../../src/utils";
-import { LoadBalancingMap } from "../../src/types";
-import Sinon from "sinon";
 import stripAnsi from "strip-ansi";
+import Sinon from "sinon";
+import { LoadBalancingMap } from "../../src/types";
 
 export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON?: boolean } = {}): T {
   const buffer = fs.readFileSync(path.resolve(path.join(`./tests/fixtures/${fileNameOrPath}`)));
@@ -14,14 +13,14 @@ export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON
   return data as T;
 }
 
-export function stubReadLoadBalancerFile(
+export function stubImportFromJSON(
   sandbox: Sinon.SinonSandbox,
-  returns: LoadBalancingMap = { e2e: {}, component: {} }
-): Sinon.SinonStub {
-  return sandbox
-    .stub(fs, "readFileSync")
-    .withArgs(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH)
-    .returns(JSON.stringify(returns));
+  fakeJSON: LoadBalancingMap = { e2e: {}, component: {} }
+): { existsSyncStub: Sinon.SinonStub; readFileSyncStub: Sinon.SinonStub } {
+  const fileNameMatch = sandbox.match("spec-map.json");
+  const existsSyncStub = sandbox.stub(fs, "existsSync").withArgs(fileNameMatch).returns(true);
+  const readFileSyncStub = sandbox.stub(fs, "readFileSync").withArgs(fileNameMatch).returns(JSON.stringify(fakeJSON));
+  return { existsSyncStub, readFileSyncStub };
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

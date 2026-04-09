@@ -1,6 +1,7 @@
 import sinon from "sinon";
 import { expect } from "chai";
 import { TestFile } from "../src/load.balancing.map";
+import path from "path";
 
 describe("TestFile", function () {
   beforeEach(function () {});
@@ -58,6 +59,11 @@ describe("TestFile", function () {
       it(`uses relative POSIX path on other systems: ${system}`, () => {
         sinon.stub(process, "platform").returns(system);
         sinon.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
+
+        //To get around strangeness with mocking the platform
+        //If not provided, it will still try to convert to a Windows path on a Windows system
+        sinon.stub(path, 'relative').callsFake(path.posix.relative)
+
         const tf = new TestFile(`/Users/hammzj/Documents/GitHub/test-repo/tests/browser/foo.test.js`);
         expect(tf.internalPath).to.equal(`tests/browser/foo.test.js`);
       });

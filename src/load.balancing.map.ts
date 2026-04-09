@@ -37,6 +37,10 @@ export class TestFile {
     return this.stats.median;
   }
 
+  public getAverage(): number {
+    return this.stats.average;
+  }
+
   /**
    * External path used for Cypress input; system dependent.
    * Paths are stored for TestFile in UNIX format.
@@ -71,8 +75,12 @@ export class TestFile {
   }
 
   private calculateMedian() {
-    const middleIndex = Math.ceil(this.durations.length / 2) - 1;
-    this.median = this.durations.toSorted((a: number, b: number) => a - b)[middleIndex || 0];
+    if (this.durations.length === 0) {
+      this.median = 0;
+    } else {
+      const middleIndex = Math.ceil(this.durations.length / 2) - 1;
+      this.median = this.durations.toSorted((a: number, b: number) => a - b)[middleIndex || 0];
+    }
   }
 
   private shrinkDurationsToMaximumSize(): void {
@@ -117,11 +125,9 @@ export class LoadBalancingMap {
     if (filePaths.length > 0) {
       //Only attempt to create the spec-map file if there are test files to run
       this.initializeSpecMapFile();
+      this.importFromJSON();
 
-      //Add new only files to the spec-map
-      filePaths.map((fp) => {
-        if (!this.doesFileExist(testingType, fp)) this.addTestFileEntry(testingType, fp);
-      });
+      filePaths.map((fp) => this.addTestFileEntry(testingType, fp));
 
       //TODO: do we need to do this, or can it wait until the process ends? I assume it is better to save on first step
       //If there are new files to be run, save them to the map file
@@ -131,10 +137,6 @@ export class LoadBalancingMap {
 
   public getTestFiles(testingType: TestingType, filePaths: string[]): TestFile[] {
     return filePaths.map((fp) => this.getTestFileEntry(testingType, fp)).filter((fp) => fp != null);
-  }
-
-  private doesFileExist(testingType: TestingType, internalFilePath: string): boolean {
-    return this.getTestFileEntry(testingType, internalFilePath) != null;
   }
 
   private importFromJSON(): boolean {
@@ -152,9 +154,12 @@ export class LoadBalancingMap {
     // }
 
     for (const testingType of LoadBalancingMap.TESTING_TYPES) {
-      for (const [fileName, value] of Object.entries(json[testingType])) {
-        this.addTestFileEntry(testingType, fileName);
-        this.updateTestFileEntry(testingType, fileName, (value as FileStats).stats?.durations ?? []);
+      //Safety check
+      if (json[testingType] != null) {
+        for (const [fileName, value] of Object.entries(json[testingType])) {
+          this.addTestFileEntry(testingType, fileName);
+          this.updateTestFileEntry(testingType, fileName, (value as FileStats).stats?.durations ?? []);
+        }
       }
     }
 
@@ -165,8 +170,8 @@ export class LoadBalancingMap {
     const testFile = new TestFile(filePath);
     const internalPath = testFile.internalPath;
 
-    //Create if not found, or if forced
-    if (!this.doesFileExist(testingType, internalPath) || opts.force === true) {
+    //Create if forced or if not found
+    if (opts.force === true || this.getTestFileEntry(testingType, internalPath) == null) {
       this.setTestFileEntry(testingType, testFile);
 
       debug(`Added new entry for file in load balancer object for "%s" type tests: "%s"`, testingType, internalPath);
