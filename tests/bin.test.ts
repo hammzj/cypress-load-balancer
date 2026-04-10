@@ -14,7 +14,7 @@ import {
   stubSpecMapReads
 } from "./support/utils";
 import cli from "../src/cli";
-import { LoadBalancingMap } from "../src/load.balancing.map";
+import { LoadBalancingMap } from "../src";
 
 const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
 const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
@@ -31,9 +31,9 @@ describe("Executables", function () {
   });
 
   beforeEach(function () {
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
-    sandbox.stub(path, "relative").callsFake(path.posix.relative);
+    // sandbox.stub(process, "platform").value("linux");
+    // sandbox.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
+    // sandbox.stub(path, "relative").callsFake(path.posix.relative);
   });
 
   describe("cypress-load-balancer", function () {
@@ -105,7 +105,7 @@ describe("Executables", function () {
                 e2e: { "foo.test.ts": { stats: { durations: [100, 200], average: 150, median: 100 } } },
                 component: {}
               },
-              "/files/fake2.json": {
+              "\\files\\fake2.json": {
                 e2e: { "bar.test.ts": { stats: { durations: [100], average: 100, median: 100 } } },
                 component: {}
               }
