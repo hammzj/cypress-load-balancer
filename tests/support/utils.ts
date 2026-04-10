@@ -3,6 +3,7 @@ import path from "node:path";
 import stripAnsi from "strip-ansi";
 import Sinon from "sinon";
 import { LoadBalancingMapJSONFile } from "../../src/types";
+import { LoadBalancingMap } from "../../src/load.balancing.map";
 
 export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON?: boolean } = {}): T {
   const buffer = fs.readFileSync(path.resolve(path.join(`./tests/fixtures/${fileNameOrPath}`)));
@@ -11,6 +12,10 @@ export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON
     data = JSON.parse(data);
   }
   return data as T;
+}
+
+export function stubInitializeSpecMapFile(sandbox: Sinon.SinonSandbox) {
+  return sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").callsFake(() => [false, false]);
 }
 
 export function stubImportFromJSON(

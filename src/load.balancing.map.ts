@@ -24,6 +24,7 @@ export class TestFile {
   }
 
   public addDurations(...durations: number[]) {
+    if (durations?.length === 0) return;
     this.durations.push(...durations);
     this.calculateStatistics();
   }

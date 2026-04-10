@@ -1,7 +1,7 @@
 import sinon from "sinon";
 import { expect } from "chai";
-import { TestFile } from "../src/load.balancing.map";
 import path from "path";
+import { TestFile } from "../src/load.balancing.map";
 
 describe("TestFile", function () {
   beforeEach(function () {});
@@ -62,7 +62,7 @@ describe("TestFile", function () {
 
         //To get around strangeness with mocking the platform
         //If not provided, it will still try to convert to a Windows path on a Windows system
-        sinon.stub(path, 'relative').callsFake(path.posix.relative)
+        sinon.stub(path, "relative").callsFake(path.posix.relative);
 
         const tf = new TestFile(`/Users/hammzj/Documents/GitHub/test-repo/tests/browser/foo.test.js`);
         expect(tf.internalPath).to.equal(`tests/browser/foo.test.js`);
@@ -119,10 +119,19 @@ describe("TestFile", function () {
       const spy = sinon.spy(tf, <never>"calculateStatistics");
 
       tf.addDurations(300, 400, 1000);
-      expect(spy).to.have.callCount(1);
+      expect(spy).to.have.been.calledOnce;
 
       expect(tf.getMedian()).to.eq(300);
       expect(tf.getAverage()).to.eq(400);
+    });
+
+    it("skips calculating statistics if the array is empty", function () {
+      const tf = new TestFile(`foo.test.js`, [100, 200]);
+      const spy = sinon.spy(tf, <never>"calculateStatistics");
+
+      tf.addDurations();
+      expect(tf.stats.durations).to.deep.eq([100, 200]);
+      expect(spy).to.not.have.been.called;
     });
   });
 
@@ -133,6 +142,10 @@ describe("TestFile", function () {
 
       const tf2 = new TestFile(`bar.test.js`, [200, 600, 400, 200]);
       expect(tf2.getAverage()).to.eq(350);
+
+      //No entries
+      const tf3 = new TestFile(`bar.test.js`, []);
+      expect(tf3.getAverage()).to.eq(0);
     });
 
     it("can calculate the median based on the durations", () => {
@@ -151,6 +164,10 @@ describe("TestFile", function () {
       //should sort highest to lowest
       const tf4 = new TestFile(`wee.test.js`, [100, 500, 200, 100, 300]);
       expect(tf4.getMedian()).to.eq(200);
+
+      //No entries
+      const tf5 = new TestFile(`bar.test.js`, []);
+      expect(tf5.getMedian()).to.eq(0);
     });
   });
 });

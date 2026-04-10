@@ -6,9 +6,8 @@ import sinon, { SinonSandbox, SinonSpy } from "sinon";
 // @ts-expect-error No types exist for this package
 import findCypressSpecs from "find-cypress-specs";
 import { debug as debugInitializer } from "debug";
-import { getFixture, stubImportFromJSON } from "./support/utils";
+import { getFixture, stubImportFromJSON, stubInitializeSpecMapFile } from "./support/utils";
 import addCypressLoadBalancerPlugin from "../src/plugin";
-import utils from "../src/utils";
 import { LoadBalancingMap, TestFile } from "../src/load.balancing.map";
 
 let sandbox: SinonSandbox;
@@ -20,10 +19,6 @@ write = process.stderr.write;
 describe("addCypressLoadBalancerPlugin", function () {
   const getOnEventSpyHandler = () => {
     return onEventSpy.getCall(0).args[1];
-  };
-
-  const stubInitializeSpecMapFile = () => {
-    return sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").callsFake(() => [false, false]);
   };
 
   //Chg stderr for debugging
@@ -62,7 +57,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       //In order for the event spy to work, it needs to be registered as an instance variable and not as "this.onEventSpy"
       onEventSpy = sandbox.spy();
 
-      this.initializeSpecMapFileStub = stubInitializeSpecMapFile();
+      this.initializeSpecMapFileStub = stubInitializeSpecMapFile(sandbox);
       this.getSpecsStub = sandbox.stub(findCypressSpecs, "getSpecs").returns(this.specFiles);
 
       //Force the test to think it is on a linux machine to avoid issues with Windows paths
@@ -321,7 +316,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       onEventSpy = sandbox.spy();
 
       this.results = getFixture<CypressCommandLine.CypressRunResult>("component-results.json", { parseJSON: true });
-      this.initializeSpecMapFileStub = stubInitializeSpecMapFile();
+      this.initializeSpecMapFileStub = stubInitializeSpecMapFile(sandbox);
       this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
       this.getSpecsStub = sandbox
         .stub(findCypressSpecs, "getSpecs")
@@ -365,8 +360,8 @@ describe("addCypressLoadBalancerPlugin", function () {
     it("is skipped if Cypress failed to execute", function () {
       //Arrange
       const updatedConfigFile = { ...this.cypressConfigFile, env: { runner: "1/2" } };
-      const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
       const failedResults = { ...this.results, status: "failed" };
+      const stub = sandbox.stub(LoadBalancingMap.prototype, "updateTestFileEntry");
 
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
@@ -376,17 +371,17 @@ describe("addCypressLoadBalancerPlugin", function () {
       onEventHandler(failedResults);
 
       //Assert
-      expect(updateFileStatsStub).to.not.have.been.called;
+      expect(stub).to.not.have.been.called;
     });
-    //TODO: Redo
+
     it("is skipped if env.cypressLoadBalancerSkipResults is true", function () {
       //Arrange
       const updatedConfigFile = {
         ...this.cypressConfigFile,
         env: { runner: "1/2", cypressLoadBalancerSkipResults: true }
       };
-      const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
-      const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
+      const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
+      const updateTestFileEntryStub = sandbox.stub(LoadBalancingMap.prototype, "updateTestFileEntry");
 
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
@@ -396,10 +391,10 @@ describe("addCypressLoadBalancerPlugin", function () {
       onEventHandler(this.results);
 
       //Assert
-      expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
-      expect(updateFileStatsStub).to.not.have.been.called;
+      expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match("spec-map-1-2.json"));
+      expect(updateTestFileEntryStub).to.not.have.been.called;
     });
-    //TODO: Redo
+
     //Works for <= v23 of Cucumber
     const tests_isSkippedIfItIsACucumberDryRun = [
       "__cypress_cucumber_preprocessor_dont_use_this_suite",
@@ -416,8 +411,8 @@ describe("addCypressLoadBalancerPlugin", function () {
             [injectedKeyName]: { isEventHandlersAttached: true }
           }
         };
-        const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
-        const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
+        const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
+        const updateTestFileEntryStub = sandbox.stub(LoadBalancingMap.prototype, "updateTestFileEntry");
 
         stubImportFromJSON(sandbox);
         addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
@@ -427,8 +422,8 @@ describe("addCypressLoadBalancerPlugin", function () {
         onEventHandler(this.results);
 
         //Assert
-        expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
-        expect(updateFileStatsStub).to.not.have.been.called;
+        expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match("spec-map-1-2.json"));
+        expect(updateTestFileEntryStub).to.not.have.been.called;
       });
     });
 

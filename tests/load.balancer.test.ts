@@ -477,9 +477,12 @@ describe("LoadBalancer", function () {
         });
 
         it("extreme low values, example 2: sum of total low values is greater than highest value (2 runners)", function () {
-          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-lows-greater-than-highest-value.json", {
-            parseJSON: true
-          });
+          const fixture = getFixture<LoadBalancingMapJSONFile>(
+            "spec-map/extreme-lows-greater-than-highest-value.json",
+            {
+              parseJSON: true
+            }
+          );
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -522,7 +525,9 @@ describe("LoadBalancer", function () {
         });
 
         it("extreme end distribution (3 runners)", function () {
-          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-ends-distribution.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-ends-distribution.json", {
+            parseJSON: true
+          });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -545,7 +550,9 @@ describe("LoadBalancer", function () {
         });
 
         it("uniform distribution (3 runners)", function () {
-          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/uniform-distribution.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/uniform-distribution.json", {
+            parseJSON: true
+          });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -573,7 +580,9 @@ describe("LoadBalancer", function () {
           const { writeFileSyncStub } = baseStubs();
           this.writeFileSyncStub = writeFileSyncStub;
 
-          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/11-elements-600-time.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/11-elements-600-time.json", {
+            parseJSON: true
+          });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -768,7 +777,9 @@ describe("LoadBalancer", function () {
 
     context("file-name", function () {
       beforeEach(function () {
-        const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/12-elements-alphabetical.json", { parseJSON: true });
+        const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/12-elements-alphabetical.json", {
+          parseJSON: true
+        });
         stubImportFromJSON(sandbox, fixture);
         this.jsonFixture = fixture;
         this.filePaths = Object.keys(this.jsonFixture.e2e);

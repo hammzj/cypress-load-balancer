@@ -1,8 +1,9 @@
-import fs, { writeFileSync } from "node:fs";
+import fs from "node:fs";
 import path from "path";
 import sinon from "sinon";
 import { expect } from "chai";
 import { LoadBalancingMap, TestFile } from "../src/load.balancing.map";
+import { stubInitializeSpecMapFile } from "./support/utils";
 
 describe("LoadBalancingMap", function () {
   beforeEach(function () {});
@@ -210,7 +211,9 @@ describe("LoadBalancingMap", function () {
         expect(testFile.getAverage()).to.eq(100);
       });
 
-      it("skips if the file is not found", function () {
+      it("skips if the file is not found with a warning message", function () {
+        const consoleSpy = sinon.stub(console, "warn");
+
         const loadBalancingMap = new LoadBalancingMap();
         loadBalancingMap.addTestFileEntry("component", "ct/foo.test.js");
         loadBalancingMap.updateTestFileEntry("component", "ct/foo.test.js", [100]);
@@ -221,6 +224,11 @@ describe("LoadBalancingMap", function () {
         const testFile = loadBalancingMap.getTestFiles("component", ["ct/foo.test.js"])[0];
         expect(testFile.getMedian()).to.eq(100);
         expect(testFile.getAverage()).to.eq(100);
+        expect(consoleSpy).to.have.been.calledWith(
+          "[%s]: Relative file path does not exist for %s",
+          "e2e",
+          "ct/foo.test.js"
+        );
       });
     });
   });
@@ -420,11 +428,14 @@ describe("LoadBalancingMap", function () {
     });
 
     it("initializes the JSON file and adds any new entries", function () {
+      //We cannot call importFromJSON here or it might actually look in the directory for a file
+      sinon.stub(LoadBalancingMap.prototype, <never>"importFromJSON");
+      const initializeSpecMapFileStub = stubInitializeSpecMapFile(sinon);
+
       const loadBalancingMap = new LoadBalancingMap();
       loadBalancingMap.addTestFileEntry("e2e", "e2e/foo.test.js");
       loadBalancingMap.updateTestFileEntry("e2e", "e2e/foo.test.js", [100]);
 
-      const initializeSpecMapFileStub = sinon.stub(loadBalancingMap, "initializeSpecMapFile");
       const saveMapFileSpy = sinon.spy(loadBalancingMap, "saveMapFile");
       const writeFileSyncSpy = sinon.stub(fs, "writeFileSync").withArgs(sinon.match("spec-map.json"));
 
