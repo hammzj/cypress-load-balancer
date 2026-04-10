@@ -7,21 +7,33 @@ import child_process from "node:child_process";
 import path from "path";
 import { expect } from "chai";
 import sinon from "sinon";
-import { stubReadLoadBalancerFile, runArgvCmdInCurrentProcess, decodeStdout } from "./support/utils";
+import {
+  runArgvCmdInCurrentProcess,
+  decodeStdout,
+  stubImportFromOriginalFile,
+  stubSpecMapReads
+} from "./support/utils";
 import cli from "../src/cli";
-import utils from "../src/utils";
+import { LoadBalancingMap } from "../src/load.balancing.map";
 
 const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
 const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
+const RETRIES = process.platform === "win32" ? 0 : 1;
 
 const sandbox = sinon.createSandbox();
 
 describe("Executables", function () {
-  this.retries(1);
+  this.retries(RETRIES);
   this.timeout(10000);
 
   before(function () {
     if (!SHOULD_RUN) this.skip();
+  });
+
+  beforeEach(function () {
+    sandbox.stub(process, "platform").value("linux");
+    sandbox.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
+    sandbox.stub(path, "relative").callsFake(path.posix.relative);
   });
 
   describe("cypress-load-balancer", function () {
@@ -39,26 +51,26 @@ describe("Executables", function () {
       context("commands", function () {
         describe("initialize", function () {
           it("can initialize the main file", async function () {
-            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([false, false]);
+            const stub = sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").returns([false, false]);
             await runArgvCmdInCurrentProcess(cli, `initialize`);
             expect(stub).to.have.been.called;
           });
 
           it("can force re-create the directory", async function () {
-            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([true, false]);
+            const stub = sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").returns([true, false]);
             await runArgvCmdInCurrentProcess(cli, `initialize --force-dir`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: true,
-              forceCreateMainLoadBalancingMap: false
+              forceCreateFile: false
             });
           });
 
           it("can force re-create the file", async function () {
-            const stub = sandbox.stub(utils, "initializeLoadBalancingFiles").returns([false, true]);
+            const stub = sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").returns([false, true]);
             await runArgvCmdInCurrentProcess(cli, `initialize --force`);
             expect(stub).to.have.been.calledWith({
               forceCreateMainDirectory: false,
-              forceCreateMainLoadBalancingMap: true
+              forceCreateFile: true
             });
           });
         });
@@ -69,58 +81,65 @@ describe("Executables", function () {
           });
 
           it("requires either a glob pattern or a list of files", async function () {
-            stubReadLoadBalancerFile(sandbox);
+            stubImportFromOriginalFile(sandbox);
             const { error } = await runArgvCmdInCurrentProcess(cli, `merge`);
             expect(error?.message).to.contain("At least one file path or a glob pattern must be provided.");
           });
 
           it(`defaults the original to the "./cypress_load_balancer/spec-map.json"`, async function () {
-            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            stubSpecMapReads(sandbox, { "spec-map.json": { e2e: {}, component: {} } });
             const { argv } = await runArgvCmdInCurrentProcess(cli, `merge -G **/files/*.json`);
-            expect(argv.original).to.eq(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH);
+            expect(argv.original).to.eq(LoadBalancingMap.MAIN_MAP_PATH);
           });
 
           it("can have a different original file specified", async function () {
-            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            stubSpecMapReads(sandbox, { "foo.json": { e2e: {}, component: {} } });
             const { argv } = await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json --og foo.json`);
             expect(argv.original).to.eq("foo.json");
           });
 
           it("can merge load balancing maps back to the original", async function () {
-            sandbox
-              .stub(fs, "readFileSync")
-              .returns(JSON.stringify({ e2e: {}, component: {} }))
-              .withArgs("fake1.json")
-              .returns(JSON.stringify({ e2e: { "foo.test.ts": { stats: { durations: [100, 200], average: 150 } } } }))
-              .withArgs("/files/fake2.json")
-              .returns(JSON.stringify({ e2e: { "bar.test.ts": { stats: { durations: [100], average: 100 } } } }));
-            const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
+            stubSpecMapReads(sandbox, {
+              "spec-map.json": { e2e: {}, component: {} },
+              "fake-1.json": {
+                e2e: { "foo.test.ts": { stats: { durations: [100, 200], average: 150, median: 100 } } },
+                component: {}
+              },
+              "/files/fake2.json": {
+                e2e: { "bar.test.ts": { stats: { durations: [100], average: 100, median: 100 } } },
+                component: {}
+              }
+            });
+
+            const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
             const { argv } = await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json -F /files/fake2.json`);
-            expect(saveMapFileStub).to.have.been.calledOnce.and.calledWithMatch(
-              {
+
+            expect(saveMapFileStub).to.have.been.calledOnce;
+            expect(this.writeFileSyncStub).to.have.been.calledWithMatch(
+              LoadBalancingMap.MAIN_MAP_PATH,
+              JSON.stringify({
                 e2e: {
                   "foo.test.ts": { stats: { durations: [100, 200], average: 150 } },
                   "bar.test.ts": { stats: { durations: [100], average: 100 } }
                 }
-              },
-              argv.output
+              })
             );
           });
 
           it("defaults to overwrite the original file", async function () {
-            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
+            stubSpecMapReads(sandbox, { "spec-map.json": { e2e: {}, component: {} } });
             await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json`);
             expect(this.writeFileSyncStub).to.have.been.calledWithMatch(
-              utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH,
+              LoadBalancingMap.MAIN_MAP_PATH,
               sinon.match.any
             );
           });
 
           it("can have a different output file specified for saving", async function () {
-            sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
-            const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
+            stubSpecMapReads(sandbox, { "spec-map.json": { e2e: {}, component: {} } });
+            //const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
             await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json -o /files/alternate.json`);
-            expect(saveMapFileStub).to.have.been.calledWithMatch(sandbox.match.any, `/files/alternate.json`);
+            expect(this.writeFileSyncStub).to.have.been.calledWithMatch(`/files/alternate.json`, sinon.match.string);
           });
 
           it("can have input files specified for merging", async function () {
@@ -130,7 +149,7 @@ describe("Executables", function () {
                 component: {}
               })
             );
-            const saveMapFileStub = sandbox.stub(utils, "saveMapFile");
+            const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
             await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json -F /files/fake2.json`);
             expect(readFileSyncStub.args.some((a: any[]) => a[0].includes("fake1.json"))).to.be.true;
             expect(readFileSyncStub.args.some((a: any[]) => a[0].includes("/files/fake2.json"))).to.be.true;
@@ -165,7 +184,7 @@ describe("Executables", function () {
             });
 
             this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
-            sandbox.stub(utils, "saveMapFile");
+            sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
             const stub = sandbox.stub(fs, "readFileSync").returns(JSON.stringify({ e2e: {}, component: {} }));
 
             //Because this is being executed in a sub-directory,
@@ -182,7 +201,7 @@ describe("Executables", function () {
           it("skips merging if no files are found", async function () {
             child_process.spawnSync("npx", [`cypress-load-balancer`, "initialize"]);
 
-            const stub = sandbox.stub(utils, "saveMapFile");
+            const stub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
             await runArgvCmdInCurrentProcess(cli, `merge -G fakeDir/**.json`);
             expect(stub).to.not.have.been.called;
           });

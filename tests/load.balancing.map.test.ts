@@ -3,8 +3,7 @@ import path from "path";
 import sinon from "sinon";
 import { expect } from "chai";
 import { LoadBalancingMap, TestFile } from "../src/load.balancing.map";
-import { stubInitializeSpecMapFile } from "./support/utils";
-import { LoadBalancingMapJSONFile } from "../src/types";
+import { stubInitializeSpecMapFile, stubSpecMapReads } from "./support/utils";
 
 describe("LoadBalancingMap", function () {
   beforeEach(function () {});
@@ -458,22 +457,12 @@ describe("LoadBalancingMap", function () {
   });
 
   context("mergeMaps", function () {
-    function stubSpecMapReads(stubs: Record<string, LoadBalancingMapJSONFile>) {
-      const readFileSyncStub = sinon.stub(fs, "readFileSync");
-
-      for (const [fileName, object] of Object.entries(stubs)) {
-        readFileSyncStub.withArgs(sinon.match(fileName)).returns(JSON.stringify(object));
-      }
-
-      return readFileSyncStub;
-    }
-
     beforeEach(function () {
       sinon.stub(fs, "existsSync").withArgs(sinon.match("spec-map")).returns(true);
     });
 
     it("merges maps back to a main file", function () {
-      stubSpecMapReads({
+      stubSpecMapReads(sinon, {
         "spec-map.json": {
           e2e: {
             "test-foo.js": {
@@ -557,7 +546,7 @@ describe("LoadBalancingMap", function () {
     });
 
     it("handles new durations and file stats to existing files without duplication", function () {
-      stubSpecMapReads({
+      stubSpecMapReads(sinon, {
         "spec-map.json": {
           e2e: {
             "test-foo.js": {
@@ -598,7 +587,7 @@ describe("LoadBalancingMap", function () {
 
     it("shrinks test file durations to the maximum allowed size", function () {
       sinon.stub(process, "env").value({ ...process.env, CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED: "3" });
-      stubSpecMapReads({
+      stubSpecMapReads(sinon, {
         "spec-map.json": {
           e2e: {
             "test-foo.js": {
@@ -635,7 +624,7 @@ describe("LoadBalancingMap", function () {
     });
 
     it("can add new files to the main map when they do not exist", function () {
-      stubSpecMapReads({
+      stubSpecMapReads(sinon, {
         "spec-map.json": {
           e2e: {
             "test-foo.js": {
@@ -671,7 +660,7 @@ describe("LoadBalancingMap", function () {
     });
 
     it("does not impact existing files in another testing type", function () {
-      stubSpecMapReads({
+      stubSpecMapReads(sinon, {
         "spec-map.json": {
           e2e: {
             "test-foo.js": {
@@ -715,7 +704,7 @@ describe("LoadBalancingMap", function () {
     });
 
     it("does not change the input files", function () {
-      stubSpecMapReads({
+      stubSpecMapReads(sinon, {
         "spec-map.json": {
           e2e: {
             "test-foo.js": {

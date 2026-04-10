@@ -4,6 +4,7 @@ import stripAnsi from "strip-ansi";
 import Sinon from "sinon";
 import { LoadBalancingMapJSONFile } from "../../src/types";
 import { LoadBalancingMap } from "../../src/load.balancing.map";
+import sinon from "sinon";
 
 export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON?: boolean } = {}): T {
   const buffer = fs.readFileSync(path.resolve(path.join(`./tests/fixtures/${fileNameOrPath}`)));
@@ -26,6 +27,16 @@ export function stubImportFromOriginalFile(
   const existsSyncStub = sandbox.stub(fs, "existsSync").withArgs(fileNameMatch).returns(true);
   const readFileSyncStub = sandbox.stub(fs, "readFileSync").withArgs(fileNameMatch).returns(JSON.stringify(fakeJSON));
   return { existsSyncStub, readFileSyncStub };
+}
+
+export function stubSpecMapReads(sandbox: Sinon.SinonSandbox, stubs: Record<string, LoadBalancingMapJSONFile>) {
+  const readFileSyncStub = sinon.stub(fs, "readFileSync");
+
+  for (const [fileName, object] of Object.entries(stubs)) {
+    readFileSyncStub.withArgs(sandbox.match(fileName)).returns(JSON.stringify(object));
+  }
+
+  return readFileSyncStub;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
