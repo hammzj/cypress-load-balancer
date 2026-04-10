@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "path";
 import { debug, warn } from "./helpers";
 import { FileStats, LoadBalancingMapJSONFile, TestingType } from "./types";
+import deepmerge from "deepmerge";
 
 const MAX_DURATIONS_ALLOWED = () => Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
 
@@ -118,14 +119,14 @@ export class LoadBalancingMap {
 
     this.internalMap = new Map();
     this.resetInternalMap();
-    this.importFromJSON();
+    this.importFromOriginalFile();
   }
 
   public prepareForLoadBalancing(testingType: TestingType, filePaths: string[] = []) {
     if (filePaths.length > 0) {
       //Only attempt to create the spec-map file if there are test files to run
       this.initializeSpecMapFile();
-      this.importFromJSON();
+      this.importFromOriginalFile();
 
       filePaths.map((fp) => this.addTestFileEntry(testingType, fp));
 
@@ -144,26 +145,16 @@ export class LoadBalancingMap {
   }
 
   /**
-   * Imports from the JSON map file specified based on its path.
-   * Please note that this will overwrite any previous data saved in the map.
-   * To import new data, first save the new data to the file with `this.saveMapFile()`, then attempt to use this method to reload it.
+   * Import a JSON object with its test files and entries.
+   * @param json
    * @private
    */
-  private importFromJSON(): boolean {
-    if (!fs.existsSync(this.path)) {
-      debug(`JSON file not found at path "%s"; does it need initialized?`, this.path);
-      return false;
-    }
-
-    const file = fs.readFileSync(this.path).toString();
-    const json = JSON.parse(file);
+  private importJSONObject(json: LoadBalancingMapJSONFile): boolean {
     //TODO: add this.validateJSONFile(jsonFile)
     // if (!this.validateJSONFile(json)) {
     //   warn("JSON file is invalid at path: ", this.path);
     //   return false;
     // }
-
-    this.resetInternalMap();
     for (const testingType of LoadBalancingMap.TESTING_TYPES) {
       //Safety check
       if (json[testingType] != null) {
@@ -173,8 +164,40 @@ export class LoadBalancingMap {
         }
       }
     }
-
     return true;
+  }
+
+  /**
+   * Imports from the base JSON map file specified based on its path.
+   * @note Please understand that this will overwrite any previous data saved in the map. It should be used for re-initialization from the base file to prevent corruption.
+   * To import new data, first save the new data to the file with `this.saveMapFile()`, then attempt to use this method to reload it.
+   * @private
+   */
+  private importFromOriginalFile(): boolean {
+    if (!fs.existsSync(this.path)) {
+      debug(`JSON file not found at path "%s"; does it need initialized?`, this.path);
+      return false;
+    }
+    const file = fs.readFileSync(this.path).toString();
+    const json = JSON.parse(file);
+
+    //Reset if importing from the original file to prevent corruption
+    this.resetInternalMap();
+
+    return this.importJSONObject(json);
+  }
+
+  public toJSON(): LoadBalancingMapJSONFile {
+    return Array.from(this.internalMap.keys()).reduce((jsonMap: LoadBalancingMapJSONFile, testingType: TestingType) => {
+      jsonMap[testingType] = Array.from(this.internalMap.get(testingType)!.entries()).reduce(
+        (acc: Record<string, FileStats>, [relativePath, testFile]: [string, TestFile]) => {
+          acc[relativePath] = { stats: testFile.stats };
+          return acc;
+        },
+        {} as Record<string, FileStats>
+      );
+      return jsonMap;
+    }, {} as LoadBalancingMapJSONFile);
   }
 
   public addTestFileEntry(testingType: TestingType, filePath: string, opts: { force?: boolean } = {}): boolean {
@@ -252,6 +275,34 @@ export class LoadBalancingMap {
     return [isDirectoryCreated, isFileCreated];
   }
 
+  public mergeMaps(otherMaps: LoadBalancingMap[]) {
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const combineMerge = (target: any[], source: any[], options?: deepmerge.ArrayMergeOptions): any[] => {
+      const destination = target.slice();
+
+      source.forEach((item, index) => {
+        if (typeof destination[index] === "undefined") {
+          destination[index] = options?.cloneUnlessOtherwiseSpecified(item, options);
+        } else if (options?.isMergeableObject(item)) {
+          destination[index] = deepmerge(target[index], item, options);
+        } else if (target.indexOf(item) === -1) {
+          destination.push(item);
+        }
+      });
+      return destination;
+    };
+
+    const original = this.toJSON();
+    const otherJsons = otherMaps.map((lbm) => lbm.toJSON());
+    const mergedFile = deepmerge.all([original, ...otherJsons], {
+      arrayMerge: combineMerge
+    }) as LoadBalancingMapJSONFile;
+
+    this.resetInternalMap();
+    //TODO: do we need to reset the internalMap first???????
+    this.importJSONObject(mergedFile);
+  }
+
   public static get TESTING_TYPES(): TestingType[] {
     return ["e2e", "component"];
   }
@@ -275,19 +326,6 @@ export class LoadBalancingMap {
   private set customFileName(fileName: string) {
     const formatted = fileName.replace(/.json/g, ``) + ".json";
     this.path = LoadBalancingMap.getPath(formatted);
-  }
-
-  private toJSON(): LoadBalancingMapJSONFile {
-    return Array.from(this.internalMap.keys()).reduce((jsonMap: LoadBalancingMapJSONFile, testingType: TestingType) => {
-      jsonMap[testingType] = Array.from(this.internalMap.get(testingType)!.entries()).reduce(
-        (acc: Record<string, FileStats>, [relativePath, testFile]: [string, TestFile]) => {
-          acc[relativePath] = { stats: testFile.stats };
-          return acc;
-        },
-        {} as Record<string, FileStats>
-      );
-      return jsonMap;
-    }, {} as LoadBalancingMapJSONFile);
   }
 
   private setTestFileEntry(testingType: TestingType, testFile: TestFile) {

@@ -1,9 +1,9 @@
+import fs from "node:fs";
 import * as child_process from "node:child_process";
+import path from "path";
 import { expect } from "chai";
 import { debug as debugInitializer } from "debug";
-import Utils from "../src/utils";
-import fs from "node:fs";
-import path from "path";
+import { LoadBalancingMap } from "../src/load.balancing.map";
 
 const decodeStdout = (stdout: Buffer) => Buffer.from(stdout).toString();
 
@@ -54,7 +54,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       const output = decodeStdout(stdout);
 
       expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.not.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("balancing with only 1 runner", function () {
@@ -136,7 +136,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       const output = decodeStdout(stdout);
       const stderrOutput = decodeStdout(stderr);
 
-      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output)
+        .to.contain(`(1 of 1)`)
+        .and.contain(`All specs passed!`)
+        .and.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
       expect(stderrOutput).to.contain(`Skipping updating all file statistics on runner`);
     });
 
@@ -155,7 +158,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       const output = decodeStdout(stdout);
       const stderrOutput = decodeStdout(stderr);
 
-      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output)
+        .to.contain(`(1 of 1)`)
+        .and.contain(`All specs passed!`)
+        .and.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
       expect(stderrOutput).to.contain(`Skipping updating all file statistics on runner`);
     });
   });
@@ -222,7 +228,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       const output = decodeStdout(stdout);
 
       expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.not.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
 
       //Check load balancing map to make sure file exists
       //Cucumber changes the path to be the full path; ensure it only gets the relative path
@@ -248,7 +254,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       const output = decodeStdout(stdout);
 
       expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(output).to.not.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.not.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
 
       //Check load balancing map to make sure file exists
       //Cucumber changes the path to be the full path; ensure it only gets the relative path
@@ -273,7 +279,10 @@ describe("Actual Cypress examples with load balancing enabled", function () {
 
       const output = decodeStdout(stdout);
 
-      expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`).and.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output)
+        .to.contain(`(1 of 1)`)
+        .and.contain(`All specs passed!`)
+        .and.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("empty runner due to tag pattern", function () {
@@ -289,7 +298,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       const output = decodeStdout(stdout);
 
       expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(output).to.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
     });
 
     it("empty runner with tag pattern AND updated specPattern", function () {
@@ -307,7 +316,7 @@ describe("Actual Cypress examples with load balancing enabled", function () {
       const output = decodeStdout(stdout);
 
       expect(output).to.contain(`(1 of 1)`).and.contain(`All specs passed!`);
-      expect(output).to.match(Utils.EMPTY_FILE_NAME_REGEXP);
+      expect(output).to.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP);
     });
   });
 });

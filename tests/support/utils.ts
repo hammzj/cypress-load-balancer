@@ -18,7 +18,7 @@ export function stubInitializeSpecMapFile(sandbox: Sinon.SinonSandbox) {
   return sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").callsFake(() => [false, false]);
 }
 
-export function stubImportFromJSON(
+export function stubImportFromOriginalFile(
   sandbox: Sinon.SinonSandbox,
   fakeJSON: LoadBalancingMapJSONFile = { e2e: {}, component: {} }
 ): { existsSyncStub: Sinon.SinonStub; readFileSyncStub: Sinon.SinonStub } {

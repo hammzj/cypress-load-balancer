@@ -6,7 +6,7 @@ import sinon, { SinonSandbox, SinonSpy } from "sinon";
 // @ts-expect-error No types exist for this package
 import findCypressSpecs from "find-cypress-specs";
 import { debug as debugInitializer } from "debug";
-import { getFixture, stubImportFromJSON, stubInitializeSpecMapFile } from "./support/utils";
+import { getFixture, stubImportFromOriginalFile, stubInitializeSpecMapFile } from "./support/utils";
 import addCypressLoadBalancerPlugin from "../src/plugin";
 import { LoadBalancingMap, TestFile } from "../src/load.balancing.map";
 
@@ -79,7 +79,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     it('only starts up when "env.runner" is specified', function () {
       //Arrange
       debugInitializer.enable("cypress-load-balancer");
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
 
       //Act
       addCypressLoadBalancerPlugin(
@@ -120,7 +120,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         //Arrange
         this.getSpecsStub.restore();
         this.getSpecsStub = sandbox.stub(findCypressSpecs, "getSpecs").returns([]);
-        stubImportFromJSON(sandbox);
+        stubImportFromOriginalFile(sandbox);
 
         //Act
         const updatedConfigFile = addCypressLoadBalancerPlugin(
@@ -139,7 +139,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       it("initializes a runner with an empty spec if the runner count is greater than the file count", function () {
         //Arrange
-        stubImportFromJSON(sandbox);
+        stubImportFromOriginalFile(sandbox);
 
         //Act
         const updatedConfigFile = addCypressLoadBalancerPlugin(
@@ -160,7 +160,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     context("inputs", function () {
       it("defaults to use the config specPattern defined for that testing type", function () {
         //Arrange
-        stubImportFromJSON(sandbox);
+        stubImportFromOriginalFile(sandbox);
 
         //Act
         const updatedConfigFile = addCypressLoadBalancerPlugin(
@@ -185,7 +185,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       context("env.runner", function () {
         it("runner must be in X/Y format", function () {
           //Arrange
-          stubImportFromJSON(sandbox);
+          stubImportFromOriginalFile(sandbox);
 
           //Act & Assert
           expect(() =>
@@ -257,7 +257,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess.map(({ runner, expectedSpecPattern }) => {
           it("the runner index specifies the specs that will be run in the Cypress process", function () {
             //Arrange
-            stubImportFromJSON(sandbox);
+            stubImportFromOriginalFile(sandbox);
 
             //Act
             const updatedConfigFile = addCypressLoadBalancerPlugin(
@@ -281,7 +281,7 @@ describe("addCypressLoadBalancerPlugin", function () {
           it(`can specify a different load balancing algorithm: ${algo}`, function () {
             //Arrange
             debugInitializer.enable("cypress-load-balancer");
-            stubImportFromJSON(sandbox);
+            stubImportFromOriginalFile(sandbox);
 
             //Act
             addCypressLoadBalancerPlugin(
@@ -335,7 +335,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
     it(`adds an "after:run" event`, async function () {
       //Arrange
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
 
       //Act
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
@@ -363,7 +363,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       const failedResults = { ...this.results, status: "failed" };
       const stub = sandbox.stub(LoadBalancingMap.prototype, "updateTestFileEntry");
 
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
       //Act
@@ -383,7 +383,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
       const updateTestFileEntryStub = sandbox.stub(LoadBalancingMap.prototype, "updateTestFileEntry");
 
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
       //Act
@@ -414,7 +414,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
         const updateTestFileEntryStub = sandbox.stub(LoadBalancingMap.prototype, "updateTestFileEntry");
 
-        stubImportFromJSON(sandbox);
+        stubImportFromOriginalFile(sandbox);
         addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
         //Act
@@ -440,7 +440,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
       const updateFileStatsStub = sandbox.stub(LoadBalancingMap.prototype, "updateTestFileEntry");
 
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
       //Act
@@ -461,7 +461,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         it("only creates a map for the current runner and no other runners", function () {
           //Assert
           const updatedConfigFile = { ...this.cypressConfigFile, env: { runner: called } };
-          stubImportFromJSON(sandbox);
+          stubImportFromOriginalFile(sandbox);
           addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
           //Prepare spy for "after:run" handler; if it is registered before the plugin, it will be called twice instead
@@ -487,7 +487,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     //TODO: move to base plugin
     it("runs file initialization for the base map if it does not exist", function () {
       //Arrange
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
       //Act
@@ -504,7 +504,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     it("runs file initialization for the current runner map", function () {
       //Arrange
       const spy = sandbox.spy(LoadBalancingMap.prototype, "saveMapFile");
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
 
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
@@ -522,7 +522,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     it("uses the base spec map if there is only one runner (1/1)", function () {
       //Arrange
       this.cypressConfigFile.env.runner = "1/1";
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
       //Act
@@ -535,7 +535,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
     it("adds non-existing files to the current runner map (even if not run)", function () {
       //Arrange
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
       //Act
@@ -555,7 +555,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     it("skips existing files in the current runner map", function () {
       //Arrange
       const existingSpecName = this.results.runs[0].spec.relative;
-      stubImportFromJSON(sandbox, {
+      stubImportFromOriginalFile(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
       });
@@ -580,7 +580,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     it("saves the current runner map file when complete", function () {
       //Arrange
       const runner = this.cypressConfigFile.env.runner;
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
       //Act
@@ -604,7 +604,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     it("adds new durations to existing files in the current runner map only", function () {
       //Arrange
       const existingSpecName = this.results.runs[0].spec.relative;
-      stubImportFromJSON(sandbox, {
+      stubImportFromOriginalFile(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
       });
@@ -635,7 +635,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       //Arrange
       const existingSpecName = this.results.runs[0].spec.relative;
       this.results.runs[0].stats.duration = 1000; //Set it to an even number for clarity
-      stubImportFromJSON(sandbox, {
+      stubImportFromOriginalFile(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000, 2000], average: 2500, median: 2000 } } }
       });
@@ -672,7 +672,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       const existingSpecName = this.results.runs[0].spec.relative;
       this.results.runs[0].stats.duration = 500; //Set it to an even number for clarity
 
-      stubImportFromJSON(sandbox, {
+      stubImportFromOriginalFile(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000, 2000, 1000], average: 2500, median: 2000 } } }
       });
@@ -707,7 +707,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       //Arrange
       sinon.stub(process, "env").value({ ...process.env, CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED: "3" });
       const existingSpecName = this.results.runs[0].spec.relative;
-      stubImportFromJSON(sandbox, {
+      stubImportFromOriginalFile(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000, 2000, 1000], average: 2000, median: 2000 } } }
       });

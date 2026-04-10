@@ -4,6 +4,7 @@ import sinon from "sinon";
 import { expect } from "chai";
 import { LoadBalancingMap, TestFile } from "../src/load.balancing.map";
 import { stubInitializeSpecMapFile } from "./support/utils";
+import { LoadBalancingMapJSONFile } from "../src/types";
 
 describe("LoadBalancingMap", function () {
   beforeEach(function () {});
@@ -27,7 +28,7 @@ describe("LoadBalancingMap", function () {
       expect(loadBalancingMap.path).to.eq(path.join(process.cwd(), ".cypress_load_balancer", "nested/my-map.json"));
     });
 
-    context("importJSON", function () {
+    context("importFromOriginalFile", function () {
       it("attempts to import from an existing JSON file on initialization", function () {
         const fakeFile = {
           e2e: {
@@ -428,8 +429,8 @@ describe("LoadBalancingMap", function () {
     });
 
     it("initializes the JSON file and adds any new entries", function () {
-      //We cannot call importFromJSON here or it might actually look in the directory for a file
-      sinon.stub(LoadBalancingMap.prototype, <never>"importFromJSON");
+      //We cannot call importFromOriginalFile here or it might actually look in the directory for a file
+      sinon.stub(LoadBalancingMap.prototype, <never>"importFromOriginalFile");
       const initializeSpecMapFileStub = stubInitializeSpecMapFile(sinon);
 
       const loadBalancingMap = new LoadBalancingMap();
@@ -453,6 +454,301 @@ describe("LoadBalancingMap", function () {
           component: {}
         })
       );
+    });
+  });
+
+  context("mergeMaps", function () {
+    function stubSpecMapReads(stubs: Record<string, LoadBalancingMapJSONFile>) {
+      const readFileSyncStub = sinon.stub(fs, "readFileSync");
+
+      for (const [fileName, object] of Object.entries(stubs)) {
+        readFileSyncStub.withArgs(sinon.match(fileName)).returns(JSON.stringify(object));
+      }
+
+      return readFileSyncStub;
+    }
+
+    beforeEach(function () {
+      sinon.stub(fs, "existsSync").withArgs(sinon.match("spec-map")).returns(true);
+    });
+
+    it("merges maps back to a main file", function () {
+      stubSpecMapReads({
+        "spec-map.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [100, 200],
+                average: 150,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        },
+        "spec-map-1-2.json": {
+          e2e: {
+            "test-bar.js": {
+              stats: {
+                durations: [300],
+                average: 300,
+                median: 300
+              }
+            }
+          },
+          component: {}
+        },
+        "spec-map-2-2.json": {
+          e2e: {
+            "test-baz.js": {
+              stats: {
+                durations: [400],
+                average: 400,
+                median: 400
+              }
+            }
+          },
+          component: {
+            "test-wee.js": {
+              stats: {
+                average: 100,
+                durations: [100],
+                median: 100
+              }
+            }
+          }
+        }
+      });
+
+      const original = new LoadBalancingMap("spec-map.json");
+      const temp1Map = new LoadBalancingMap("spec-map-1-2.json");
+      const temp2Map = new LoadBalancingMap("spec-map-2-2.json");
+
+      original.mergeMaps([temp1Map, temp2Map]);
+
+      expect(original.getTestFiles("e2e", ["test-foo.js", "test-bar.js", "test-baz.js"])).to.deep.eq([
+        {
+          average: 150,
+          durations: [100, 200],
+          median: 100,
+          path: "test-foo.js"
+        },
+        {
+          average: 300,
+          durations: [300],
+          median: 300,
+          path: "test-bar.js"
+        },
+        {
+          average: 400,
+          durations: [400],
+          median: 400,
+          path: "test-baz.js"
+        }
+      ]);
+      expect(original.getTestFiles("component", ["test-wee.js"])).to.deep.eq([
+        {
+          average: 100,
+          durations: [100],
+          median: 100,
+          path: "test-wee.js"
+        }
+      ]);
+    });
+
+    it("handles new durations and file stats to existing files without duplication", function () {
+      stubSpecMapReads({
+        "spec-map.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [100, 200],
+                average: 150,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        },
+        "spec-map-1-2.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [100, 200, 300],
+                average: 200,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        }
+      });
+
+      const original = new LoadBalancingMap("spec-map.json");
+      const temp1Map = new LoadBalancingMap("spec-map-1-2.json");
+
+      original.mergeMaps([temp1Map]);
+
+      //Only one duration is added, and the calculations are updated
+      const tf = original.getTestFiles("e2e", ["test-foo.js"])[0];
+      expect(tf).to.have.deep.property("durations", [100, 200, 300]);
+      expect(tf).to.have.deep.property("average", 200);
+      expect(tf).to.have.deep.property("median", 200);
+    });
+
+    it("shrinks test file durations to the maximum allowed size", function () {
+      sinon.stub(process, "env").value({ ...process.env, CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED: "3" });
+      stubSpecMapReads({
+        "spec-map.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [200, 200, 200],
+                average: 200,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        },
+        "spec-map-1-2.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [200, 200, 200, 300],
+                average: 300,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        }
+      });
+
+      const original = new LoadBalancingMap("spec-map.json");
+      const temp1Map = new LoadBalancingMap("spec-map-1-2.json");
+
+      original.mergeMaps([temp1Map]);
+
+      const tf = original.getTestFiles("e2e", ["test-foo.js"])[0];
+      expect(tf).to.have.deep.property("durations", [200, 200, 300]);
+    });
+
+    it("can add new files to the main map when they do not exist", function () {
+      stubSpecMapReads({
+        "spec-map.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [100, 200],
+                average: 150,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        },
+        "spec-map-1-2.json": {
+          e2e: {
+            "test-bar.js": {
+              stats: {
+                durations: [300],
+                average: 300,
+                median: 300
+              }
+            }
+          },
+          component: {}
+        }
+      });
+
+      const original = new LoadBalancingMap("spec-map.json");
+      const temp1Map = new LoadBalancingMap("spec-map-1-2.json");
+
+      original.mergeMaps([temp1Map]);
+
+      expect(original.getTestFiles("e2e", ["test-foo.js", "test-bar.js"])).to.have.lengthOf(2);
+    });
+
+    it("does not impact existing files in another testing type", function () {
+      stubSpecMapReads({
+        "spec-map.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [100, 200],
+                average: 150,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        },
+        "spec-map-1-2.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [100, 200],
+                average: 150,
+                median: 200
+              }
+            }
+          },
+          component: {
+            "test-zoom.js": {
+              stats: {
+                durations: [400],
+                average: 400,
+                median: 400
+              }
+            }
+          }
+        }
+      });
+
+      const original = new LoadBalancingMap("spec-map.json");
+      const temp1Map = new LoadBalancingMap("spec-map-1-2.json");
+
+      original.mergeMaps([temp1Map]);
+      expect(original.getTestFiles("e2e", ["test-foo.js"])[0]).to.have.deep.property("durations", [100, 200]);
+      expect(original.getTestFiles("component", ["test-zoom.js"])[0]).to.have.deep.property("durations", [400]);
+    });
+
+    it("does not change the input files", function () {
+      stubSpecMapReads({
+        "spec-map.json": {
+          e2e: {
+            "test-foo.js": {
+              stats: {
+                durations: [100, 200],
+                average: 150,
+                median: 200
+              }
+            }
+          },
+          component: {}
+        },
+        "spec-map-1-2.json": {
+          e2e: {
+            "test-bar.js": {
+              stats: {
+                durations: [300],
+                average: 300,
+                median: 300
+              }
+            }
+          },
+          component: {}
+        }
+      });
+
+      const original = new LoadBalancingMap("spec-map.json");
+      const temp1Map = new LoadBalancingMap("spec-map-1-2.json");
+
+      original.mergeMaps([temp1Map]);
+
+      expect(original.getTestFiles("e2e", ["test-foo.js", "test-bar.js"])).to.have.lengthOf(2);
+      expect(temp1Map.getTestFiles("e2e", ["test-foo.js", "test-bar.js"])).to.have.lengthOf(1);
     });
   });
 });

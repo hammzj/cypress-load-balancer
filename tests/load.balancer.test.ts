@@ -6,7 +6,7 @@ import { expect } from "chai";
 import { debug as debugInitializer } from "debug";
 import { LoadBalancer } from "../src/load.balancer";
 import { LoadBalancingMap } from "../src/load.balancing.map";
-import { getFixture, stubImportFromJSON } from "./support/utils";
+import { getFixture, stubImportFromOriginalFile } from "./support/utils";
 import { FilePath, LoadBalancingMapJSONFile, TestingType } from "../src/types";
 
 //eslint-disable-next-line prefer-const
@@ -50,7 +50,7 @@ describe("LoadBalancer", function () {
     });
 
     it("runs file initialization", function () {
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       const loadBalancer = new LoadBalancer();
 
       expect(this.writeFileSyncStub).to.not.have.been.called;
@@ -67,7 +67,7 @@ describe("LoadBalancer", function () {
     });
 
     it("only uses the relative file path", function () {
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
       const fileName = "test.1.ts";
 
       const full = path.join(process.cwd(), fileName);
@@ -84,7 +84,7 @@ describe("LoadBalancer", function () {
       sandbox.stub(process, "cwd").returns("C:\\docs\\test-project\\");
       sandbox.stub(path, "relative").callsFake(fakePathRelative);
 
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
 
       const fileName = "e2e/test.1.ts";
 
@@ -99,7 +99,7 @@ describe("LoadBalancer", function () {
       sandbox.stub(process, "platform").value("linux");
       sandbox.stub(process, "cwd").returns("/test-project/");
       sandbox.stub(path, "relative").callsFake(fakePathRelative);
-      stubImportFromJSON(sandbox);
+      stubImportFromOriginalFile(sandbox);
 
       const fileName = "e2e/test.1.ts";
 
@@ -111,7 +111,7 @@ describe("LoadBalancer", function () {
   });
 
   it("defaults to keep empty runners (needed for consistency's sake)", function () {
-    stubImportFromJSON(sandbox);
+    stubImportFromOriginalFile(sandbox);
 
     const loadBalancer = new LoadBalancer();
     const runners = loadBalancer.performLoadBalancing(3, "e2e", []);
@@ -119,7 +119,7 @@ describe("LoadBalancer", function () {
   });
 
   it("can retain empty runners when there are no files", function () {
-    stubImportFromJSON(sandbox);
+    stubImportFromOriginalFile(sandbox);
 
     const loadBalancer = new LoadBalancer("weighted-largest");
     const runners = loadBalancer.performLoadBalancing(3, "e2e", []);
@@ -146,7 +146,7 @@ describe("LoadBalancer", function () {
 
       it("defaults to weighted-largest", function () {
         const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/11-elements-600-time.json", { parseJSON: true });
-        stubImportFromJSON(sandbox, fixture);
+        stubImportFromOriginalFile(sandbox, fixture);
         debugInitializer.enable("cypress-load-balancer");
 
         const loadBalancer = new LoadBalancer();
@@ -172,7 +172,7 @@ describe("LoadBalancer", function () {
 
       context("simple balancing cases", function () {
         beforeEach(function () {
-          stubImportFromJSON(sandbox, this.jsonFixture);
+          stubImportFromOriginalFile(sandbox, this.jsonFixture);
         });
         it("can balance for 1 runner", function () {
           const filePaths = this.filePaths;
@@ -253,7 +253,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can handle more runners than files", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const filePaths = this.filePaths;
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(
           filePaths.length + 1,
@@ -265,7 +265,7 @@ describe("LoadBalancer", function () {
       });
 
       it("only includes files given to it and does not consider others in the load balancing map", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const fourFiles = this.filePaths.slice(0, 3);
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(2, "e2e", fourFiles);
         expect(runners[0]).to.deep.eq(["100.1.test.ts", "75.1.test.ts"]);
@@ -273,7 +273,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can differentiate specs between e2e and component", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const e2eFilePaths = Object.keys(this.jsonFixture.e2e);
         const lb = new LoadBalancer("weighted-largest");
 
@@ -302,7 +302,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can handle files that have not been run (or do not exist in map) yet", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const e2eFilePaths = [...Object.keys(this.jsonFixture.e2e), "newFile.test.ts"];
 
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(1, "e2e", e2eFilePaths);
@@ -329,7 +329,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can handle a brand new map", function () {
-        stubImportFromJSON(sandbox, { e2e: {}, component: {} });
+        stubImportFromOriginalFile(sandbox, { e2e: {}, component: {} });
 
         const newFiles = [
           "newFile.1.test.ts",
@@ -365,7 +365,7 @@ describe("LoadBalancer", function () {
 
         it("every test file has equal (median) time (3 runners)", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/all-equal-time.json", { parseJSON: true });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
 
@@ -381,7 +381,7 @@ describe("LoadBalancer", function () {
 
         it("bell-curve distribution (3 runners)", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/bell-curve.json", { parseJSON: true });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", this.filePaths);
@@ -435,7 +435,7 @@ describe("LoadBalancer", function () {
 
         it("extreme high values (2 runners)", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-highs.json", { parseJSON: true });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
 
@@ -452,7 +452,7 @@ describe("LoadBalancer", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-lows-equal-to-highest-value.json", {
             parseJSON: true
           });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
 
@@ -483,7 +483,7 @@ describe("LoadBalancer", function () {
               parseJSON: true
             }
           );
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
 
@@ -511,7 +511,7 @@ describe("LoadBalancer", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-center-distribution.json", {
             parseJSON: true
           });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
 
@@ -528,7 +528,7 @@ describe("LoadBalancer", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-ends-distribution.json", {
             parseJSON: true
           });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
 
@@ -553,7 +553,7 @@ describe("LoadBalancer", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/uniform-distribution.json", {
             parseJSON: true
           });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
 
@@ -583,7 +583,7 @@ describe("LoadBalancer", function () {
           const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/11-elements-600-time.json", {
             parseJSON: true
           });
-          stubImportFromJSON(sandbox, fixture);
+          stubImportFromOriginalFile(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
         });
@@ -658,7 +658,7 @@ describe("LoadBalancer", function () {
       });
 
       it("sorts files slowest to fastest", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const filePaths = Object.keys(this.jsonFixture.e2e);
         const runners = new LoadBalancer("round-robin").performLoadBalancing(1, "e2e", filePaths);
         expect(runners[0]).to.deep.eq([
@@ -672,7 +672,7 @@ describe("LoadBalancer", function () {
       });
 
       it("balances files per runner equally", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const filePaths = Object.keys(this.jsonFixture.e2e);
         const runners = new LoadBalancer("round-robin").performLoadBalancing(3, "e2e", filePaths);
         expect(runners).to.have.lengthOf(3);
@@ -682,7 +682,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can handle balancing runners when files cannot be balanced equally across them", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const filePaths = Object.keys(this.jsonFixture.e2e);
         const runners = new LoadBalancer("round-robin").performLoadBalancing(4, "e2e", filePaths);
         expect(runners[0]).to.deep.eq(["median.4000.test.ts", "median.50.test.ts"]);
@@ -692,7 +692,7 @@ describe("LoadBalancer", function () {
       });
 
       it("only includes files given to it and does not consider others in the load balancing map", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const runners = new LoadBalancer("round-robin").performLoadBalancing(2, "e2e", [
           "median.4000.test.ts",
           "median.300.test.ts",
@@ -703,7 +703,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can handle less files than runners", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const filePaths = Object.keys(this.jsonFixture.e2e);
         const runners = new LoadBalancer("round-robin").performLoadBalancing(filePaths.length + 1, "e2e", filePaths);
         expect(runners[0]).to.have.lengthOf(1);
@@ -711,7 +711,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can differentiate specs between e2e and component", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const e2eRunners = new LoadBalancer("round-robin").performLoadBalancing(1, "e2e", [
           "median.200.test.ts",
           "median.300.test.ts"
@@ -725,7 +725,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can handle files that have not been run (or do not exist in map) yet", function () {
-        stubImportFromJSON(sandbox, this.jsonFixture);
+        stubImportFromOriginalFile(sandbox, this.jsonFixture);
         const e2eFilePaths = [...Object.keys(this.jsonFixture.e2e), "newFile.test.ts"];
 
         const runners = new LoadBalancer("round-robin").performLoadBalancing(1, "e2e", e2eFilePaths);
@@ -747,7 +747,7 @@ describe("LoadBalancer", function () {
       });
 
       it("can handle a brand new map", function () {
-        stubImportFromJSON(sandbox, { e2e: {}, component: {} });
+        stubImportFromOriginalFile(sandbox, { e2e: {}, component: {} });
 
         const newFiles = [
           "newFile.1.test.ts",
@@ -780,7 +780,7 @@ describe("LoadBalancer", function () {
         const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/12-elements-alphabetical.json", {
           parseJSON: true
         });
-        stubImportFromJSON(sandbox, fixture);
+        stubImportFromOriginalFile(sandbox, fixture);
         this.jsonFixture = fixture;
         this.filePaths = Object.keys(this.jsonFixture.e2e);
       });
