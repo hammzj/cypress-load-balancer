@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import stripAnsi from "strip-ansi";
 import Sinon from "sinon";
-import { LoadBalancingMap } from "../../src/types";
+import { LoadBalancingMapJSONFile } from "../../src/types";
 
 export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON?: boolean } = {}): T {
   const buffer = fs.readFileSync(path.resolve(path.join(`./tests/fixtures/${fileNameOrPath}`)));
@@ -15,7 +15,7 @@ export function getFixture<T = string>(fileNameOrPath: string, opts: { parseJSON
 
 export function stubImportFromJSON(
   sandbox: Sinon.SinonSandbox,
-  fakeJSON: LoadBalancingMap = { e2e: {}, component: {} }
+  fakeJSON: LoadBalancingMapJSONFile = { e2e: {}, component: {} }
 ): { existsSyncStub: Sinon.SinonStub; readFileSyncStub: Sinon.SinonStub } {
   const fileNameMatch = sandbox.match("spec-map.json");
   const existsSyncStub = sandbox.stub(fs, "existsSync").withArgs(fileNameMatch).returns(true);
