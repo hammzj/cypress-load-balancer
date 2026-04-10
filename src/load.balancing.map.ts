@@ -114,7 +114,7 @@ export class LoadBalancingMap {
 
   constructor(specMapFileName?: string) {
     //To get this to stop complaining
-    this.path = this.MAIN_MAP_PATH;
+    this.path = LoadBalancingMap.MAIN_MAP_PATH;
     if (specMapFileName) this.customFileName = specMapFileName;
 
     this.internalMap = new Map();
@@ -303,6 +303,11 @@ export class LoadBalancingMap {
     this.importJSONObject(mergedFile);
   }
 
+  //Map to MAIN container map, to which parallelized files are merged
+  public static get MAIN_MAP_PATH(): string {
+    return LoadBalancingMap.getPath("spec-map.json");
+  }
+
   public static get TESTING_TYPES(): TestingType[] {
     return ["e2e", "component"];
   }
@@ -338,11 +343,6 @@ export class LoadBalancingMap {
     //TODO: is there a better way to DRY this up and not make it dependent on the TestFile class?
     const internalPath = TestFile.convertToInternalPath(filePath);
     return this.internalMap.get(testingType)!.get(internalPath);
-  }
-
-  //Map to MAIN container map, to which parallelized files are merged
-  private get MAIN_MAP_PATH(): string {
-    return LoadBalancingMap.getPath("spec-map.json");
   }
 
   /*
