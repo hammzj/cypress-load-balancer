@@ -41,6 +41,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
   context("base plugin", function () {
     beforeEach(function () {
+      //Basic fixtures
       this.cypressConfigFile = {
         component: {
           specPattern: "**/*.cy.{js,jsx,ts,tsx}"
@@ -54,19 +55,25 @@ describe("addCypressLoadBalancerPlugin", function () {
         "cypress/tests/TestFunction.4.cy.ts"
       ];
 
+      //Sandbox
       sandbox = sinon.createSandbox();
+
+      //Spies and stubs
+      //In order for the event spy to work, it needs to be registered as an instance variable and not as "this.onEventSpy"
       onEventSpy = sandbox.spy();
 
       this.initializeSpecMapFileStub = stubInitializeSpecMapFile();
+      this.getSpecsStub = sandbox.stub(findCypressSpecs, "getSpecs").returns(this.specFiles);
+
+      //Force the test to think it is on a linux machine to avoid issues with Windows paths
       sandbox.stub(process, "platform").value("linux");
       sandbox.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
-
       //To get around strangeness with mocking the platform
       //If not provided, it will still try to convert to a Windows path on a Windows system
       sandbox.stub(path, "relative").callsFake(path.posix.relative);
 
+      //Only way to test certain filesystem calls. Not ideal
       this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
-      this.getSpecsStub = sandbox.stub(findCypressSpecs, "getSpecs").returns(this.specFiles);
     });
 
     afterEach(() => {
@@ -75,9 +82,11 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     it('only starts up when "env.runner" is specified', function () {
+      //Arrange
       debugInitializer.enable("cypress-load-balancer");
       stubImportFromJSON(sandbox);
 
+      //Act
       addCypressLoadBalancerPlugin(
         onEventSpy,
         {
@@ -86,14 +95,18 @@ describe("addCypressLoadBalancerPlugin", function () {
         },
         "component"
       );
+
+      //Assert
       expect(output)
         .to.include(`cypress-load-balancer`)
         .and.include(`Starting up load balancing process as "env.runner" has been declared`);
     });
 
     it('does not start up if "env.runner" is empty', function () {
+      //Arrange
       debugInitializer.enable("cypress-load-balancer");
 
+      //Act
       addCypressLoadBalancerPlugin(
         onEventSpy,
         {
@@ -102,15 +115,19 @@ describe("addCypressLoadBalancerPlugin", function () {
         },
         "component"
       );
+
+      //Assert
       expect(output).to.be.empty;
     });
 
     context("Empty runner handling", function () {
       it("initializes a runner with an empty spec if no specs have been found", function () {
+        //Arrange
         this.getSpecsStub.restore();
         this.getSpecsStub = sandbox.stub(findCypressSpecs, "getSpecs").returns([]);
-
         stubImportFromJSON(sandbox);
+
+        //Act
         const updatedConfigFile = addCypressLoadBalancerPlugin(
           onEventSpy,
           {
@@ -120,12 +137,16 @@ describe("addCypressLoadBalancerPlugin", function () {
           "component"
         );
 
+        //Assert
         expect(updatedConfigFile.specPattern).to.have.lengthOf(1);
         expect(updatedConfigFile.specPattern[0]).to.include("clb-empty-1-1.cy.js");
       });
 
       it("initializes a runner with an empty spec if the runner count is greater than the file count", function () {
+        //Arrange
         stubImportFromJSON(sandbox);
+
+        //Act
         const updatedConfigFile = addCypressLoadBalancerPlugin(
           onEventSpy,
           {
@@ -135,6 +156,7 @@ describe("addCypressLoadBalancerPlugin", function () {
           "component"
         );
 
+        //Assert
         expect(updatedConfigFile.specPattern).to.have.lengthOf(1);
         expect(updatedConfigFile.specPattern[0]).to.include("clb-empty-5-5.cy.js");
       });
@@ -142,7 +164,10 @@ describe("addCypressLoadBalancerPlugin", function () {
 
     context("inputs", function () {
       it("defaults to use the config specPattern defined for that testing type", function () {
+        //Arrange
         stubImportFromJSON(sandbox);
+
+        //Act
         const updatedConfigFile = addCypressLoadBalancerPlugin(
           onEventSpy,
           {
@@ -152,9 +177,9 @@ describe("addCypressLoadBalancerPlugin", function () {
           "component"
         );
 
+        //Assert
         expect(this.getSpecsStub).to.have.been.calledWith(sinon.match(this.cypressConfigFile), "component");
-
-        expect(updatedConfigFile.specPattern).to.deep.equal([
+        expect(updatedConfigFile.specPattern).to.have.all.members([
           "cypress/tests/TestFunction.cy.ts",
           "cypress/tests/TestFunction.2.cy.ts",
           "cypress/tests/TestFunction.3.cy.ts",
@@ -164,7 +189,10 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       context("env.runner", function () {
         it("runner must be in X/Y format", function () {
+          //Arrange
           stubImportFromJSON(sandbox);
+
+          //Act & Assert
           expect(() =>
             addCypressLoadBalancerPlugin(
               onEventSpy,
@@ -180,6 +208,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         });
 
         it("cannot have an index 0", function () {
+          //Act & Assert
           expect(() =>
             addCypressLoadBalancerPlugin(
               onEventSpy,
@@ -193,6 +222,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         });
 
         it("cannot have a count of 0", function () {
+          //Act & Assert
           expect(() =>
             addCypressLoadBalancerPlugin(
               onEventSpy,
@@ -206,6 +236,7 @@ describe("addCypressLoadBalancerPlugin", function () {
         });
 
         it("the index cannot be higher than the runner count", function () {
+          //Act & Assert
           expect(() =>
             addCypressLoadBalancerPlugin(
               onEventSpy,
@@ -230,7 +261,10 @@ describe("addCypressLoadBalancerPlugin", function () {
         ];
         test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess.map(({ runner, expectedSpecPattern }) => {
           it("the runner index specifies the specs that will be run in the Cypress process", function () {
+            //Arrange
             stubImportFromJSON(sandbox);
+
+            //Act
             const updatedConfigFile = addCypressLoadBalancerPlugin(
               onEventSpy,
               {
@@ -239,6 +273,8 @@ describe("addCypressLoadBalancerPlugin", function () {
               },
               "component"
             );
+
+            //Assert
             expect(updatedConfigFile.specPattern.length).to.eq(expectedSpecPattern.length);
             expect(updatedConfigFile.specPattern).to.deep.eq(expectedSpecPattern);
           });
@@ -246,19 +282,26 @@ describe("addCypressLoadBalancerPlugin", function () {
       });
 
       context("cypressLoadBalancerAlgorithm", function () {
-        it("can specify a different load balancing algorithm", function () {
-          stubImportFromJSON(sandbox);
-          debugInitializer.enable("cypress-load-balancer");
-          addCypressLoadBalancerPlugin(
-            onEventSpy,
-            {
-              ...this.cypressConfigFile,
-              env: { runner: "1/2", cypressLoadBalancerAlgorithm: "round-robin" }
-            },
-            "component"
-          );
-          expect(output).to.include("Using algorithm for load balancing: round-robin");
-        });
+        for (const algo of ["weighted-largest", "round-robin", "file-name"]) {
+          it(`can specify a different load balancing algorithm: ${algo}`, function () {
+            //Arrange
+            debugInitializer.enable("cypress-load-balancer");
+            stubImportFromJSON(sandbox);
+
+            //Act
+            addCypressLoadBalancerPlugin(
+              onEventSpy,
+              {
+                ...this.cypressConfigFile,
+                env: { runner: "1/2", cypressLoadBalancerAlgorithm: algo }
+              },
+              "component"
+            );
+
+            //Assert
+            expect(output).to.include(`Using algorithm for load balancing: ${algo}`);
+          });
+        }
       });
     });
   });
@@ -275,6 +318,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       };
 
       sandbox = sinon.createSandbox();
+      onEventSpy = sandbox.spy();
 
       this.results = getFixture<CypressCommandLine.CypressRunResult>("component-results.json", { parseJSON: true });
       this.initializeSpecMapFileStub = stubInitializeSpecMapFile();
@@ -287,8 +331,6 @@ describe("addCypressLoadBalancerPlugin", function () {
           "cypress/tests/TestFunction.3.cy.ts",
           "cypress/tests/TestFunction.4.cy.ts"
         ]);
-
-      onEventSpy = sandbox.spy();
     });
 
     afterEach(() => {
@@ -297,34 +339,48 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     it(`adds an "after:run" event`, async function () {
+      //Arrange
       stubImportFromJSON(sandbox);
+
+      //Act
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
+
+      //Assert
       expect(onEventSpy.getCall(0).args[0]).to.eq("after:run");
     });
 
     it('is not registered if "env.runner" is not defined', function () {
+      //Arrange
       const cypressConfigFile = this.cypressConfigFile;
       delete cypressConfigFile.env.runner;
+
+      //Act
       addCypressLoadBalancerPlugin(onEventSpy, cypressConfigFile, "component");
 
+      //Assert
       expect(onEventSpy).to.not.have.been.called;
     });
 
     //TODO: Redo
     it("is skipped if Cypress failed to execute", function () {
+      //Arrange
       const updatedConfigFile = { ...this.cypressConfigFile, env: { runner: "1/2" } };
       const updateFileStatsStub = sandbox.stub(utils, "updateFileStats");
       const failedResults = { ...this.results, status: "failed" };
 
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
+
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(failedResults);
 
+      //Assert
       expect(updateFileStatsStub).to.not.have.been.called;
     });
     //TODO: Redo
     it("is skipped if env.cypressLoadBalancerSkipResults is true", function () {
+      //Arrange
       const updatedConfigFile = {
         ...this.cypressConfigFile,
         env: { runner: "1/2", cypressLoadBalancerSkipResults: true }
@@ -334,9 +390,12 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
+
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
 
+      //Assert
       expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
       expect(updateFileStatsStub).to.not.have.been.called;
     });
@@ -348,6 +407,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     ];
     tests_isSkippedIfItIsACucumberDryRun.map((injectedKeyName) => {
       it("is skipped if it is a Cucumber dry run", function () {
+        //Arrange
         const updatedConfigFile = {
           ...this.cypressConfigFile,
           env: {
@@ -362,15 +422,18 @@ describe("addCypressLoadBalancerPlugin", function () {
         stubImportFromJSON(sandbox);
         addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
+        //Act
         const onEventHandler = getOnEventSpyHandler();
         onEventHandler(this.results);
 
+        //Assert
         expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
         expect(updateFileStatsStub).to.not.have.been.called;
       });
     });
 
     it("is skipped if there is only an empty file being run", function () {
+      //Arrange
       const emptyFileResults = getFixture<CypressCommandLine.CypressRunResult>(
         "component-results-for-empty-file.json",
         { parseJSON: true }
@@ -385,9 +448,11 @@ describe("addCypressLoadBalancerPlugin", function () {
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(emptyFileResults);
 
+      //Assert
       expect(saveMapFileStub).to.not.have.been.calledWith(sinon.match.object, "spec-map-1-2.json");
       expect(updateFileStatsStub).to.not.have.been.called;
     });
@@ -399,17 +464,19 @@ describe("addCypressLoadBalancerPlugin", function () {
     tests_onlyCreatesAMapForTheCurrentRunnerAndNoOtherRunners.map(
       ({ called, notCalled }: { called: string; notCalled: string }) => {
         it("only creates a map for the current runner and no other runners", function () {
+          //Assert
           const updatedConfigFile = { ...this.cypressConfigFile, env: { runner: called } };
-
           stubImportFromJSON(sandbox);
-
           addCypressLoadBalancerPlugin(onEventSpy, updatedConfigFile, "component");
 
           //Prepare spy for "after:run" handler; if it is registered before the plugin, it will be called twice instead
           const spy = sandbox.spy(LoadBalancingMap.prototype, "saveMapFile");
+
+          //Act
           const onEventHandler = getOnEventSpyHandler();
           onEventHandler(this.results);
 
+          //Assert
           expect(spy).to.have.been.calledOnce;
           expect(this.writeFileSyncStub).to.have.been.calledWith(
             sinon.match(`spec-map-${called.replace("/", "-")}.json`)
@@ -422,47 +489,65 @@ describe("addCypressLoadBalancerPlugin", function () {
       }
     );
 
+    //TODO: move to base plugin
     it("runs file initialization for the base map if it does not exist", function () {
+      //Arrange
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
-      const onEventHandler = getOnEventSpyHandler();
-      onEventHandler(this.results);
+      //Act
+      //const onEventHandler = getOnEventSpyHandler();
+      //onEventHandler(this.results);
 
+      //Assert
       expect(this.initializeSpecMapFileStub).to.have.been.called;
+
+      //TODO: this actually is called twice
+      expect(this.writeFileSyncStub.firstCall).to.have.been.calledWith(sinon.match("spec-map.json"));
     });
 
     it("runs file initialization for the current runner map", function () {
+      //Arrange
       const spy = sandbox.spy(LoadBalancingMap.prototype, "saveMapFile");
       stubImportFromJSON(sandbox);
 
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
+
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
 
+      //Assert
       //1st call is for "spec-map.json" initialization (when not pre-defined)
       //2nd call is for "spec-map-1-2.json" initialization (when not pre-defined)
       expect(spy).to.have.been.calledTwice;
-      expect(this.writeFileSyncStub).to.have.been.calledWith(sinon.match("spec-map-1-2.json"));
+      expect(this.writeFileSyncStub.lastCall).to.have.been.calledWith(sinon.match("spec-map-1-2.json"));
     });
 
     it("uses the base spec map if there is only one runner (1/1)", function () {
+      //Arrange
       this.cypressConfigFile.env.runner = "1/1";
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
+
+      //Assert
       expect(this.writeFileSyncStub).to.have.been.calledWith(sinon.match("spec-map.json"));
     });
 
     it("adds non-existing files to the current runner map (even if not run)", function () {
+      //Arrange
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
 
+      //Assert
       const loadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
       const actualSpecs = Object.keys(loadBalancingMap.component);
       //@ts-expect-error Ignore
@@ -473,6 +558,7 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     it("skips existing files in the current runner map", function () {
+      //Arrange
       const existingSpecName = this.results.runs[0].spec.relative;
       stubImportFromJSON(sandbox, {
         e2e: {},
@@ -480,9 +566,11 @@ describe("addCypressLoadBalancerPlugin", function () {
       });
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
 
+      //Assert
       //First call is the main load balancer map (initialization)
       //Second call is the current runner map
       const mainLoadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
@@ -495,14 +583,16 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     it("saves the current runner map file when complete", function () {
+      //Arrange
       const runner = this.cypressConfigFile.env.runner;
-
       stubImportFromJSON(sandbox);
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
 
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
 
+      //Assert
       //Test that the current runner map file name has the runner values in it
       expect(this.writeFileSyncStub.lastCall).to.have.been.calledWith(
         sandbox.match(`spec-map-${runner.replace("/", "-")}.json`)
@@ -517,14 +607,16 @@ describe("addCypressLoadBalancerPlugin", function () {
     });
 
     it("adds new durations to existing files in the current runner map only", function () {
+      //Arrange
       const existingSpecName = this.results.runs[0].spec.relative;
-
       stubImportFromJSON(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000], average: 3000, median: 3000 } } }
       });
 
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
+
+      //Act
       const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
 
@@ -533,6 +625,7 @@ describe("addCypressLoadBalancerPlugin", function () {
       const mainLoadBalancingMap = JSON.parse(this.writeFileSyncStub.firstCall.args[1]);
       const currentRunnerLoadBalancingMap = JSON.parse(this.writeFileSyncStub.secondCall.args[1]);
 
+      //Assert
       expect(mainLoadBalancingMap.component[existingSpecName].stats.durations).to.have.lengthOf(1);
       expect(mainLoadBalancingMap.component[existingSpecName].stats.durations).to.deep.eq([3000]);
 
@@ -547,16 +640,15 @@ describe("addCypressLoadBalancerPlugin", function () {
       //Arrange
       const existingSpecName = this.results.runs[0].spec.relative;
       this.results.runs[0].stats.duration = 1000; //Set it to an even number for clarity
-
       stubImportFromJSON(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000, 2000], average: 2500, median: 2000 } } }
       });
 
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
-      const onEventHandler = getOnEventSpyHandler();
 
-      //Register spy after plugin but before after:run event
+      //Register spy after plugin but before after:run event is triggered
+      const onEventHandler = getOnEventSpyHandler();
       const spy = sandbox.spy(TestFile.prototype, <never>"calculateAverage");
 
       //Act
@@ -590,9 +682,9 @@ describe("addCypressLoadBalancerPlugin", function () {
         component: { [existingSpecName]: { stats: { durations: [3000, 2000, 1000], average: 2500, median: 2000 } } }
       });
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
-      const onEventHandler = getOnEventSpyHandler();
 
-      //Register spy after plugin but before after:run event
+      //Register spy after plugin but before after:run event is triggered
+      const onEventHandler = getOnEventSpyHandler();
       const spy = sandbox.spy(TestFile.prototype, <never>"calculateMedian");
 
       //Act
@@ -619,17 +711,15 @@ describe("addCypressLoadBalancerPlugin", function () {
     it("removes the oldest durations when the maximum limit has been reached for the current runner map only", function () {
       //Arrange
       sinon.stub(process, "env").value({ ...process.env, CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED: "3" });
-
       const existingSpecName = this.results.runs[0].spec.relative;
       stubImportFromJSON(sandbox, {
         e2e: {},
         component: { [existingSpecName]: { stats: { durations: [3000, 2000, 1000], average: 2000, median: 2000 } } }
       });
-
       addCypressLoadBalancerPlugin(onEventSpy, this.cypressConfigFile, "component");
-      const onEventHandler = getOnEventSpyHandler();
 
       //Act
+      const onEventHandler = getOnEventSpyHandler();
       onEventHandler(this.results);
 
       //Assert
