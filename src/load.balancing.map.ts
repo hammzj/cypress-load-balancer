@@ -303,9 +303,13 @@ export class LoadBalancingMap {
     this.importJSONObject(mergedFile);
   }
 
+  public static get MAIN_MAP_FILE_NAME() {
+    return "spec-map.json";
+  }
+
   //Map to MAIN container map, to which parallelized files are merged
   public static get MAIN_MAP_PATH(): string {
-    return LoadBalancingMap.getPath("spec-map.json");
+    return LoadBalancingMap.getPath(LoadBalancingMap.MAIN_MAP_FILE_NAME);
   }
 
   public static get TESTING_TYPES(): TestingType[] {
@@ -330,7 +334,7 @@ export class LoadBalancingMap {
 
   private set customFileName(fileName: string) {
     const formatted = fileName.replace(/.json/g, ``) + ".json";
-    this.path = LoadBalancingMap.getPath(formatted);
+    this.path = formatted;
   }
 
   private setTestFileEntry(testingType: TestingType, testFile: TestFile) {

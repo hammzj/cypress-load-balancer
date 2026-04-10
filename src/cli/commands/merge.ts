@@ -90,7 +90,7 @@ export default {
       orig.saveMapFile(argv.output);
       console.log(
         "cypress-load-balancer",
-        "map merge complete with output to %s",
+        "map merge complete with output to ",
         argv.output || LoadBalancingMap.MAIN_MAP_PATH
       );
 

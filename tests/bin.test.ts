@@ -112,7 +112,7 @@ describe("Executables", function () {
             });
 
             const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
-            const { argv } = await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json -F /files/fake2.json`);
+            await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json -F /files/fake2.json`);
 
             expect(saveMapFileStub).to.have.been.calledOnce;
             expect(this.writeFileSyncStub).to.have.been.calledWithMatch(

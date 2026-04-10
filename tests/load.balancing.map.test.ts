@@ -17,14 +17,14 @@ describe("LoadBalancingMap", function () {
       expect(loadBalancingMap.path).to.eq(path.join(process.cwd(), ".cypress_load_balancer", "spec-map.json"));
     });
 
-    it("can use a custom file name", function () {
-      const loadBalancingMap = new LoadBalancingMap("nested/my-map.json");
-      expect(loadBalancingMap.path).to.eq(path.join(process.cwd(), ".cypress_load_balancer", "nested/my-map.json"));
+    it("can use a custom file name in a different directory", function () {
+      const loadBalancingMap = new LoadBalancingMap("foo/my-map.json");
+      expect(loadBalancingMap.path).to.eq("foo/my-map.json");
     });
 
     it('removes duplicate ".json" when initializing custom file names', function () {
-      const loadBalancingMap = new LoadBalancingMap("nested/my-map.json.json.json");
-      expect(loadBalancingMap.path).to.eq(path.join(process.cwd(), ".cypress_load_balancer", "nested/my-map.json"));
+      const loadBalancingMap = new LoadBalancingMap("foo/my-map.json.json.json");
+      expect(loadBalancingMap.path).to.eq("foo/my-map.json");
     });
 
     context("importFromOriginalFile", function () {
