@@ -116,8 +116,7 @@ export class LoadBalancingMap {
     if (specMapFileName) this.customFileName = specMapFileName;
 
     this.internalMap = new Map();
-    LoadBalancingMap.TESTING_TYPES.map((t) => this.internalMap.set(t, new Map()));
-
+    this.resetInternalMap();
     this.importFromJSON();
   }
 
@@ -139,6 +138,16 @@ export class LoadBalancingMap {
     return filePaths.map((fp) => this.getTestFileEntry(testingType, fp)).filter((fp) => fp != null);
   }
 
+  private resetInternalMap() {
+    LoadBalancingMap.TESTING_TYPES.map((t) => this.internalMap.set(t, new Map()));
+  }
+
+  /**
+   * Imports from the JSON map file specified based on its path.
+   * Please note that this will overwrite any previous data saved in the map.
+   * To import new data, first save the new data to the file with `this.saveMapFile()`, then attempt to use this method to reload it.
+   * @private
+   */
   private importFromJSON(): boolean {
     if (!fs.existsSync(this.path)) {
       debug(`JSON file not found at path "%s"; does it need initialized?`, this.path);
@@ -153,6 +162,7 @@ export class LoadBalancingMap {
     //   return false;
     // }
 
+    this.resetInternalMap();
     for (const testingType of LoadBalancingMap.TESTING_TYPES) {
       //Safety check
       if (json[testingType] != null) {

@@ -121,11 +121,11 @@ export default function addCypressLoadBalancerPlugin(
 
       //If there is only 1 runner, then set as undefined so it saves to `spec-map.json` instead
       const specMapFileName = runnerCount === 1 ? undefined : `spec-map-${config.env.runner.replace("/", "-")}.json`;
-      const loadBalancingMap = new LoadBalancingMap(specMapFileName);
 
-      //TODO: figure out how to better handle this
-      //Prep load balancing file if not existing and read it
-      loadBalancingMap.initializeSpecMapFile();
+      //copy base spec-map to use for updates from parallelized runner
+      const loadBalancingMapForRunner = new LoadBalancingMap();
+      //Safety check -- should do nothing
+      loadBalancingMapForRunner.initializeSpecMapFile();
 
       for (const run of cypressRunResult.runs) {
         const fileName = run.spec.relative;
@@ -133,15 +133,15 @@ export default function addCypressLoadBalancerPlugin(
         //This line should never be true, but is here just-in-case
         //We should never save the results of empty files generated from this process
         if (fileName.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP)) return;
-        loadBalancingMap.addTestFileEntry(testingType, fileName);
-        loadBalancingMap.updateTestFileEntry(testingType, fileName, [run.stats.duration as number]);
+        loadBalancingMapForRunner.addTestFileEntry(testingType, fileName);
+        loadBalancingMapForRunner.updateTestFileEntry(testingType, fileName, [run.stats.duration as number]);
       }
 
-      //Overwrite load balancing file for runner
-      loadBalancingMap.saveMapFile();
+      //Save with newly added data
+      loadBalancingMapForRunner.saveMapFile(specMapFileName);
 
       debug("%s Saved load balancing map with new file stats for runner %s", "Plugin", runner);
-      debug("Load balancing map file path %s", loadBalancingMap.path);
+      debug("Load balancing map file name: %s", specMapFileName);
       debug("Cypress Load Balancer after:run event finished");
     });
 

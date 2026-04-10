@@ -9,10 +9,7 @@ export interface FileStats {
 export type FileEntry = Record<string, FileStats>;
 
 //TODO: replace with LoadBalancingMapFile
-export interface LoadBalancingMap {
-  e2e: FileEntry;
-  component: FileEntry;
-}
+export type LoadBalancingMap = Record<TestingType, Record<string, FileStats>>;
 
 export type LoadBalancingMapJSONFile = Record<TestingType, Record<string, FileStats>>;
 

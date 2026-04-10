@@ -5,16 +5,17 @@ import path from "path";
 import { expect } from "chai";
 import { debug as debugInitializer } from "debug";
 import { LoadBalancer } from "../src/load.balancer";
+import { LoadBalancingMap } from "../src/load.balancing.map";
 import { getFixture, stubImportFromJSON } from "./support/utils";
-import { FilePath, LoadBalancingMap, TestingType } from "../src/types";
+import { FilePath, LoadBalancingMapJSONFile, TestingType } from "../src/types";
 
 //eslint-disable-next-line prefer-const
 let sandbox = sinon.createSandbox();
 
-const getTotalMedianTime = (loadBalancerFile: LoadBalancingMap, testingType: TestingType, fps: FilePath[]) =>
+const getTotalMedianTime = (loadBalancerFile: LoadBalancingMapJSONFile, testingType: TestingType, fps: FilePath[]) =>
   fps.map((f) => loadBalancerFile[testingType][f].stats.median).reduce((acc, next) => acc + next, 0);
 const assertTotalRunnerTime = (
-  loadBalancerFile: LoadBalancingMap,
+  loadBalancerFile: LoadBalancingMapJSONFile,
   testingType: TestingType,
   runner: FilePath[],
   expectedTime: number
@@ -23,15 +24,16 @@ const assertTotalRunnerTime = (
 };
 
 const baseStubs = () => {
-  const mkdirSyncStub = sandbox.stub(fs, "mkdirSync");
+  sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").callsFake(() => {
+    return [false, false];
+  });
   const writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
-  return { mkdirSyncStub, writeFileSyncStub };
+  return { writeFileSyncStub };
 };
 
 describe("LoadBalancer", function () {
   beforeEach(function () {
-    const { mkdirSyncStub, writeFileSyncStub } = baseStubs();
-    this.mkdirSyncStub = mkdirSyncStub;
+    const { writeFileSyncStub } = baseStubs();
     this.writeFileSyncStub = writeFileSyncStub;
   });
   afterEach(function () {
@@ -143,7 +145,7 @@ describe("LoadBalancer", function () {
       });
 
       it("defaults to weighted-largest", function () {
-        const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
+        const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/11-elements-600-time.json", { parseJSON: true });
         stubImportFromJSON(sandbox, fixture);
         debugInitializer.enable("cypress-load-balancer");
 
@@ -163,7 +165,7 @@ describe("LoadBalancer", function () {
 
     context("weighted-largest", function () {
       beforeEach(function () {
-        const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
+        const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/11-elements-600-time.json", { parseJSON: true });
         this.jsonFixture = fixture;
         this.filePaths = Object.keys(fixture.e2e);
       });
@@ -357,12 +359,12 @@ describe("LoadBalancer", function () {
       context("specific cases based on time distribution", function () {
         beforeEach(function () {
           sandbox.restore();
-          this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
-          this.mkdirSyncStub = sandbox.stub(fs, "mkdirSync");
+          const { writeFileSyncStub } = baseStubs();
+          this.writeFileSyncStub = writeFileSyncStub;
         });
 
         it("every test file has equal (median) time (3 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/all-equal-time.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/all-equal-time.json", { parseJSON: true });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -378,7 +380,7 @@ describe("LoadBalancer", function () {
         });
 
         it("bell-curve distribution (3 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/bell-curve.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/bell-curve.json", { parseJSON: true });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -432,7 +434,7 @@ describe("LoadBalancer", function () {
         });
 
         it("extreme high values (2 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/extreme-highs.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-highs.json", { parseJSON: true });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -447,7 +449,7 @@ describe("LoadBalancer", function () {
         });
 
         it("extreme low values, example 1: sum of total low values equals highest value (2 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/extreme-lows-equal-to-highest-value.json", {
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-lows-equal-to-highest-value.json", {
             parseJSON: true
           });
           stubImportFromJSON(sandbox, fixture);
@@ -475,7 +477,7 @@ describe("LoadBalancer", function () {
         });
 
         it("extreme low values, example 2: sum of total low values is greater than highest value (2 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/extreme-lows-greater-than-highest-value.json", {
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-lows-greater-than-highest-value.json", {
             parseJSON: true
           });
           stubImportFromJSON(sandbox, fixture);
@@ -503,7 +505,7 @@ describe("LoadBalancer", function () {
         });
 
         it("extreme center distribution (3 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/extreme-center-distribution.json", {
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-center-distribution.json", {
             parseJSON: true
           });
           stubImportFromJSON(sandbox, fixture);
@@ -520,7 +522,7 @@ describe("LoadBalancer", function () {
         });
 
         it("extreme end distribution (3 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/extreme-ends-distribution.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/extreme-ends-distribution.json", { parseJSON: true });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -543,7 +545,7 @@ describe("LoadBalancer", function () {
         });
 
         it("uniform distribution (3 runners)", function () {
-          const fixture = getFixture<LoadBalancingMap>("spec-map/uniform-distribution.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/uniform-distribution.json", { parseJSON: true });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -562,17 +564,16 @@ describe("LoadBalancer", function () {
     context("round-robin", function () {
       beforeEach(function () {
         //SLOWEST TO FASTEST: "median.4000.test.ts", "median.1000.test.ts", "median.300.test.ts", "median.200.test.ts", "median.50.test.ts", "median.1.test.ts"
-        this.jsonFixture = getFixture<LoadBalancingMap>("spec-map/generic.json", { parseJSON: true });
+        this.jsonFixture = getFixture<LoadBalancingMapJSONFile>("spec-map/generic.json", { parseJSON: true });
       });
 
       context("simple balancing cases", function () {
         beforeEach(function () {
           sandbox.restore();
-          const { mkdirSyncStub, writeFileSyncStub } = baseStubs();
-          this.mkdirSyncStub = mkdirSyncStub;
+          const { writeFileSyncStub } = baseStubs();
           this.writeFileSyncStub = writeFileSyncStub;
 
-          const fixture = getFixture<LoadBalancingMap>("spec-map/11-elements-600-time.json", { parseJSON: true });
+          const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/11-elements-600-time.json", { parseJSON: true });
           stubImportFromJSON(sandbox, fixture);
           this.jsonFixture = fixture;
           this.filePaths = Object.keys(this.jsonFixture.e2e);
@@ -767,7 +768,7 @@ describe("LoadBalancer", function () {
 
     context("file-name", function () {
       beforeEach(function () {
-        const fixture = getFixture<LoadBalancingMap>("spec-map/12-elements-alphabetical.json", { parseJSON: true });
+        const fixture = getFixture<LoadBalancingMapJSONFile>("spec-map/12-elements-alphabetical.json", { parseJSON: true });
         stubImportFromJSON(sandbox, fixture);
         this.jsonFixture = fixture;
         this.filePaths = Object.keys(this.jsonFixture.e2e);
