@@ -1,7 +1,6 @@
 import addCypressLoadBalancerPlugin from "./plugin";
-//TODO: remove
-import performLoadBalancing from "./_loadBalancer";
 import mergeLoadBalancingMapFiles from "./merge";
+import { LoadBalancer } from "./load.balancer";
 import { default as cli } from "./cli";
 
-export { addCypressLoadBalancerPlugin, performLoadBalancing, mergeLoadBalancingMapFiles, cli };
+export { addCypressLoadBalancerPlugin, mergeLoadBalancingMapFiles, LoadBalancer, cli };
