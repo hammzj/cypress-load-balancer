@@ -6,13 +6,21 @@ import { LoadBalancingMap, TestFile } from "../src/load.balancing.map";
 import { stubInitializeSpecMapFile, stubSpecMapReads } from "./support/utils";
 
 describe("LoadBalancingMap", function () {
-  beforeEach(function () {});
+  beforeEach(function () {
+    //TODO:
+    //Ensure process is linux and cwd is a unix directory
+    this.processPlatformStub = sinon.stub(process, "platform").value("linux");
+    this.processCwdStub = sinon.stub(process, "cwd").returns("/docs/test-project/");
+  });
   afterEach(function () {
     sinon.restore();
   });
 
   context("initialization", function () {
     it('defaults to use "spec-map.json" as the file name if one is not provided', function () {
+      //Reset the process.cwd stub to ensure it works on any system
+      this.processCwdStub.restore();
+
       const loadBalancingMap = new LoadBalancingMap();
       expect(loadBalancingMap.path).to.eq(path.join(process.cwd(), ".cypress_load_balancer", "spec-map.json"));
     });
@@ -109,7 +117,6 @@ describe("LoadBalancingMap", function () {
       });
 
       it("changes absolute to relative paths", function () {
-        sinon.stub(process, "cwd").returns("/docs/test-project/");
         const loadBalancingMap = new LoadBalancingMap();
 
         loadBalancingMap.addTestFileEntry("e2e", "/docs/test-project/tests/foo.test.js");
@@ -119,8 +126,11 @@ describe("LoadBalancingMap", function () {
       });
 
       it("changes Windows to POSIX paths for keys", function () {
-        sinon.stub(process, "platform").returns("win32");
-        sinon.stub(process, "cwd").returns("C:\\docs\\test-project\\");
+        this.processPlatformStub.restore();
+        this.processCwdStub.restore();
+        this.processPlatformStub = sinon.stub(process, "platform").value("win32");
+        this.processCwdStub = sinon.stub(process, "cwd").returns("C:\\docs\\test-project\\");
+
         const loadBalancingMap = new LoadBalancingMap();
 
         loadBalancingMap.addTestFileEntry("e2e", "C:\\docs\\test-project\\tests\\foo.test.js");
@@ -174,12 +184,14 @@ describe("LoadBalancingMap", function () {
       });
 
       it("changes Windows paths to POSIX paths to reference the internal key correctly", function () {
+        this.processPlatformStub.restore();
+        this.processPlatformStub = sinon.stub(process, "platform").value("win32");
+
         const loadBalancingMap = new LoadBalancingMap();
         loadBalancingMap.addTestFileEntry("component", "ct\\foo.test.js");
 
-        const componentFiles = loadBalancingMap.getTestFiles("component", ["ct\\foo.test.js"]);
-
-        expect(componentFiles[0].internalPath).to.eq("ct/foo.test.js");
+        const testFile = loadBalancingMap.getTestFiles("component", ["ct\\foo.test.js"])[0];
+        expect(testFile.internalPath).to.eq("ct/foo.test.js");
       });
     });
 
@@ -234,11 +246,6 @@ describe("LoadBalancingMap", function () {
   });
 
   context("saveMapFile", function () {
-    beforeEach(function () {
-      sinon.stub(process, "platform").returns("linux");
-      sinon.stub(process, "cwd").returns("/test-project/");
-    });
-
     it("writes a represenation of the map to a JSON file using its base path", function () {
       const stub = sinon.stub(fs, "writeFileSync");
       const loadBalancingMap = new LoadBalancingMap();
@@ -335,8 +342,6 @@ describe("LoadBalancingMap", function () {
 
   context("initializeSpecMapFile", function () {
     beforeEach(function () {
-      sinon.stub(process, "platform").returns("linux");
-      sinon.stub(process, "cwd").returns("/test-project/");
       this.writeFileSync = sinon.stub(fs, "writeFileSync");
       this.mkDirSyncStub = sinon.stub(fs, "mkdirSync");
       this.BASE_DIR = path.join(process.cwd(), ".cypress_load_balancer");

@@ -11,7 +11,9 @@ describe("TestFile", function () {
 
   context("TestFile.convertToInternalPath", () => {
     const expected = `tests/browser/foo.test.js`;
+
     it("converts absolute Windows paths to a relative POSIX path format", () => {
+      sinon.stub(process, "platform").value("win32");
       sinon.stub(process, "cwd").returns(`B:\\GitHub\\Projects\\test-repo`);
       expect(TestFile.convertToInternalPath(`B:\\GitHub\\Projects\\test-repo\\tests\\browser\\foo.test.js`)).to.equal(
         expected
@@ -38,9 +40,17 @@ describe("TestFile", function () {
 
   context("systemPath", () => {
     it("can convert to relative Windows path on Windows systems", () => {
-      sinon.stub(process, "platform").returns("win32");
-      sinon.stub(process, "cwd").returns(`B:\\GitHub\\Projects\\test-repo`);
-      const tf = new TestFile(`B:\\GitHub\\Projects\\test-repo\\tests\\browser\\foo.test.js`);
+      const fakeCwd = `B:\\GitHub\\Projects\\test-repo`;
+      sinon.stub(process, "platform").value("win32");
+      sinon.stub(process, "cwd").returns(fakeCwd);
+      const win32Spy = sinon.spy(path.win32, "relative");
+      const posixSpy = sinon.spy(path.posix, "relative");
+
+      const testFileAbsolutePath = `B:\\GitHub\\Projects\\test-repo\\tests\\browser\\foo.test.js`;
+      const tf = new TestFile(testFileAbsolutePath);
+
+      expect(win32Spy).to.have.been.calledWith(fakeCwd, testFileAbsolutePath);
+      expect(posixSpy).to.not.have.been.called;
       expect(tf.systemPath).to.equal(`tests\\browser\\foo.test.js`);
     });
 
@@ -57,15 +67,18 @@ describe("TestFile", function () {
       "netbsd"
     ]) {
       it(`uses relative POSIX path on other systems: ${system}`, () => {
-        sinon.stub(process, "platform").returns(system);
-        sinon.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
+        const fakeCwd = `/usr/docs/test-repo`;
+        sinon.stub(process, "platform").value(system);
+        sinon.stub(process, "cwd").returns(fakeCwd);
+        const win32Spy = sinon.spy(path.win32, "relative");
+        const posixSpy = sinon.spy(path.posix, "relative");
 
-        //To get around strangeness with mocking the platform
-        //If not provided, it will still try to convert to a Windows path on a Windows system
-        sinon.stub(path, "relative").callsFake(path.posix.relative);
+        const testFileAbsolutePath = `/usr/docs/test-repo/tests/browser/foo.test.js`;
+        const tf = new TestFile(testFileAbsolutePath);
 
-        const tf = new TestFile(`/Users/hammzj/Documents/GitHub/test-repo/tests/browser/foo.test.js`);
-        expect(tf.internalPath).to.equal(`tests/browser/foo.test.js`);
+        expect(posixSpy).to.have.been.calledWith(fakeCwd, testFileAbsolutePath);
+        expect(win32Spy).to.not.have.been.called;
+        expect(tf.systemPath).to.equal(`tests/browser/foo.test.js`);
       });
     }
   });

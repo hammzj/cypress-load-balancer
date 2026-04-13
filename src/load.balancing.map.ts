@@ -6,10 +6,6 @@ import deepmerge from "deepmerge";
 
 const MAX_DURATIONS_ALLOWED = () => Number(Number(process.env.CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED || 10));
 
-function getRelativePath(filePath: string) {
-  return path.relative(process.cwd(), filePath);
-}
-
 export class TestFile {
   private readonly path: string;
   private average: number;
@@ -45,7 +41,7 @@ export class TestFile {
 
   /**
    * External path used for Cypress input; system dependent.
-   * Paths are stored for TestFile in UNIX format.
+   * Paths are stored for TestFile in POSIX format.
    * To ensure stability on Windows devices, the `systemPath` will be changed to reflect how the path appears on Windows systems.
    */
   public get systemPath() {
@@ -58,12 +54,13 @@ export class TestFile {
 
   /**
    * Returns a file path converted to the internal path format used for the TestFile.
-   * All internal paths are represented as relative UNIX system paths.
+   * All internal paths are represented as relative POSIX system paths.
    * @param filePath {string}
    */
   public static convertToInternalPath(filePath: string): string {
-    const relativePath = getRelativePath(filePath);
-    return process.platform === "win32" ? relativePath.replaceAll(path.sep, path.posix.sep) : relativePath;
+    return process.platform === "win32"
+      ? path.win32.relative(process.cwd(), filePath).replaceAll(path.win32.sep, path.posix.sep)
+      : path.posix.relative(process.cwd(), filePath);
   }
 
   //@ts-expect-error Ignore -- might use later

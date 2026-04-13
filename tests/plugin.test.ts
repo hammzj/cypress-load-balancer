@@ -1,6 +1,5 @@
 //Thanks to https://github.com/javierbrea/cypress-fail-fast/blob/main/test/plugin.spec.js
 import fs from "node:fs";
-import path from "path";
 import { expect } from "chai";
 import sinon, { SinonSandbox, SinonSpy } from "sinon";
 // @ts-expect-error No types exist for this package
@@ -63,9 +62,9 @@ describe("addCypressLoadBalancerPlugin", function () {
       //Force the test to think it is on a linux machine to avoid issues with Windows paths
       sandbox.stub(process, "platform").value("linux");
       sandbox.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
-      //To get around strangeness with mocking the platform
-      //If not provided, it will still try to convert to a Windows path on a Windows system
-      sandbox.stub(path, "relative").callsFake(path.posix.relative);
+      // //To get around strangeness with mocking the platform
+      // //If not provided, it will still try to convert to a Windows path on a Windows system
+      // sandbox.stub(path, "relative").callsFake(path.posix.relative);
 
       //Only way to test certain filesystem calls. Not ideal
       this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
