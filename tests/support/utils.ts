@@ -18,20 +18,18 @@ export function stubInitializeSpecMapFile(sandbox: Sinon.SinonSandbox) {
   return sandbox.stub(LoadBalancingMap.prototype, "initializeSpecMapFile").callsFake(() => [false, false]);
 }
 
-export function stubImportFromOriginalFile(
-  sandbox: Sinon.SinonSandbox,
-  fakeJSON: LoadBalancingMapJSONFile = { e2e: {}, component: {} }
-): { existsSyncStub: Sinon.SinonStub; readFileSyncStub: Sinon.SinonStub } {
-  const fileNameMatch = sandbox.match("spec-map.json");
-  const existsSyncStub = sandbox.stub(fs, "existsSync").withArgs(fileNameMatch).returns(true);
-  const readFileSyncStub = sandbox.stub(fs, "readFileSync").withArgs(fileNameMatch).returns(JSON.stringify(fakeJSON));
-  return { existsSyncStub, readFileSyncStub };
-}
-
+/**
+ * Allows faking reading and imports of spec map files based on filename matching.
+ * @example stubSpecMapReads(sandbox, {"spec-map.json": {e2e: {}, component: {}}}
+ * @param sandbox
+ * @param stubs
+ */
 export function stubSpecMapReads(sandbox: Sinon.SinonSandbox, stubs: Record<string, LoadBalancingMapJSONFile>) {
+  const existsSyncStub = sandbox.stub(fs, "existsSync");
   const readFileSyncStub = sandbox.stub(fs, "readFileSync");
 
   for (const [fileName, object] of Object.entries(stubs)) {
+    existsSyncStub.withArgs(sandbox.match(fileName)).returns(true);
     readFileSyncStub.withArgs(sandbox.match(fileName)).returns(JSON.stringify(object));
   }
 

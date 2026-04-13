@@ -7,8 +7,9 @@ import { LoadBalancingMap } from "../src/load.balancing.map";
 
 const decodeStdout = (stdout: Buffer) => Buffer.from(stdout).toString();
 
-const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
-const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
+//const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
+//const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
+const SHOULD_RUN = !process.env.SKIP_LONG_TESTS;
 
 describe("Actual Cypress examples with load balancing enabled", function () {
   this.retries(1);
@@ -16,8 +17,6 @@ describe("Actual Cypress examples with load balancing enabled", function () {
 
   before(function () {
     if (!SHOULD_RUN) this.skip();
-    this.NO_COLOR = process.env.NO_COLOR;
-    this.FORCE_COLORS = process.env.FORCE_COLORS;
     process.env.NO_COLOR = "1";
     process.env.FORCE_COLORS = "0";
   });

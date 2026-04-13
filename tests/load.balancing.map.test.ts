@@ -462,10 +462,6 @@ describe("LoadBalancingMap", function () {
   });
 
   context("mergeMaps", function () {
-    beforeEach(function () {
-      sinon.stub(fs, "existsSync").withArgs(sinon.match("spec-map")).returns(true);
-    });
-
     it("merges maps back to a main file", function () {
       stubSpecMapReads(sinon, {
         "spec-map.json": {

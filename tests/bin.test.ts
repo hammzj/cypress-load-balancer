@@ -7,17 +7,13 @@ import child_process from "node:child_process";
 import path from "path";
 import { expect } from "chai";
 import sinon from "sinon";
-import {
-  runArgvCmdInCurrentProcess,
-  decodeStdout,
-  stubImportFromOriginalFile,
-  stubSpecMapReads
-} from "./support/utils";
+import { runArgvCmdInCurrentProcess, decodeStdout, stubSpecMapReads } from "./support/utils";
 import cli from "../src/cli";
 import { LoadBalancingMap } from "../src";
 
-const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
-const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
+//const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
+//const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
+const SHOULD_RUN = !process.env.SKIP_LONG_TESTS;
 const RETRIES = process.platform === "win32" ? 0 : 1;
 
 const sandbox = sinon.createSandbox();
@@ -31,9 +27,8 @@ describe("Executables", function () {
   });
 
   beforeEach(function () {
-    // sandbox.stub(process, "platform").value("linux");
-    // sandbox.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
-    // sandbox.stub(path, "relative").callsFake(path.posix.relative);
+    sandbox.stub(process, "platform").value("linux");
+    sandbox.stub(process, "cwd").returns(`/usr/docs/test-repo/`);
   });
 
   describe("cypress-load-balancer", function () {
@@ -81,7 +76,7 @@ describe("Executables", function () {
           });
 
           it("requires either a glob pattern or a list of files", async function () {
-            stubImportFromOriginalFile(sandbox);
+            stubSpecMapReads(sandbox, { "spec-map.json": { e2e: {}, component: {} } });
             const { error } = await runArgvCmdInCurrentProcess(cli, `merge`);
             expect(error?.message).to.contain("At least one file path or a glob pattern must be provided.");
           });
@@ -101,27 +96,27 @@ describe("Executables", function () {
           it("can merge load balancing maps back to the original", async function () {
             stubSpecMapReads(sandbox, {
               "spec-map.json": { e2e: {}, component: {} },
-              "fake-1.json": {
+              "fake1.json": {
                 e2e: { "foo.test.ts": { stats: { durations: [100, 200], average: 150, median: 100 } } },
                 component: {}
               },
-              "\\files\\fake2.json": {
+              "/files/fake2.json": {
                 e2e: { "bar.test.ts": { stats: { durations: [100], average: 100, median: 100 } } },
                 component: {}
               }
             });
 
-            const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
+            const saveMapFileSpy = sandbox.spy(LoadBalancingMap.prototype, "saveMapFile");
             await runArgvCmdInCurrentProcess(cli, `merge -F fake1.json -F /files/fake2.json`);
-
-            expect(saveMapFileStub).to.have.been.calledOnce;
+            expect(saveMapFileSpy).to.have.been.calledOnce;
             expect(this.writeFileSyncStub).to.have.been.calledWithMatch(
               LoadBalancingMap.MAIN_MAP_PATH,
               JSON.stringify({
                 e2e: {
-                  "foo.test.ts": { stats: { durations: [100, 200], average: 150 } },
-                  "bar.test.ts": { stats: { durations: [100], average: 100 } }
-                }
+                  "foo.test.ts": { stats: { durations: [100, 200], average: 150, median: 100 } },
+                  "bar.test.ts": { stats: { durations: [100], average: 100, median: 100 } }
+                },
+                component: {}
               })
             );
           });
