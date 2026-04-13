@@ -61,10 +61,7 @@ describe("addCypressLoadBalancerPlugin", function () {
 
       //Force the test to think it is on a linux machine to avoid issues with Windows paths
       sandbox.stub(process, "platform").value("linux");
-      sandbox.stub(process, "cwd").returns(`/Users/hammzj/Documents/GitHub/test-repo/`);
-      // //To get around strangeness with mocking the platform
-      // //If not provided, it will still try to convert to a Windows path on a Windows system
-      // sandbox.stub(path, "relative").callsFake(path.posix.relative);
+      sandbox.stub(process, "cwd").returns(`/usr/docs/test-repo/`);
 
       //Only way to test certain filesystem calls. Not ideal
       this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
