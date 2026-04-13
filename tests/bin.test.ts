@@ -11,7 +11,7 @@ import { runArgvCmdInCurrentProcess, decodeStdout, stubSpecMapReads } from "./su
 import cli from "../src/cli";
 import { LoadBalancingMap } from "../src";
 
-//const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
+const IS_ON_GHA = process.env.GITHUB_ACTIONS == "true";
 //const SHOULD_RUN = !process.env.SKIP_LONG_TESTS || IS_ON_GHA;
 const SHOULD_RUN = !process.env.SKIP_LONG_TESTS;
 const RETRIES = process.platform === "win32" ? 0 : 1;
