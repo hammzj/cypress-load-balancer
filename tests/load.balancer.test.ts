@@ -79,10 +79,8 @@ describe("LoadBalancer", function () {
     });
 
     it(`outputs runners with system dependent paths: win32`, function () {
-      const fakePathRelative = path.win32.relative.bind({});
-      sandbox.stub(process, "platform").value("linux");
+      sandbox.stub(process, "platform").value("win32");
       sandbox.stub(process, "cwd").returns("C:\\docs\\test-project\\");
-      sandbox.stub(path, "relative").callsFake(fakePathRelative);
 
       stubImportFromOriginalFile(sandbox);
 
@@ -95,10 +93,8 @@ describe("LoadBalancer", function () {
     });
 
     it(`outputs runners with system dependent paths: linux`, function () {
-      const fakePathRelative = path.posix.relative.bind({});
       sandbox.stub(process, "platform").value("linux");
       sandbox.stub(process, "cwd").returns("/test-project/");
-      sandbox.stub(path, "relative").callsFake(fakePathRelative);
       stubImportFromOriginalFile(sandbox);
 
       const fileName = "e2e/test.1.ts";
