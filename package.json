@@ -33,7 +33,7 @@
     "cypress-load-balancer": "./dist/cjs/src/bin/cypressLoadBalancer.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup.sh",
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.commonjs.json && ./scripts/fixup",
     "example:cypress:open": "cypress open --e2e",
     "example:cypress:run": "cypress run --e2e",
     "example:cypress:run:cucumber": "cypress run -C cypress.config.cucumber.ts --e2e",
