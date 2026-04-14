@@ -324,6 +324,47 @@ describe("LoadBalancer", function () {
         );
       });
 
+      it("evenly spreads out new files amongst runners", function () {
+        stubSpecMapReads(sandbox, { "spec-map.json": this.jsonFixture });
+        const e2eFilePaths = [
+          ...Object.keys(this.jsonFixture.e2e),
+          "newFile.1.test.ts",
+          "newFile.2.test.ts",
+          "newFile.3.test.ts",
+          "newFile.4.test.ts"
+        ];
+
+        const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", e2eFilePaths);
+        expect(runners).to.deep.eq([
+          [
+            [
+              "100.1.test.ts",
+              "75.3.test.ts",
+              "10.1.test.ts",
+              "10.2.test.ts",
+              "5.1.test.ts",
+              //New files
+              "newFile.1.test.ts",
+              "newFile.4.test.ts"
+            ],
+            [
+              "150.1.test.ts",
+              "25.1.test.ts",
+              "25.2.test.ts",
+              //New file
+              "newFile.2.test.ts"
+            ],
+            [
+              "75.1.test.ts",
+              "75.2.test.ts",
+              "50.1.test.ts",
+              //New file
+              "newFile.3.test.ts"
+            ]
+          ]
+        ]);
+      });
+
       it("can handle a brand new map", function () {
         stubSpecMapReads(sandbox, { "spec-map.json": { e2e: {}, component: {} } });
 

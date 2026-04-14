@@ -143,8 +143,8 @@ export class LoadBalancer {
 
     if (runnerCount === 1) return [sortedTestFiles];
 
-    const firstNewFileIndex = sortedTestFiles.findIndex((tf) => tf.isNewFile());
-    const brandNewFiles = sortedTestFiles.splice(firstNewFileIndex);
+    //Splice array from files without durations to be handled later
+    const brandNewFiles = sortedTestFiles.splice(sortedTestFiles.findIndex((tf) => tf.isNewFile()));
 
     // Initialize each runner empty
     let testSets: TestSets = Array.from({ length: runnerCount }, () => []);
