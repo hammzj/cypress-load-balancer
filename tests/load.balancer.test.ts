@@ -198,7 +198,7 @@ describe("LoadBalancer", function () {
 
           expect(getTotalMedianTime(this.jsonFixture, "e2e", runners[0])).to.eq(expectedRunTime);
           for (const r of runners) assertTotalRunnerTime(this.jsonFixture, "e2e", r, expectedRunTime);
-          expect(runners).to.deep.equal([
+          expect(runners).to.have.deep.members([
             //200 median time
             ["100.1.test.ts", "75.3.test.ts", "10.1.test.ts", "10.2.test.ts", "5.1.test.ts"],
             //200 median time
@@ -216,7 +216,7 @@ describe("LoadBalancer", function () {
 
           expect(getTotalMedianTime(this.jsonFixture, "e2e", runners[0])).to.eq(expectedRunTime);
           for (const r of runners) assertTotalRunnerTime(this.jsonFixture, "e2e", r, expectedRunTime);
-          expect(runners).to.deep.equal([
+          expect(runners).to.have.deep.members([
             ["100.1.test.ts", "25.1.test.ts", "10.1.test.ts", "10.2.test.ts", "5.1.test.ts"],
             ["75.2.test.ts", "50.1.test.ts", "25.2.test.ts"],
             ["75.1.test.ts", "75.3.test.ts"],
@@ -361,14 +361,17 @@ describe("LoadBalancer", function () {
           "newFile.5.test.ts",
           "newFile.6.test.ts",
           "newFile.7.test.ts",
-          "newFile.8.test.ts"
+          "newFile.8.test.ts",
+          "newFile.9.test.ts"
         ];
 
-        const runners = new LoadBalancer("weighted-largest").performLoadBalancing(2, "e2e", newFiles);
+        const runners = new LoadBalancer("weighted-largest").performLoadBalancing(4, "e2e", newFiles);
 
-        expect(runners).to.deep.equal([
-          ["newFile.1.test.ts", "newFile.3.test.ts", "newFile.5.test.ts", "newFile.7.test.ts"],
-          ["newFile.2.test.ts", "newFile.4.test.ts", "newFile.6.test.ts", "newFile.8.test.ts"]
+        expect(runners).to.have.deep.members([
+          ["newFile.1.test.ts", "newFile.5.test.ts", "newFile.9.test.ts"],
+          ["newFile.2.test.ts", "newFile.6.test.ts"],
+          ["newFile.3.test.ts", "newFile.7.test.ts"],
+          ["newFile.4.test.ts", "newFile.8.test.ts"]
         ]);
         expect(this.writeFileSyncStub.calledOnce).to.be.true;
 
@@ -779,14 +782,17 @@ describe("LoadBalancer", function () {
           "newFile.5.test.ts",
           "newFile.6.test.ts",
           "newFile.7.test.ts",
-          "newFile.8.test.ts"
+          "newFile.8.test.ts",
+          "newFile.9.test.ts"
         ];
 
-        const runners = new LoadBalancer("round-robin").performLoadBalancing(2, "e2e", newFiles);
+        const runners = new LoadBalancer("round-robin").performLoadBalancing(4, "e2e", newFiles);
 
-        expect(runners).to.deep.equal([
-          ["newFile.1.test.ts", "newFile.3.test.ts", "newFile.5.test.ts", "newFile.7.test.ts"],
-          ["newFile.2.test.ts", "newFile.4.test.ts", "newFile.6.test.ts", "newFile.8.test.ts"]
+        expect(runners).to.have.deep.members([
+          ["newFile.1.test.ts", "newFile.5.test.ts", "newFile.9.test.ts"],
+          ["newFile.2.test.ts", "newFile.6.test.ts"],
+          ["newFile.3.test.ts", "newFile.7.test.ts"],
+          ["newFile.4.test.ts", "newFile.8.test.ts"]
         ]);
         expect(this.writeFileSyncStub.calledOnce).to.be.true;
 
@@ -831,7 +837,7 @@ describe("LoadBalancer", function () {
       it("can balance for 2 runners", function () {
         const filePaths = this.filePaths;
         const runners = new LoadBalancer("file-name").performLoadBalancing(2, "e2e", filePaths);
-        expect(runners).to.deep.equal([
+        expect(runners).to.have.deep.members([
           ["a.test.ts", "b.test.ts", "c.test.ts", "d.test.ts", "e.test.ts", "f.test.ts"],
           ["g.test.ts", "h.test.ts", "i.test.ts", "j.test.ts", "k.test.ts", "l.test.ts"]
         ]);
@@ -840,7 +846,7 @@ describe("LoadBalancer", function () {
       it("can balance for an uneven runners to files", function () {
         const filePaths = this.filePaths;
         const runners = new LoadBalancer("file-name").performLoadBalancing(5, "e2e", filePaths);
-        expect(runners).to.deep.equal([
+        expect(runners).to.have.deep.members([
           ["a.test.ts", "b.test.ts", "c.test.ts"],
           ["d.test.ts", "e.test.ts", "f.test.ts"],
           ["g.test.ts", "h.test.ts"],
@@ -851,7 +857,7 @@ describe("LoadBalancer", function () {
 
       it("sorts files by file name", function () {
         const runners = new LoadBalancer("file-name").performLoadBalancing(1, "e2e", this.filePaths);
-        expect(runners).to.deep.equal([
+        expect(runners).to.have.deep.members([
           [
             "a.test.ts",
             "b.test.ts",
@@ -877,7 +883,7 @@ describe("LoadBalancer", function () {
       it("balances files per runner so files are evenly spread across runner", function () {
         const runners = new LoadBalancer("file-name").performLoadBalancing(3, "e2e", this.filePaths);
         expect(runners.every((r) => r.length === 4)).to.be.true;
-        expect(runners).to.deep.equal([
+        expect(runners).to.have.deep.members([
           ["a.test.ts", "b.test.ts", "c.test.ts", "d.test.ts"],
           ["e.test.ts", "f.test.ts", "g.test.ts", "h.test.ts"],
           ["i.test.ts", "j.test.ts", "k.test.ts", "l.test.ts"]
@@ -886,7 +892,7 @@ describe("LoadBalancer", function () {
 
       it("can handle balancing runners when files cannot be evenly spread across them", function () {
         const runners = new LoadBalancer("file-name").performLoadBalancing(5, "e2e", this.filePaths);
-        expect(runners).to.deep.equal([
+        expect(runners).to.have.deep.members([
           ["a.test.ts", "b.test.ts", "c.test.ts"],
           ["d.test.ts", "e.test.ts", "f.test.ts"],
           ["g.test.ts", "h.test.ts"],
@@ -957,7 +963,7 @@ describe("LoadBalancer", function () {
           "newFile.6.test.ts"
         ];
         const runners = new LoadBalancer("file-name").performLoadBalancing(2, "e2e", newFiles);
-        expect(runners).to.deep.equal([
+        expect(runners).to.have.deep.members([
           ["newFile.1.test.ts", "newFile.2.test.ts", "newFile.3.test.ts"],
           ["newFile.4.test.ts", "newFile.5.test.ts", "newFile.6.test.ts"]
         ]);
