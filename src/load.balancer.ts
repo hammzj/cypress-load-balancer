@@ -96,6 +96,9 @@ export class LoadBalancer {
    * If there are more tests than runners, then it will continually keep a check of the total run time of
    * the runner with the longest runtime, and compare other runners to stay under or near that limit.
    *
+   * Please note that any new files not in the mapfile are balanced using the round robin approach, `LoadBalancer.balanceByMatchingArrayIndices`,
+   * and then placed into each existing runner with existing test files, to ensure an even spread of new files amongst balanced runners.
+   *
    * Cypress is dependent on waiting for the slowest runner to finish; there is no need to care about the fastest runner in this case.
    * This algorithm involves making the slowest runners as fast as possible, or other runners equal to it
    *
@@ -137,18 +140,21 @@ export class LoadBalancer {
 
     //TODO: change to priority queue based on median time descending
     //Sort descending order by median runtime
-    const sortedTestFiles = testFilesToRun.toSorted(
+    const sortedTestFiles: TestFile[] = testFilesToRun.toSorted(
       (a: TestFile, b: TestFile) => getTotalTime([b]) - getTotalTime([a])
     );
 
     if (runnerCount === 1) return [sortedTestFiles];
 
-    //Initialize each runner empty
+    //Splice array from files without durations to be handled later
+    const indexOfNewFile = sortedTestFiles.findIndex((tf) => tf.isNewFile());
+    const brandNewFiles = indexOfNewFile > -1 ? sortedTestFiles.splice(indexOfNewFile) : [];
+
+    // Initialize each runner empty
     let testSets: TestSets = Array.from({ length: runnerCount }, () => []);
 
     //Debugging purposes only
     let currentIteration = 0;
-
     //This could be done more efficiently by using array indices alongside an array of every test sets' total time,
     // instead of resorting each iteration.
     sortTestSets: do {
@@ -181,6 +187,14 @@ export class LoadBalancer {
         addHighestFileToTestSet(currentTestSet);
       }
     } while (sortedTestFiles.length > 0);
+
+    if (brandNewFiles.length > 0) {
+      debug("Handling for %d new files added", brandNewFiles.length);
+      const testSetsForNewFiles = this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles);
+      for (let i = 0; i <= testSetsForNewFiles.length - 1; i++) {
+        testSets[i] = [...testSets[i], ...testSetsForNewFiles[i]];
+      }
+    }
 
     debug(`%s Total iterations: %d`, `weighted-largest`, currentIteration);
     debug(

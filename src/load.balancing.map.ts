@@ -31,6 +31,10 @@ export class TestFile {
     return { durations: this.durations, average: this.average, median: this.median };
   }
 
+  public isNewFile(): boolean {
+    return this.durations.length === 0;
+  }
+
   public getMedian(): number {
     return this.stats.median;
   }
