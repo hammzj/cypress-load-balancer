@@ -177,37 +177,31 @@ describe("Executables", function () {
           });
 
           it(`The glob pattern for merging runners works with \"./.cypress_load_balancer/**/spec-map-*.json\"`, async function () {
-            if (IS_ON_GHA) this.skip();
-            const tempFileNames = [
-              "/.cypress_load_balancer/spec-map-1-4.json",
-              "/.cypress_load_balancer/spec-map-2-4.json",
-              "/.cypress_load_balancer/spec-map-3-4.json",
-              "/.cypress_load_balancer/spec-map-4-4.json"
-            ];
+            //if (IS_ON_GHA) this.skip();
             this.processCwdStub.restore();
-            this.writeFileSyncStub.restore();
-            this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
-            sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
-            tempFileNames.map((f) => {
-              fs.writeFileSync(
-                path.join(process.cwd(), f),
-                JSON.stringify({
-                  e2e: {},
-                  component: {}
-                })
-              );
+            const saveMapFileStub = sandbox.stub(LoadBalancingMap.prototype, "saveMapFile");
+            const { readFileSyncStub } = stubSpecMapReads(sandbox, {
+              "spec-map.json": { e2e: {}, component: {} },
+              "spec-map-1-4.json": { e2e: {}, component: {} },
+              "spec-map-2-4.json": { e2e: {}, component: {} },
+              "spec-map-3-4.json": { e2e: {}, component: {} },
+              "spec-map-4-4.json": { e2e: {}, component: {} }
             });
-            const { readFileSyncStub } = stubSpecMapReads(sandbox, { "spec-map.json": { e2e: {}, component: {} } });
 
             //Because this is being executed in a sub-directory,
             // we need to treat the glob with the path from the base directory
             const tempGlob = path.join(process.cwd(), "./.cypress_load_balancer/**/spec-map-*.json");
-
             await runArgvCmdInCurrentProcess(cli, `merge -G "${tempGlob}"`);
-
-            tempFileNames.map((f) => {
+            [
+              "/.cypress_load_balancer/spec-map-1-4.json",
+              "/.cypress_load_balancer/spec-map-2-4.json",
+              "/.cypress_load_balancer/spec-map-3-4.json",
+              "/.cypress_load_balancer/spec-map-4-4.json"
+            ].map((f) => {
+              console.log("readFileSyncStub'", readFileSyncStub.args);
               expect(readFileSyncStub.args.some((a: any[]) => a[0].includes(f))).to.be.true;
             });
+            expect(saveMapFileStub).to.have.been.calledOnce;
           });
 
           it("skips merging if no files are found", async function () {
@@ -241,7 +235,7 @@ describe("Executables", function () {
             expect(stub).to.have.been.calledWith(sandbox.match("/files/fake2.json"));
           });
 
-          it("can be set to throw an error if no files are found", function () {
+          it("can be set to throw an error if no files are found", async function (done) {
             child_process.spawnSync("npx", [`cypress-load-balancer`, "initialize"]);
 
             const { stderr } = child_process.spawnSync("npx", [
@@ -252,6 +246,7 @@ describe("Executables", function () {
             ]);
             const output = decodeStdout(stderr);
             expect(output).to.contain("No input files provided or found for the merge command to use!");
+            done();
           });
         });
 
