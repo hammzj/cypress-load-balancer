@@ -33,7 +33,7 @@ export function stubSpecMapReads(sandbox: Sinon.SinonSandbox, stubs: Record<stri
     readFileSyncStub.withArgs(sandbox.match(fileName)).returns(JSON.stringify(object));
   }
 
-  return readFileSyncStub;
+  return {existsSyncStub, readFileSyncStub};
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
