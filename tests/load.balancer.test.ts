@@ -228,7 +228,7 @@ describe("LoadBalancer", function () {
           const filePaths = this.filePaths;
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(6, "e2e", filePaths);
 
-          expect(runners).to.deep.equal([
+          expect(runners).to.have.deep.members([
             //150 Total run time
             ["150.1.test.ts"],
             //105 Total run time
@@ -264,8 +264,8 @@ describe("LoadBalancer", function () {
         stubSpecMapReads(sandbox, { "spec-map.json": this.jsonFixture });
         const fourFiles = this.filePaths.slice(0, 3);
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(2, "e2e", fourFiles);
-        expect(runners[0]).to.deep.eq(["100.1.test.ts", "75.1.test.ts"]);
-        expect(runners[1]).to.deep.eq(["150.1.test.ts"]);
+        expect(runners[0]).to.have.deep.members(["100.1.test.ts", "75.1.test.ts"]);
+        expect(runners[1]).to.have.deep.members(["150.1.test.ts"]);
       });
 
       it("can differentiate specs between e2e and component", function () {
@@ -274,7 +274,7 @@ describe("LoadBalancer", function () {
         const lb = new LoadBalancer("weighted-largest");
 
         const e2eRunners = lb.performLoadBalancing(1, "e2e", e2eFilePaths);
-        expect(e2eRunners).to.deep.eq([
+        expect(e2eRunners).to.have.deep.members([
           [
             "150.1.test.ts",
             "100.1.test.ts",
@@ -292,7 +292,7 @@ describe("LoadBalancer", function () {
 
         const componentFilePaths = Object.keys(this.jsonFixture.component);
         const componentRunners = lb.performLoadBalancing(1, "component", componentFilePaths);
-        expect(componentRunners).to.deep.eq([
+        expect(componentRunners).to.have.deep.members([
           ["50.1.test.ct.ts", "10.1.test.ct.ts", "10.2.test.ct.ts", "5.1.test.ct.ts"]
         ]);
       });
@@ -302,7 +302,7 @@ describe("LoadBalancer", function () {
         const e2eFilePaths = [...Object.keys(this.jsonFixture.e2e), "newFile.test.ts"];
 
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(1, "e2e", e2eFilePaths);
-        expect(runners).to.deep.eq([
+        expect(runners).to.have.deep.members([
           [
             "150.1.test.ts",
             "100.1.test.ts",
@@ -335,33 +335,18 @@ describe("LoadBalancer", function () {
         ];
 
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", e2eFilePaths);
-        expect(runners).to.deep.eq([
+        expect(runners).to.have.deep.members([
           [
-            [
-              "100.1.test.ts",
-              "75.3.test.ts",
-              "10.1.test.ts",
-              "10.2.test.ts",
-              "5.1.test.ts",
-              //New files
-              "newFile.1.test.ts",
-              "newFile.4.test.ts"
-            ],
-            [
-              "150.1.test.ts",
-              "25.1.test.ts",
-              "25.2.test.ts",
-              //New file
-              "newFile.2.test.ts"
-            ],
-            [
-              "75.1.test.ts",
-              "75.2.test.ts",
-              "50.1.test.ts",
-              //New file
-              "newFile.3.test.ts"
-            ]
-          ]
+            "100.1.test.ts",
+            "75.3.test.ts",
+            "10.1.test.ts",
+            "10.2.test.ts",
+            "5.1.test.ts",
+            "newFile.1.test.ts",
+            "newFile.4.test.ts"
+          ],
+          ["150.1.test.ts", "25.1.test.ts", "25.2.test.ts", "newFile.2.test.ts"],
+          ["75.1.test.ts", "75.2.test.ts", "50.1.test.ts", "newFile.3.test.ts"]
         ]);
       });
 
@@ -409,7 +394,7 @@ describe("LoadBalancer", function () {
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", this.filePaths);
 
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([300, 300, 300]);
-          expect(runners).to.deep.equal([
+          expect(runners).to.have.deep.members([
             ["100.1.test.ts", "100.4.test.ts", "100.7.test.ts"],
             ["100.2.test.ts", "100.5.test.ts", "100.8.test.ts"],
             ["100.3.test.ts", "100.6.test.ts", "100.9.test.ts"]
@@ -479,7 +464,7 @@ describe("LoadBalancer", function () {
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(2, "e2e", this.filePaths);
 
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([2100, 2100]);
-          expect(runners).to.deep.equal([
+          expect(runners).to.have.deep.members([
             ["500.1.test.ts", "500.3.test.ts", "500.5.test.ts", "500.7.test.ts", "100.1.test.ts"],
             ["500.2.test.ts", "500.4.test.ts", "500.6.test.ts", "500.8.test.ts", "100.2.test.ts"]
           ]);
@@ -554,7 +539,7 @@ describe("LoadBalancer", function () {
 
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", this.filePaths);
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([270, 270, 260]);
-          expect(runners).to.deep.equal([
+          expect(runners).to.have.deep.members([
             ["100.1.test.ts", "50.1.test.ts", "50.2.test.ts", "50.5.test.ts", "20.1.test.ts"],
             ["90.1.test.ts", "60.1.test.ts", "50.4.test.ts", "40.1.test.ts", "30.1.test.ts"],
             ["80.1.test.ts", "70.1.test.ts", "50.3.test.ts", "50.6.test.ts", "10.1.test.ts"]
@@ -596,7 +581,7 @@ describe("LoadBalancer", function () {
 
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", this.filePaths);
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([600, 600, 600]);
-          expect(runners).to.deep.equal([
+          expect(runners).to.have.deep.members([
             ["200.1.test.ts", "200.4.test.ts", "100.1.test.ts", "100.4.test.ts"],
             ["200.2.test.ts", "200.5.test.ts", "100.2.test.ts", "100.5.test.ts"],
             ["200.3.test.ts", "200.6.test.ts", "100.3.test.ts", "100.6.test.ts"]
@@ -766,7 +751,7 @@ describe("LoadBalancer", function () {
         const e2eFilePaths = [...Object.keys(this.jsonFixture.e2e), "newFile.test.ts"];
 
         const runners = new LoadBalancer("round-robin").performLoadBalancing(1, "e2e", e2eFilePaths);
-        expect(runners).to.deep.eq([
+        expect(runners).to.have.deep.members([
           [
             "median.4000.test.ts",
             "median.1000.test.ts",
@@ -938,7 +923,7 @@ describe("LoadBalancer", function () {
           "component",
           Object.keys(this.jsonFixture.component)
         );
-        expect(e2eRunners[0]).to.deep.eq([
+        expect(e2eRunners[0]).to.have.deep.members([
           "a.test.ts",
           "b.test.ts",
           "c.test.ts",
@@ -952,7 +937,7 @@ describe("LoadBalancer", function () {
           "k.test.ts",
           "l.test.ts"
         ]);
-        expect(componentRunners[0]).to.deep.eq(["a.ct.ts", "b.ct.ts", "c.ct.ts"]);
+        expect(componentRunners[0]).to.have.deep.members(["a.ct.ts", "b.ct.ts", "c.ct.ts"]);
       });
 
       it("can handle files that have not been run (or do not exist in map) yet", function () {

@@ -96,6 +96,9 @@ export class LoadBalancer {
    * If there are more tests than runners, then it will continually keep a check of the total run time of
    * the runner with the longest runtime, and compare other runners to stay under or near that limit.
    *
+   * Please note that any new files not in the mapfile are balanced using the round robin approach, `LoadBalancer.balanceByMatchingArrayIndices`,
+   * and then placed into each existing runner with existing test files, to ensure an even spread of new files amongst balanced runners.
+   *
    * Cypress is dependent on waiting for the slowest runner to finish; there is no need to care about the fastest runner in this case.
    * This algorithm involves making the slowest runners as fast as possible, or other runners equal to it
    *
@@ -144,14 +147,14 @@ export class LoadBalancer {
     if (runnerCount === 1) return [sortedTestFiles];
 
     //Splice array from files without durations to be handled later
-    const brandNewFiles = sortedTestFiles.splice(sortedTestFiles.findIndex((tf) => tf.isNewFile()));
+    const indexOfNewFile = sortedTestFiles.findIndex((tf) => tf.isNewFile());
+    const brandNewFiles = indexOfNewFile > -1 ? sortedTestFiles.splice(indexOfNewFile) : [];
 
     // Initialize each runner empty
     let testSets: TestSets = Array.from({ length: runnerCount }, () => []);
 
     //Debugging purposes only
     let currentIteration = 0;
-
     //This could be done more efficiently by using array indices alongside an array of every test sets' total time,
     // instead of resorting each iteration.
     sortTestSets: do {
