@@ -137,13 +137,16 @@ export class LoadBalancer {
 
     //TODO: change to priority queue based on median time descending
     //Sort descending order by median runtime
-    const sortedTestFiles = testFilesToRun.toSorted(
+    const sortedTestFiles: TestFile[] = testFilesToRun.toSorted(
       (a: TestFile, b: TestFile) => getTotalTime([b]) - getTotalTime([a])
     );
 
     if (runnerCount === 1) return [sortedTestFiles];
 
-    //Initialize each runner empty
+    const firstNewFileIndex = sortedTestFiles.findIndex((tf) => tf.isNewFile());
+    const brandNewFiles = sortedTestFiles.splice(firstNewFileIndex);
+
+    // Initialize each runner empty
     let testSets: TestSets = Array.from({ length: runnerCount }, () => []);
 
     //Debugging purposes only
@@ -181,6 +184,14 @@ export class LoadBalancer {
         addHighestFileToTestSet(currentTestSet);
       }
     } while (sortedTestFiles.length > 0);
+
+    if (brandNewFiles.length > 0) {
+      debug("Handling for %d new files added", brandNewFiles.length);
+      const testSetsForNewFiles = this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles);
+      for (let i = 0; i <= testSetsForNewFiles.length - 1; i++) {
+        testSets[i] = [...testSets[i], ...testSetsForNewFiles[i]];
+      }
+    }
 
     debug(`%s Total iterations: %d`, `weighted-largest`, currentIteration);
     debug(
