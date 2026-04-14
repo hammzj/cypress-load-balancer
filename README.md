@@ -498,7 +498,7 @@ manually.
 ### Manually
 
 - Increment the version in the `package.json` according to [semantic versions](https://semver.org/)
-- `yarn run build`
+- `npm run build`
 - `npm publish`
 - Login to NPM with an OTP token if asked, and the process should upload the new version to https://www.npmjs.com.
 

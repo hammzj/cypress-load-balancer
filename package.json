@@ -46,9 +46,9 @@
     "dev:lint": "eslint . && prettier --check . && prettier --check \".github/**/*.yml\"",
     "test": "mocha",
     "test:skip-long-tests": "SKIP_LONG_TESTS=1 mocha",
-    "pretest": "yarn build",
+    "pretest": "npm run build",
     "prepare": "husky",
-    "prepublish": "yarn build"
+    "prepublish": "npm run build"
   },
   "files": [
     "dist/cjs",
