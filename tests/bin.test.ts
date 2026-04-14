@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-//TODO: use mock-fs to mock out the file system for calls
-//TODO: has a lot of issues on GHA. Using husky to run tests on pre-commit now
 
 //Before you run this file, run an `npm run build` or `yarn build`
+import { tmpdir } from "node:os";
 import fs from "node:fs";
 import child_process from "node:child_process";
 import path from "path";
@@ -28,11 +27,6 @@ describe("Executables", function () {
   });
 
   beforeEach(function () {
-    if (fs.existsSync(".cypress_load_balancer")) {
-      fs.rmSync(".cypress_load_balancer", { recursive: true });
-      fs.mkdirSync(".cypress_load_balancer");
-    }
-
     this.processPlatformStub = sandbox.stub(process, "platform").value("linux");
     this.processCwdStub = sandbox.stub(process, "cwd").returns(`/usr/docs/test-repo/`);
   });
@@ -177,65 +171,6 @@ describe("Executables", function () {
             expect(readFileSyncStub.args.some((a: any[]) => a[0].includes("/files/fake2.json"))).to.be.true;
           });
 
-          it("can use a glob pattern to find input files", async function () {
-            //Need to use real file system for this test
-            this.processCwdStub.restore();
-            const readFileSyncStub = sandbox
-              .stub(fs, "readFileSync")
-              .returns(JSON.stringify({ e2e: {}, component: {} }));
-            const mergeMapsSpy = sandbox.spy(LoadBalancingMap.prototype, "mergeMaps");
-
-            await runArgvCmdInCurrentProcess(cli, `merge -G tests/fixtures/spec-map/**.json`);
-
-            expect(mergeMapsSpy).to.have.been.called;
-            //Test against two known files that will appear
-            ["/tests/fixtures/spec-map/generic.json", "/tests/fixtures/spec-map/all-equal-time.json"].map(
-              (fileName) => {
-                expect(readFileSyncStub.args.some((a: any[]) => a[0].includes(fileName))).to.be.true;
-              }
-            );
-          });
-
-          it(`The glob pattern for merging runners works with \"./.cypress_load_balancer/**/spec-map-*.json\"`, async function () {
-            //Need to use real file system for this test
-
-            //if (IS_ON_GHA) this.skip();
-            const tempFiles = [
-              "/.cypress_load_balancer/spec-map-1-4.json",
-              "/.cypress_load_balancer/spec-map-2-4.json",
-              "/.cypress_load_balancer/spec-map-3-4.json",
-              "/.cypress_load_balancer/spec-map-4-4.json"
-            ];
-
-            this.processCwdStub.restore();
-
-            //Temporary to create files for glob to find
-            this.writeFileSyncStub.restore();
-            tempFiles.map((fn) => {
-              fs.writeFileSync(path.join(process.cwd(), fn), JSON.stringify({ e2e: {}, component: {} }));
-            });
-            this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
-
-            const mergeMapsSpy = sandbox.spy(LoadBalancingMap.prototype, "mergeMaps");
-            const { readFileSyncStub } = stubSpecMapReads(sandbox, {
-              "spec-map.json": { e2e: {}, component: {} },
-              "spec-map-1-4.json": { e2e: {}, component: {} },
-              "spec-map-2-4.json": { e2e: {}, component: {} },
-              "spec-map-3-4.json": { e2e: {}, component: {} },
-              "spec-map-4-4.json": { e2e: {}, component: {} }
-            });
-
-            //Because this is being executed in a sub-directory,
-            // we need to treat the glob with the path from the base directory
-            const tempGlob = path.join(process.cwd(), "./.cypress_load_balancer/**/spec-map-*.json");
-            await runArgvCmdInCurrentProcess(cli, `merge -G "${tempGlob}"`);
-
-            expect(mergeMapsSpy).to.have.been.calledOnce;
-            tempFiles.map((f) => {
-              expect(readFileSyncStub.args.some((a: any[]) => a[0].includes(f))).to.be.true;
-            });
-          });
-
           it("skips merging if no files are found via File input", async function () {
             child_process.spawnSync("npx", [`cypress-load-balancer`, "initialize"]);
 
@@ -289,6 +224,76 @@ describe("Executables", function () {
             const output = decodeStdout(stderr);
             expect(output).to.contain("No input files provided or found for the merge command to use!");
             done();
+          });
+
+          context("using a real file system", function () {
+            let tempDir: string;
+
+            beforeEach(function () {
+              if (tempDir) {
+                fs.rmSync(tempDir, { recursive: true });
+              }
+            });
+
+            it("can use a glob pattern to find input files", async function () {
+              //Need to use real file system for this test
+              //Arrange
+              this.processCwdStub.restore();
+              const readFileSyncStub = sandbox
+                .stub(fs, "readFileSync")
+                .returns(JSON.stringify({ e2e: {}, component: {} }));
+              const mergeMapsSpy = sandbox.spy(LoadBalancingMap.prototype, "mergeMaps");
+
+              //Act
+              //This glob will read real files from the project directory. Using fixtures in this case
+              await runArgvCmdInCurrentProcess(cli, `merge -G tests/fixtures/spec-map/**.json`);
+
+              //Assert
+              expect(mergeMapsSpy).to.have.been.called;
+              //Test against two known files that will appear
+              ["/tests/fixtures/spec-map/generic.json", "/tests/fixtures/spec-map/all-equal-time.json"].map(
+                (fileName) => {
+                  expect(readFileSyncStub.args.some((a: any[]) => a[0].includes(fileName))).to.be.true;
+                }
+              );
+            });
+
+            it(`The glob pattern for merging runners works with \"./.cypress_load_balancer/**/spec-map-*.json\"`, async function () {
+              //Can't seem to write files on GitHub Actions
+              //Need to use real temp dirs for this test
+              //if (IS_ON_GHA) this.skip();
+              //Arrange
+              const tempFiles = ["spec-map-1-4.json", "spec-map-2-4.json", "spec-map-3-4.json", "spec-map-4-4.json"];
+
+              this.writeFileSyncStub.restore();
+              this.processCwdStub.restore();
+
+              this.processCwdStub = sandbox.stub(process, "cwd").returns(tmpdir());
+              tempDir = fs.mkdtempSync(path.join(process.cwd(), ".cypress_load_balancer"));
+              const tempDirName = tempDir.split("/").toReversed()[0];
+
+              //Create real files in temp directory
+              fs.writeFileSync(path.join(tempDir, "spec-map.json"), JSON.stringify({ e2e: {}, component: {} }));
+              tempFiles.map((fn) => {
+                fs.writeFileSync(path.join(tempDir, fn), JSON.stringify({ e2e: {}, component: {} }));
+              });
+              this.writeFileSyncStub = sandbox.stub(fs, "writeFileSync");
+
+              const mergeMapsSpy = sandbox.spy(LoadBalancingMap.prototype, "mergeMaps");
+              const readFileSyncSpy = sandbox.spy(fs, "readFileSync");
+
+              //Act
+              //The temp glob should be based on the temp directory for this test.
+              //It will be treated like the glob in the test title.
+              const tempGlob = path.join(`${tempDirName}/**/spec-map-*.json`);
+              await runArgvCmdInCurrentProcess(cli, `merge -G "${tempGlob}"`);
+
+              //Assert
+              expect(mergeMapsSpy).to.have.been.calledOnce;
+              tempFiles.map((f) => {
+                expect(readFileSyncSpy.args.some((a: any[]) => a[0].includes(f))).to.be.true;
+              });
+            });
           });
         });
 
