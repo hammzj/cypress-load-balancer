@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs, { existsSync } from "node:fs";
 import { globSync } from "glob";
 import { LoadBalancingMap } from "../../load.balancing.map";
 import { debug } from "../../helpers";
@@ -22,6 +22,7 @@ export default {
           alias: "F",
           description: "A list of other files to load and merge back to the original",
           type: "array",
+          coerce: (files: string[]) => files.filter((f) => existsSync(f)),
           default: []
         })
         .option("glob", {
