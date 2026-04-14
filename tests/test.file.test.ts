@@ -38,6 +38,11 @@ describe("TestFile", function () {
     expect(tf.internalPath).to.equal(`tests/browser/foo.test.js`);
   });
 
+  it("can determine if the test is a new file", () => {
+    expect(new TestFile("test-a.js").isNewFile()).to.be.true;
+    expect(new TestFile("test-b.js", [100]).isNewFile()).to.be.false;
+  });
+
   context("systemPath", () => {
     it("can convert to relative Windows path on Windows systems", () => {
       const fakeCwd = `B:\\GitHub\\Projects\\test-repo`;
