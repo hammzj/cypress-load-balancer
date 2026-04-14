@@ -504,7 +504,7 @@ manually.
 
 ### Creating a hybrid package for ESM and CommonJS
 
-See https://www.embedthis.com/blog/sensedeep/how-to-create-single-source-npm-module.html.
+See https://sensedeep.medium.com/how-to-create-a-hybrid-npm-module-for-esm-and-commonjs-7e0d337ebb89?source=post_page-----6dd6be922063----3-------------------------------.
 
 _To be incredibly honest, I would not have been able to do this myself without the help from above. Huge thanks to the
 authors._
