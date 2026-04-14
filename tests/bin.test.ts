@@ -28,8 +28,10 @@ describe("Executables", function () {
   });
 
   beforeEach(function () {
-    fs.rmSync(".cypress_load_balancer", { recursive: true });
-    fs.mkdirSync(".cypress_load_balancer");
+    if (fs.existsSync(".cypress_load_balancer")) {
+      fs.rmSync(".cypress_load_balancer", { recursive: true });
+      fs.mkdirSync(".cypress_load_balancer");
+    }
 
     this.processPlatformStub = sandbox.stub(process, "platform").value("linux");
     this.processCwdStub = sandbox.stub(process, "cwd").returns(`/usr/docs/test-repo/`);
