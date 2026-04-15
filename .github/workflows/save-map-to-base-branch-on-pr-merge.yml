@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - run: yarn install && yarn build
+      - run: npm ci && npm run build
 
       # Until I can figure out a better way to access cache on head branch, we will need to download it as an artifact
       #      - name: Restore cached load-balancing map on head branch

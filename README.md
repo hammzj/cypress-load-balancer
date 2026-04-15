@@ -170,7 +170,7 @@ cases, you should use the command below to accurately collect all parallelized m
 merging:
 
 ```shell
-npx cypress-load-balancer -G "./.cypress_load_balancer/**/spec-map-*.json" --rm
+npx cypress-load-balancer merge -G "./.cypress_load_balancer/**/spec-map-*.json" --rm
 ```
 
 ### Using a different algorithm
@@ -498,13 +498,13 @@ manually.
 ### Manually
 
 - Increment the version in the `package.json` according to [semantic versions](https://semver.org/)
-- `yarn run build`
+- `npm run build`
 - `npm publish`
 - Login to NPM with an OTP token if asked, and the process should upload the new version to https://www.npmjs.com.
 
 ### Creating a hybrid package for ESM and CommonJS
 
-See https://www.embedthis.com/blog/sensedeep/how-to-create-single-source-npm-module.html.
+See https://sensedeep.medium.com/how-to-create-a-hybrid-npm-module-for-esm-and-commonjs-7e0d337ebb89?source=post_page-----6dd6be922063----3-------------------------------.
 
 _To be incredibly honest, I would not have been able to do this myself without the help from above. Huge thanks to the
 authors._

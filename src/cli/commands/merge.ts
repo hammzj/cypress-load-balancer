@@ -1,9 +1,7 @@
-import fs from "node:fs";
+import fs, { existsSync } from "node:fs";
 import { globSync } from "glob";
-import utils from "../../utils";
+import { LoadBalancingMap } from "../../load.balancing.map";
 import { debug } from "../../helpers";
-import mergeLoadBalancingMapFiles from "../../merge";
-import { LoadBalancingMap } from "../../types";
 
 export default {
   command: "merge",
@@ -18,12 +16,13 @@ export default {
             `The JSON file path of the original load balancing map into which to merge other files.\n` +
             `Defaulted to exist within the current working directory at "./cypress_load_balancer/spec-map.json"`,
           type: "string",
-          default: utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH
+          default: LoadBalancingMap.MAIN_MAP_PATH
         })
         .option("files", {
           alias: "F",
           description: "A list of other files to load and merge back to the original",
           type: "array",
+          coerce: (files: string[]) => files.filter((f) => existsSync(f)),
           default: []
         })
         .option("glob", {
@@ -66,13 +65,6 @@ export default {
   },
   //@ts-expect-error Need to fix type
   handler: function (argv) {
-    const loadFile = (fileName: string) => {
-      const data = JSON.parse(fs.readFileSync(fileName).toString());
-      others.push(data);
-    };
-    const orig = JSON.parse(fs.readFileSync(argv.original).toString());
-    const others: LoadBalancingMap[] = [];
-
     const fileNames = [
       //Collect data from files found by glob
       globSync(argv.glob, { dot: true, absolute: true, ignore: argv.original }),
@@ -80,13 +72,28 @@ export default {
       argv.files
     ].flat();
 
-    fileNames.map(loadFile);
+    const orig = new LoadBalancingMap(argv.original);
+    const others: LoadBalancingMap[] = fileNames.map((f) => new LoadBalancingMap(f));
 
-    debug("spec-maps to merge to original: %o", others);
+    debug("spec-map file names to use: %o", fileNames);
+    debug("files found: %d", others.length);
+
+    if (others.length !== fileNames.length) {
+      debug(
+        "WARNING: less files were found than the file names provided! Maps count: %d; File names count: %d",
+        others.length,
+        fileNames.length
+      );
+    }
+
     if (others.length > 0) {
-      const merged = mergeLoadBalancingMapFiles(orig, others);
-      utils.saveMapFile(merged, argv.output);
-      console.log("cypress-load-balancer", "map merge complete");
+      orig.mergeMaps(others);
+      orig.saveMapFile(argv.output);
+      console.log(
+        "cypress-load-balancer",
+        "map merge complete with output to ",
+        argv.output || LoadBalancingMap.MAIN_MAP_PATH
+      );
 
       if (argv.removeExtraMaps) {
         fileNames.map((f) => {

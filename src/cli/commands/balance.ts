@@ -1,13 +1,15 @@
+//TODO: replace performLoadBalancing with correct commands
+
 //TODO: this has been deprecated. It will eventually be replaced with a "demo" command
 // to see the outputs and timings before actually running Cypress.
 //eslint-disable @typescript-eslint/no-explicit-any
 
 // @ts-expect-error There are no types for this package
 import findCypressSpecs from "find-cypress-specs";
-import performLoadBalancing from "../../loadBalancer";
-import { Runners, TestingType } from "../../types";
+import { LoadBalancer } from "../../load.balancer";
 import { debug } from "../../helpers";
 import { GetSpecsError } from "../errors";
+import { Runners, TestingType } from "../../types";
 
 type FormatOutputOption = "spec" | "string" | "newline";
 
@@ -45,7 +47,7 @@ export default {
         .option("algorithm", {
           alias: "a",
           type: "string",
-          choices: ["weighted-largest", "round-robin"],
+          choices: ["weighted-largest", "round-robin", "file-name"],
           default: "weighted-largest",
           description:
             "The algorithm to use for load balancing" +
@@ -124,13 +126,10 @@ export default {
     }
 
     debug("CLI arguments: %o", argv);
-
-    const output: Runners | string[] = performLoadBalancing(
-      argv.runners,
-      testingType as TestingType,
-      [...new Set(files)],
-      argv.algorithm
-    );
+    const loadBalancer = new LoadBalancer(argv.algorithm);
+    const output: Runners | string[] = loadBalancer.performLoadBalancing(argv.runners, testingType as TestingType, [
+      ...new Set(files)
+    ]);
 
     argv.output =
       argv.format === "newline" ? JSON.stringify(output, null, 2) : JSON.stringify(formatOutput(output, argv.format));

@@ -12,9 +12,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: |
-          yarn install
-          yarn run dev:check
-          yarn run dev:check:tests
+          npm ci
+          npm run dev:check
+          npm run dev:check:tests
 
   lint:
     name: Lint
@@ -25,5 +25,5 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: |
-          yarn install
-          yarn run dev:lint
+          npm ci
+          npm run dev:lint

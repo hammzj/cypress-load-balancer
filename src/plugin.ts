@@ -1,32 +1,31 @@
 import fs from "node:fs";
-import utils from "./utils";
+import * as os from "node:os";
+import path from "path";
 // @ts-expect-error Does not have typings
 import { getSpecs } from "find-cypress-specs";
-import { debug } from "./helpers";
-import { LoadBalancingMap, TestingType } from "./types";
-import { performLoadBalancing } from "./";
-import path from "path";
-import * as os from "node:os";
-import Utils from "./utils";
+import { LoadBalancer } from "./load.balancer";
+import { LoadBalancingMap } from "./load.balancing.map";
+import { debug, warn } from "./helpers";
+import { TestingType } from "./types";
 
 //Thanks to Gleb Bahmutov with cypress-split -- this works very well
 //@see https://github.com/bahmutov/cypress-split for inspiration
 const createEmptyFileForEmptyRunner = (runnerIndex: number, runnerCount: number) => {
-  const emptyFilename = path.resolve(__dirname, Utils.EMPTY_FILE_NAME);
-
   //Make the runnerIndex match the user input
   const userInputtedRunnerIndex = runnerIndex + 1;
-  const tempFileNameToUse = path.join(os.tmpdir(), `clb-empty-${userInputtedRunnerIndex}-${runnerCount}.cy.js`);
-  fs.copyFileSync(emptyFilename, tempFileNameToUse);
 
-  if (!process.env.CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS) {
-    console.warn(
-      "Runner %d/%d is empty! Running an empty spec instead to prevent Cypress producing an error.",
-      userInputtedRunnerIndex,
-      runnerCount
-    );
-  }
+  const emptyFilename = path.resolve(__dirname, LoadBalancingMap.EMPTY_FILE_NAME);
+  const tempFileNameToUse = path.join(os.tmpdir(), `clb-empty-${userInputtedRunnerIndex}-${runnerCount}.cy.js`);
+
+  fs.copyFileSync(emptyFilename, tempFileNameToUse);
   debug("Empty file created for runner %d/%d: %s", userInputtedRunnerIndex, runnerCount, tempFileNameToUse);
+
+  warn(
+    "Runner %d/%d is empty! Running an empty spec instead to prevent Cypress producing an error.",
+    userInputtedRunnerIndex,
+    runnerCount
+  );
+
   return tempFileNameToUse;
 };
 
@@ -77,6 +76,7 @@ export default function addCypressLoadBalancerPlugin(
   //Only register the plugin and hooks if it has a runner declared
   if (hasRunner) {
     debug("Runner declared so registering plugin: %s", config.env.runner);
+
     const {
       runner,
       cypressLoadBalancerSkipResults,
@@ -84,6 +84,7 @@ export default function addCypressLoadBalancerPlugin(
       CYPRESS_LOAD_BALANCER_DISABLE_WARNINGS,
       CYPRESS_LOAD_BALANCER_MAX_DURATIONS_ALLOWED
     } = getAllEnvVariables(config);
+
     const [runnerIndex, runnerCount] = getRunnerArgs(config.env.runner);
 
     on("after:run", (results: CypressCommandLine.CypressRunResult | CypressCommandLine.CypressFailedRunResult) => {
@@ -96,16 +97,14 @@ export default function addCypressLoadBalancerPlugin(
       const cypressRunResult = results as CypressCommandLine.CypressRunResult;
       const hasOnlyEmptyFile =
         cypressRunResult.runs.length === 1 &&
-        cypressRunResult.runs.some((r) => {
-          return r.spec.relative.match(Utils.EMPTY_FILE_NAME_REGEXP);
-        });
+        cypressRunResult.runs.some((r) => r.spec.relative.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP));
 
       //The Cucumber preprocessor MUST be registered BEFORE this plugin in the config file
       //Don't run when if it is a Cucumber dry run
       const isCucumberDryRun =
         //AWFUL but only way to detect cross-plugin behavior, since "cypress_cucumber_preprocessor" injects keys into the env
-        Object.keys(config.env || {}).some((k) => k.includes("cypress_cucumber_preprocessor")) != null &&
-        config.env?.dryRun == true;
+        config.env?.dryRun == true &&
+        Object.keys(config.env || {}).some((k) => k.includes("cypress_cucumber_preprocessor")) != null;
 
       //Skip updating results for any of these reasons
       if (cypressLoadBalancerSkipResults || hasOnlyEmptyFile || isCucumberDryRun) {
@@ -114,38 +113,35 @@ export default function addCypressLoadBalancerPlugin(
           hasOnlyEmptyFile,
           isCucumberDryRun
         });
+
         return;
       }
 
       debug("Updating file statistics for runner %s", runner);
 
-      //Prep load balancing file if not existing and read it
-      utils.initializeLoadBalancingFiles();
+      //If there is only 1 runner, then set as undefined so it saves to `spec-map.json` instead
+      const specMapFileName = runnerCount === 1 ? undefined : `spec-map-${config.env.runner.replace("/", "-")}.json`;
 
-      //TODO: use stream for map
-      const loadBalancingMap = JSON.parse(
-        fs.readFileSync(utils.MAIN_LOAD_BALANCING_MAP_FILE_PATH).toString()
-      ) as LoadBalancingMap;
+      //copy base spec-map to use for updates from parallelized runner
+      const loadBalancingMapForRunner = new LoadBalancingMap();
+      //Safety check -- should do nothing
+      loadBalancingMapForRunner.initializeSpecMapFile();
 
       for (const run of cypressRunResult.runs) {
         const fileName = run.spec.relative;
 
         //This line should never be true, but is here just-in-case
         //We should never save the results of empty files generated from this process
-        if (fileName.match(Utils.EMPTY_FILE_NAME_REGEXP)) {
-          return;
-        }
-
-        utils.createNewEntry(loadBalancingMap, testingType, fileName);
-        utils.updateFileStats(loadBalancingMap, testingType, fileName, run.stats.duration);
+        if (fileName.match(LoadBalancingMap.EMPTY_FILE_NAME_REGEXP)) return;
+        loadBalancingMapForRunner.addTestFileEntry(testingType, fileName);
+        loadBalancingMapForRunner.updateTestFileEntry(testingType, fileName, [run.stats.duration as number]);
       }
 
-      //Overwrite load balancing file for runner
-      //If there is only 1 runner, then set as undefined so it saves to `spec-map.json` instead
-      const fileNameForRunner = runnerCount === 1 ? undefined : `spec-map-${config.env.runner.replace("/", "-")}.json`;
-      utils.saveMapFile(loadBalancingMap, fileNameForRunner);
+      //Save with newly added data
+      loadBalancingMapForRunner.saveMapFile(specMapFileName);
+
       debug("%s Saved load balancing map with new file stats for runner %s", "Plugin", runner);
-      debug("Load balancing map name: %s", fileNameForRunner);
+      debug("Load balancing map file name: %s", specMapFileName);
       debug("Cypress Load Balancer after:run event finished");
     });
 
@@ -161,15 +157,13 @@ export default function addCypressLoadBalancerPlugin(
     }
 
     const filePaths = getSpecs({ ...config }, testingType);
-    const runners = performLoadBalancing(
-      runnerCount,
-      testingType,
-      filePaths,
-      cypressLoadBalancerAlgorithm || "weighted-largest"
-    );
+    const loadBalancer = new LoadBalancer(cypressLoadBalancerAlgorithm);
+
+    const runners = loadBalancer.performLoadBalancing(runnerCount, testingType, filePaths);
 
     const currentRunner = runners[runnerIndex];
     const isCurrentRunnerFilePatternEmpty = currentRunner == null || currentRunner.length === 0;
+
     config.specPattern = isCurrentRunnerFilePatternEmpty
       ? [createEmptyFileForEmptyRunner(runnerIndex, runnerCount)]
       : currentRunner;

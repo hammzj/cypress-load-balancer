@@ -63,8 +63,8 @@ jobs:
       - name: Initialize map if not present
         if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
         run: |
-          yarn install
-          yarn build
+          npm ci
+          npm run build
           npx cypress-load-balancer initialize
 
       - name: Cache "ORIGINAL" map for all future run attempts on cache miss
@@ -83,11 +83,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      # "yarn build" is only needed for this project to build the CLI ! It shouldn't be required in other projects as the CLI scripts should be installed normally
+      # "npm run build" is only needed for this project to build the CLI ! It shouldn't be required in other projects as the CLI scripts should be installed normally
       - name: Install dependencies
         run: |
-          yarn install
-          yarn build
+          npm ci
+          npm run build
 
       - id: generate-runners
         run: npx cypress-load-balancer generate-runners ${{ inputs.runner_count || env.runner_count }} --gha
@@ -143,7 +143,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - run: yarn install && yarn build
+      - run: npm ci && npm run build
 
       - name: Restore "ORIGINAL" load-balancing map for this run attempt
         uses: actions/cache/restore@v4
