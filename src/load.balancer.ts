@@ -9,10 +9,10 @@ function filterOutEmptyArrays<T>(arr: T[]): T[] {
 }
 
 export class LoadBalancer {
-  private mainLoadBalancingMap: LoadBalancingMap;
+  private loadBalancingMap: LoadBalancingMap;
 
   constructor(private algorithm: LoadBalancingAlgorithm = "weighted-largest") {
-    this.mainLoadBalancingMap = new LoadBalancingMap();
+    this.loadBalancingMap = new LoadBalancingMap();
   }
 
   public performLoadBalancing(runnerCount: number, testingType: TestingType, inputFilePaths: string[]): Runners {
@@ -23,9 +23,9 @@ export class LoadBalancer {
     debug(`Testing Type: %s`, testingType);
     debug("Absolute file paths provided: %o", inputFilePaths);
 
-    this.mainLoadBalancingMap.prepareForLoadBalancing(testingType, inputFilePaths);
+    this.loadBalancingMap.prepareForLoadBalancing(testingType, inputFilePaths);
 
-    const filteredTestFiles = this.mainLoadBalancingMap.getTestFiles(testingType, inputFilePaths);
+    const filteredTestFiles = this.loadBalancingMap.getTestFiles(testingType, inputFilePaths);
 
     let testSets: TestSets = [];
 
@@ -48,13 +48,9 @@ export class LoadBalancer {
         throw Error("Algorithm not known for " + this.algorithm);
     }
 
-    const runners = this.convertTestSetsToRunners(testSets);
+    const runners = testSets.map((ts) => ts.map((f) => f.systemPath));
     debug("Runners: %O", runners);
     return runners;
-  }
-
-  private convertTestSetsToRunners(testSets: TestSets): Runners {
-    return testSets.map((ts) => ts.map((f) => f.systemPath));
   }
 
   /**
@@ -71,20 +67,10 @@ export class LoadBalancer {
    */
   private balanceByFileName(runnerCount: number, testFiles: TestFile[]): TestSets {
     const testSets: TestSets = [];
-    const systemPaths = testFiles.map((tf) => tf.systemPath);
-
-    debug("filePaths unsorted: %s", systemPaths);
-    const sortedTestFiles = testFiles.sort((a, b) =>
-      a.systemPath.localeCompare(b.systemPath, undefined, { sensitivity: "base" })
-    );
-    debug(
-      "filePaths sorted ascending: %s",
-      sortedTestFiles.map((stf) => stf.systemPath)
-    );
-
+    testFiles.sort((a, b) => a.systemPath.localeCompare(b.systemPath, undefined, { sensitivity: "base" }));
     for (let i = runnerCount; i > 0; i--) {
-      const spliceCount = Math.ceil(sortedTestFiles.length / i);
-      testSets.push(sortedTestFiles.splice(0, spliceCount));
+      const spliceCount = Math.ceil(testFiles.length / i);
+      testSets.push(testFiles.splice(0, spliceCount));
     }
     return testSets;
   }
@@ -122,9 +108,9 @@ export class LoadBalancer {
    * **Tradeoffs**: Runner times are more uniform, but there could be a larger set of slow runners overall. Could be a slow O-time and memory heavy; has not been calculated.
    *
    * @param runnerCount {number}
-   * @param testFilesToRun {TestFile[]}
+   * @param testFiles {TestFile[]}
    */
-  private balanceByWeightedLargestRunner(runnerCount: number, testFilesToRun: TestFile[]): TestSets {
+  private balanceByWeightedLargestRunner(runnerCount: number, testFiles: TestFile[]): TestSets {
     const sum = (arr: number[]): number => {
       return arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
     };
@@ -132,15 +118,14 @@ export class LoadBalancer {
     const addHighestFileToTestSet = (testSet: TestFile[]) => {
       const testFile = sortedTestFiles.shift();
       if (testFile == null) {
-        debug("No more files in sortedFilePaths to remove, %o", sortedTestFiles);
+        debug("No more files");
         return;
       }
       testSet.push(testFile);
     };
 
-    //TODO: change to priority queue based on median time descending
     //Sort descending order by median runtime
-    const sortedTestFiles: TestFile[] = testFilesToRun.toSorted(
+    const sortedTestFiles: TestFile[] = testFiles.toSorted(
       (a: TestFile, b: TestFile) => getTotalTime([b]) - getTotalTime([a])
     );
 
@@ -149,51 +134,47 @@ export class LoadBalancer {
     //Splice array from files without durations to be handled later
     const indexOfNewFile = sortedTestFiles.findIndex((tf) => tf.isNewFile());
     const brandNewFiles = indexOfNewFile > -1 ? sortedTestFiles.splice(indexOfNewFile) : [];
-
-    // Initialize each runner empty
-    let testSets: TestSets = Array.from({ length: runnerCount }, () => []);
+    const testSets: TestSets = Array.from({ length: runnerCount }, () => []);
 
     //Debugging purposes only
     let currentIteration = 0;
+
     //This could be done more efficiently by using array indices alongside an array of every test sets' total time,
     // instead of resorting each iteration.
-    sortTestSets: do {
+    performIteration: do {
       debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
       if (sortedTestFiles.length === 0) break;
 
-      //Sort runners from smallest to highest runtime
-      const areAllTestSetsEqualInRunTime = testSets.every((ts) => getTotalTime(ts) === getTotalTime(testSets[0]));
-      if (areAllTestSetsEqualInRunTime) {
-        //When all runners are equal in time, pop out the file with the next highest runtime for each runner
-        //This will prevent a deadlock state while also keeping files evenly spread amongst runners while still balanced
+      //When all runners are equal in time, pop out the file with the next highest runtime for each runner
+      //This will prevent a deadlock state while also keeping files evenly spread amongst runners while still balanced
+      if (testSets.every((ts) => getTotalTime(ts) === getTotalTime(testSets[0]))) {
         testSets.map(addHighestFileToTestSet);
       }
 
-      //Sort runners highest to lowest runtime
-      testSets = testSets.sort((a, b) => getTotalTime(a) - getTotalTime(b));
-
       //Get the highest runner runtime of this iteration to compare against the other smaller runners
+      testSets.sort((a, b) => getTotalTime(a) - getTotalTime(b));
       const highestRunTime = getTotalTime(testSets[testSets.length - 1]);
 
       debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, testSets);
       debug("Current highest runtime: %d", highestRunTime);
 
+      /*
+      For each test set besides the largest,
+      Put a file into each one, starting from the smallest.
+      Repeat until there are no more files, or if rebalancing needs to occur.
+       */
       for (let i = 0; i <= testSets.length - 2; i++) {
-        if (sortedTestFiles.length === 0) break sortTestSets;
-        const currentTestSet = testSets[i];
-        const currentTestSetRunTime = getTotalTime(currentTestSet);
+        if (sortedTestFiles.length === 0) break performIteration;
 
-        if (currentTestSetRunTime >= highestRunTime) continue;
+        const currentTestSet = testSets[i];
+        if (getTotalTime(currentTestSet) >= highestRunTime) continue;
         addHighestFileToTestSet(currentTestSet);
       }
     } while (sortedTestFiles.length > 0);
 
     if (brandNewFiles.length > 0) {
-      debug("Handling for %d new files added", brandNewFiles.length);
-      const testSetsForNewFiles = this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles);
-      for (let i = 0; i <= testSetsForNewFiles.length - 1; i++) {
-        testSets[i] = [...testSets[i], ...testSetsForNewFiles[i]];
-      }
+      debug("Handling for %d new files", brandNewFiles.length);
+      this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles).map((ts, i) => testSets[i].push(...ts));
     }
 
     debug(`%s Total iterations: %d`, `weighted-largest`, currentIteration);
@@ -216,7 +197,6 @@ export class LoadBalancer {
       .toSorted((a: TestFile[], b: TestFile[]) => getTotalTime(b) - getTotalTime(a));
   }
 
-  //TODO: this is not very efficient but can be improved.
   /**
    * Basic "round-robin" approach:
    * - Create X buckets based on the `runnerCount`.
@@ -230,14 +210,11 @@ export class LoadBalancer {
    * **Tradeoffs**: There will be outliers between the longest running job and the slowest.
    *
    * @param runnerCount {number}
-   * @param testFilesToRun {TestFile[]}
+   * @param testFiles {TestFile[]}
    */
-  balanceByMatchingArrayIndices(runnerCount: number, testFilesToRun: TestFile[]): TestSets {
+  balanceByMatchingArrayIndices(runnerCount: number, testFiles: TestFile[]): TestSets {
     const testSets: TestSets = Array.from({ length: runnerCount }, () => []);
-    testFilesToRun
-      //Sort descending by median runtime
-      .toSorted((a, b) => b.getMedian() - a.getMedian())
-      .map((tf, i) => testSets[i % testSets.length].push(tf));
+    testFiles.toSorted((a, b) => b.getMedian() - a.getMedian()).map((tf, i) => testSets[i % testSets.length].push(tf));
 
     debug("%s Completed load balancing algorithm", "round-robin");
     return testSets;
