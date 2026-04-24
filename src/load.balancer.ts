@@ -115,18 +115,19 @@ export class LoadBalancer {
       return arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
     };
     const getTotalTime = (testFiles: TestFile[]) => sum(testFiles.map((tf) => tf.getMedian()));
-    const addHighestFileToTestSet = (testSet: TestFile[]) => {
+    const addHighestFileToTestSet = (testSetIndex: number) => {
       const testFile = sortedTestFiles.shift();
       if (testFile == null) {
         debug("No more files");
         return;
       }
-      testSet.push(testFile);
+      testSets[i].push(testFile);
+      testSetTimings[i] += testFile.getMedian();
     };
 
     //Sort descending order by median runtime
     const sortedTestFiles: TestFile[] = testFiles.toSorted(
-      (a: TestFile, b: TestFile) => getTotalTime([b]) - getTotalTime([a])
+      (a: TestFile, b: TestFile) => b.getMedian() - a.getMedian())
     );
 
     if (runnerCount === 1) return [sortedTestFiles];
@@ -135,6 +136,8 @@ export class LoadBalancer {
     const indexOfNewFile = sortedTestFiles.findIndex((tf) => tf.isNewFile());
     const brandNewFiles = indexOfNewFile > -1 ? sortedTestFiles.splice(indexOfNewFile) : [];
     const testSets: TestSets = Array.from({ length: runnerCount }, () => []);
+    const testSetTimings: number[] = Array.from({ length: runnerCount }, () => 0);
+    let highestIndex = 0;
 
     //Debugging purposes only
     let currentIteration = 0;
@@ -147,28 +150,25 @@ export class LoadBalancer {
 
       //When all runners are equal in time, pop out the file with the next highest runtime for each runner
       //This will prevent a deadlock state while also keeping files evenly spread amongst runners while still balanced
-      if (testSets.every((ts) => getTotalTime(ts) === getTotalTime(testSets[0]))) {
-        testSets.map(addHighestFileToTestSet);
+      if (testSetTimings.every((t) => t === testSetTimings[0])) {
+        testSets.map((_, i) => addHighestFileToTestSet(i));
       }
 
-      //Get the highest runner runtime of this iteration to compare against the other smaller runners
-      testSets.sort((a, b) => getTotalTime(a) - getTotalTime(b));
-      const highestRunTime = getTotalTime(testSets[testSets.length - 1]);
+      highestIndex = testSetTimings.indexOf(Math.Max(...testSetTimings));
 
       debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, testSets);
-      debug("Current highest runtime: %d", highestRunTime);
+      debug("Current highest runtime: %d", testSetTimings[i]);
 
       /*
       For each test set besides the largest,
       Put a file into each one, starting from the smallest.
       Repeat until there are no more files, or if rebalancing needs to occur.
        */
-      for (let i = 0; i <= testSets.length - 2; i++) {
+      for (let i = 0; i <= testSets.length - 1; i++) {
         if (sortedTestFiles.length === 0) break performIteration;
-
-        const currentTestSet = testSets[i];
-        if (getTotalTime(currentTestSet) >= highestRunTime) continue;
-        addHighestFileToTestSet(currentTestSet);
+        if (i === highestIndex) continue;
+        addHighestFileToTestSet(i);
+        if (testSetTimings[i] > testSetTimings[highestIndex]) highestIndex = i
       }
     } while (sortedTestFiles.length > 0);
 
@@ -181,7 +181,7 @@ export class LoadBalancer {
     debug(
       `%s Total run time of each runner: %o`,
       `weighted-largest`,
-      testSets.map((r, i) => `Runner ${i}: ${getTotalTime(r)}`)
+      testSets.map((_, i) => `Runner ${i}: ${testSetTimings(i)}`)
     );
     debug(`%s Completed load balancing algorithm`, `weighted-largest`);
 
