@@ -197,14 +197,13 @@ describe("LoadBalancer", function () {
           const expectedRunTime = 200;
 
           expect(getTotalMedianTime(this.jsonFixture, "e2e", runners[0])).to.eq(expectedRunTime);
+
+          //200 median time
           for (const r of runners) assertTotalRunnerTime(this.jsonFixture, "e2e", r, expectedRunTime);
           expect(runners).to.have.deep.members([
-            //200 median time
-            ["100.1.test.ts", "75.3.test.ts", "10.1.test.ts", "10.2.test.ts", "5.1.test.ts"],
-            //200 median time
-            ["150.1.test.ts", "25.1.test.ts", "25.2.test.ts"],
-            //200 median time
-            ["75.1.test.ts", "75.2.test.ts", "50.1.test.ts"]
+            ["150.1.test.ts", "50.1.test.ts"],
+            ["100.1.test.ts", "75.3.test.ts", "25.2.test.ts"],
+            ["75.1.test.ts", "75.2.test.ts", "25.1.test.ts", "10.1.test.ts", "10.2.test.ts", "5.1.test.ts"]
           ]);
         });
 
@@ -217,10 +216,10 @@ describe("LoadBalancer", function () {
           expect(getTotalMedianTime(this.jsonFixture, "e2e", runners[0])).to.eq(expectedRunTime);
           for (const r of runners) assertTotalRunnerTime(this.jsonFixture, "e2e", r, expectedRunTime);
           expect(runners).to.have.deep.members([
+            ["150.1.test.ts"],
             ["100.1.test.ts", "25.1.test.ts", "10.1.test.ts", "10.2.test.ts", "5.1.test.ts"],
-            ["75.2.test.ts", "50.1.test.ts", "25.2.test.ts"],
-            ["75.1.test.ts", "75.3.test.ts"],
-            ["150.1.test.ts"]
+            ["75.1.test.ts", "50.1.test.ts", "25.2.test.ts"],
+            ["75.2.test.ts", "75.3.test.ts"]
           ]);
         });
 
@@ -234,11 +233,11 @@ describe("LoadBalancer", function () {
             //105 Total run time
             ["100.1.test.ts", "5.1.test.ts"],
             //100 Total run time
-            ["75.1.test.ts", "25.2.test.ts"],
+            ["75.3.test.ts", "25.2.test.ts"],
+            //85 Total run time
+            ["75.1.test.ts", "10.2.test.ts"],
             //85 Total run time
             ["75.2.test.ts", "10.1.test.ts"],
-            //85 Total run time
-            ["75.3.test.ts", "10.2.test.ts"],
             //75 Total run time
             ["50.1.test.ts", "25.1.test.ts"]
           ]);
@@ -336,17 +335,17 @@ describe("LoadBalancer", function () {
 
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", e2eFilePaths);
         expect(runners).to.have.deep.members([
+          ["150.1.test.ts", "50.1.test.ts", "newFile.1.test.ts", "newFile.4.test.ts"],
+          ["100.1.test.ts", "75.3.test.ts", "25.2.test.ts", "newFile.2.test.ts"],
           [
-            "100.1.test.ts",
-            "75.3.test.ts",
+            "75.1.test.ts",
+            "75.2.test.ts",
+            "25.1.test.ts",
             "10.1.test.ts",
             "10.2.test.ts",
             "5.1.test.ts",
-            "newFile.1.test.ts",
-            "newFile.4.test.ts"
-          ],
-          ["150.1.test.ts", "25.1.test.ts", "25.2.test.ts", "newFile.2.test.ts"],
-          ["75.1.test.ts", "75.2.test.ts", "50.1.test.ts", "newFile.3.test.ts"]
+            "newFile.3.test.ts"
+          ]
         ]);
       });
 
@@ -414,35 +413,6 @@ describe("LoadBalancer", function () {
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([601, 600, 600]);
           expect(runners).to.deep.equal([
             [
-              "90.1.test.ts",
-              "80.1.test.ts",
-              "70.1.test.ts",
-              "70.4.test.ts",
-              "60.5.test.ts",
-              "50.3.test.ts",
-              "50.6.test.ts",
-              "40.3.test.ts",
-              "30.1.test.ts",
-              "30.2.test.ts",
-              "20.1.test.ts",
-              "10.1.test.ts",
-              "1.1.test.ts"
-            ],
-            [
-              "90.2.test.ts",
-              "80.2.test.ts",
-              "70.2.test.ts",
-              "60.1.test.ts",
-              "60.3.test.ts",
-              "50.1.test.ts",
-              "50.4.test.ts",
-              "40.1.test.ts",
-              "40.4.test.ts",
-              "30.3.test.ts",
-              "20.2.test.ts",
-              "10.2.test.ts"
-            ],
-            [
               "100.1.test.ts",
               "80.3.test.ts",
               "70.3.test.ts",
@@ -452,8 +422,37 @@ describe("LoadBalancer", function () {
               "50.5.test.ts",
               "40.2.test.ts",
               "40.5.test.ts",
+              "30.3.test.ts",
+              "20.2.test.ts",
+              "1.1.test.ts"
+            ],
+            [
+              "90.1.test.ts",
+              "80.2.test.ts",
+              "70.2.test.ts",
+              "60.1.test.ts",
+              "60.3.test.ts",
+              "50.1.test.ts",
+              "50.4.test.ts",
+              "40.1.test.ts",
+              "40.4.test.ts",
+              "30.2.test.ts",
+              "20.1.test.ts",
+              "10.1.test.ts"
+            ],
+            [
+              "90.2.test.ts",
+              "80.1.test.ts",
+              "70.1.test.ts",
+              "70.4.test.ts",
+              "60.5.test.ts",
+              "50.3.test.ts",
+              "50.6.test.ts",
+              "40.3.test.ts",
+              "30.1.test.ts",
               "30.4.test.ts",
-              "20.3.test.ts"
+              "20.3.test.ts",
+              "10.2.test.ts"
             ]
           ]);
         });
@@ -485,6 +484,7 @@ describe("LoadBalancer", function () {
 
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([1000, 1000]);
           expect(runners).to.deep.equal([
+            ["1000.1.test.ts"],
             [
               "100.1.test.ts",
               "100.2.test.ts",
@@ -496,8 +496,7 @@ describe("LoadBalancer", function () {
               "100.8.test.ts",
               "100.9.test.ts",
               "100.10.test.ts"
-            ],
-            ["1000.1.test.ts"]
+            ]
           ]);
         });
 
@@ -515,6 +514,7 @@ describe("LoadBalancer", function () {
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(2, "e2e", this.filePaths);
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([1100, 1000]);
           expect(runners).to.deep.equal([
+            ["1000.1.test.ts", "100.11.test.ts"],
             [
               "100.1.test.ts",
               "100.2.test.ts",
@@ -525,10 +525,8 @@ describe("LoadBalancer", function () {
               "100.7.test.ts",
               "100.8.test.ts",
               "100.9.test.ts",
-              "100.10.test.ts",
-              "100.11.test.ts"
-            ],
-            ["1000.1.test.ts"]
+              "100.10.test.ts"
+            ]
           ]);
         });
 
@@ -543,9 +541,9 @@ describe("LoadBalancer", function () {
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", this.filePaths);
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([270, 270, 260]);
           expect(runners).to.have.deep.members([
-            ["100.1.test.ts", "50.1.test.ts", "50.2.test.ts", "50.5.test.ts", "20.1.test.ts"],
-            ["90.1.test.ts", "60.1.test.ts", "50.4.test.ts", "40.1.test.ts", "30.1.test.ts"],
-            ["80.1.test.ts", "70.1.test.ts", "50.3.test.ts", "50.6.test.ts", "10.1.test.ts"]
+            ["90.1.test.ts", "60.1.test.ts", "50.3.test.ts", "50.6.test.ts", "20.1.test.ts"],
+            ["80.1.test.ts", "70.1.test.ts", "50.4.test.ts", "40.1.test.ts", "30.1.test.ts"],
+            ["100.1.test.ts", "50.1.test.ts", "50.2.test.ts", "50.5.test.ts", "10.1.test.ts"]
           ]);
         });
 
@@ -560,17 +558,9 @@ describe("LoadBalancer", function () {
           const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", this.filePaths);
           expect(runners.map((r) => getTotalMedianTime(this.jsonFixture, "e2e", r))).to.deep.equal([300, 290, 290]);
           expect(runners).to.deep.equal([
-            [
-              "100.2.test.ts",
-              "90.1.test.ts",
-              "60.1.test.ts",
-              "20.1.test.ts",
-              "10.1.test.ts",
-              "10.3.test.ts",
-              "10.4.test.ts"
-            ],
-            ["100.3.test.ts", "80.1.test.ts", "70.1.test.ts", "30.1.test.ts", "10.2.test.ts"],
-            ["100.1.test.ts", "100.4.test.ts", "50.1.test.ts", "40.1.test.ts"]
+            ["100.1.test.ts", "100.4.test.ts", "50.1.test.ts", "40.1.test.ts", "10.4.test.ts"],
+            ["100.2.test.ts", "90.1.test.ts", "60.1.test.ts", "30.1.test.ts", "10.2.test.ts"],
+            ["100.3.test.ts", "80.1.test.ts", "70.1.test.ts", "20.1.test.ts", "10.1.test.ts", "10.3.test.ts"]
           ]);
         });
 
