@@ -158,11 +158,11 @@ export class LoadBalancer {
       Put a file into each one, starting from the smallest.
       Repeat until there are no more files, or if rebalancing needs to occur.
        */
-      for (let i = testSets.length - 1; i >= 0; i--) {
-        if (sortedTestFiles.length === 0) break performIteration;
-        if (i === hi || testSetTimings[i] >= testSetTimings[hi]) continue;
-        addHighestFileToTestSet(i);
-        if (testSetTimings[i] > testSetTimings[hi]) hi = i;
+      for (let i = testSets.length - 1; i >= 0 && sortedTestFiles.length > 0; i--) {
+        if (i !== hi && testSetTimings[i] < testSetTimings[hi]) {
+          addHighestFileToTestSet(i);
+          if (testSetTimings[i] > testSetTimings[hi]) hi = i;
+        }
       }
     } while (sortedTestFiles.length > 0);
 
