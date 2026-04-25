@@ -138,7 +138,7 @@ export class LoadBalancer {
     //Debugging purposes only
     let currentIteration = 0;
 
-    performIteration: do {
+    do {
       debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
       if (sortedTestFiles.length === 0) break;
 
