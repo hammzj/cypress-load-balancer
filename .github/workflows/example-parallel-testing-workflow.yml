@@ -49,7 +49,9 @@ jobs:
         id: attempt-cross-workflow-download
         uses: dawidd6/action-download-artifact@v8
         with:
-          ref: ${{ github.base_ref || github.ref_name || 'main' }}
+          branch: ${{ github.base_ref || github.ref_name || 'main' }}
+          # Optional, will use the specified branch. Defaults to all branches
+          branch: ${{github.branch || 'main' }}
           workflow: example-parallel-testing-workflow.yml
           name: cypress-load-balancer-map
           path: .cypress_load_balancer
