@@ -44,8 +44,21 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+
+      - name: Attempt to download from base-ref if not found
+        id: attempt-cross-workflow-download
+        uses: dawidd6/action-download-artifact@v8
+        with:
+          ref: ${{ github.base_ref || github.ref_name || 'main' }}
+          workflow: example-parallel-testing-workflow.yml
+          name: cypress-load-balancer-map
+          path: .cypress_load_balancer
+          workflow_conclusion: 'completed'
+          if_no_artifact_found: warn
+
       - name: Check if "ORIGINAL" map exists, and if not, restore cache of the map from previous workflow runs
         id: check-if-original-map-exists
+        if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: false
@@ -59,6 +72,7 @@ jobs:
           restore-keys: |
             cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref || 'main' }}
+
 
       - name: Initialize map if not present
         if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
