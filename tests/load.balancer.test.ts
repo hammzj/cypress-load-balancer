@@ -335,7 +335,7 @@ describe("LoadBalancer", function () {
 
         const runners = new LoadBalancer("weighted-largest").performLoadBalancing(3, "e2e", e2eFilePaths);
         expect(runners).to.have.deep.members([
-          ["150.1.test.ts", "50.1.test.ts", "newFile.3.test.ts"],
+          ["150.1.test.ts", "50.1.test.ts", "newFile.1.test.ts", "newFile.4.test.ts"],
           ["100.1.test.ts", "75.3.test.ts", "25.2.test.ts", "newFile.2.test.ts"],
           [
             "75.1.test.ts",
@@ -344,8 +344,7 @@ describe("LoadBalancer", function () {
             "10.1.test.ts",
             "10.2.test.ts",
             "5.1.test.ts",
-            "newFile.1.test.ts",
-            "newFile.4.test.ts"
+            "newFile.3.test.ts"
           ]
         ]);
       });

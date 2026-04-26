@@ -4,10 +4,6 @@ import { debug } from "./helpers";
 
 type TestSets = TestFile[][];
 
-function filterOutEmptyArrays<T>(arr: T[]): T[] {
-  return arr.filter((v) => v != null);
-}
-
 export class LoadBalancer {
   private loadBalancingMap: LoadBalancingMap;
 
@@ -169,11 +165,7 @@ export class LoadBalancer {
 
     if (brandNewFiles.length > 0) {
       debug("Handling for %d new files", brandNewFiles.length);
-      //This will have the same number of runners as well
-      //reverse so less files are placed in largest runners first
-      this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles)
-        .reverse()
-        .map((tfs, i) => getRunners()[i].push(...tfs));
+      this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles).map((tfs, i) => getRunners()[i].push(...tfs));
     }
 
     debug(`%s Total iterations: %d`, `weighted-largest`, currentIteration);
@@ -191,7 +183,10 @@ export class LoadBalancer {
      * This is to make sure if there is additional filtering that means less files than runners,
      * then the earlier runners will have files and the later runners are empty.
      */
-    return tuples.toSorted((a, b) => b[1] - a[1]).map((tu) => filterOutEmptyArrays(tu[0]));
+    return tuples
+      .filter(([tfs]) => tfs.map((v) => v != null))
+      .toSorted((a, b) => b[1] - a[1])
+      .map(([tfs]) => tfs);
   }
 
   /**
