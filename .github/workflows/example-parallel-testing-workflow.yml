@@ -46,7 +46,7 @@ jobs:
 
       - name: Check if "ORIGINAL" map exists, and if not, restore cache of the map from previous workflow runs
         id: check-if-original-map-exists
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           fail-on-cache-miss: false
           path: .cypress_load_balancer/spec-map.json
@@ -70,7 +70,7 @@ jobs:
 
       - name: Cache "ORIGINAL" map for all future run attempts on cache miss
         if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
           path: .cypress_load_balancer/spec-map.json
@@ -107,7 +107,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Restore "ORIGINAL" load-balancing map for this run attempt
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           fail-on-cache-miss: true
           path: .cypress_load_balancer/spec-map.json
@@ -147,7 +147,7 @@ jobs:
       - run: npm ci && npm run build
 
       - name: Restore "ORIGINAL" load-balancing map for this run attempt
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           fail-on-cache-miss: true
           path: .cypress_load_balancer/spec-map.json
@@ -165,7 +165,7 @@ jobs:
 
       - name: Save overwritten cached load-balancing map to workflow
         id: cache-save-load-balancing-map
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           # This saves to the workflow run.
           # To save to the base branch during pull requests, this needs to be uploaded on merge using a separate action.
