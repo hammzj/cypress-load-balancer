@@ -237,7 +237,7 @@ describe("addCypressLoadBalancerPlugin", function () {
               },
               "component"
             )
-          ).to.throw("nv.runner is incorrect! The runner index cannot be greater than the total runner count: 2/1");
+          ).to.throw("env.runner is incorrect! The runner index cannot be greater than the total runner count: 2/1");
         });
 
         const test_theRunnerIndexSpecifiesTheSpecsThatWillBeRunInTheCypressProcess = [
