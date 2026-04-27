@@ -39,14 +39,14 @@ jobs:
     name: Save the original map to cache to use on all future run attempts of this workflow
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Check if "ORIGINAL" map exists, and if not, restore cache of the map from previous workflow runs
         id: check-if-original-map-exists
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           fail-on-cache-miss: false
           path: .cypress_load_balancer/spec-map.json
@@ -59,6 +59,7 @@ jobs:
           restore-keys: |
             cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref || 'main' }}
+            cypress-load-balancer-map-main
 
       - name: Initialize map if not present
         if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
@@ -69,7 +70,7 @@ jobs:
 
       - name: Cache "ORIGINAL" map for all future run attempts on cache miss
         if: ${{ steps.check-if-original-map-exists.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
           path: .cypress_load_balancer/spec-map.json
@@ -79,8 +80,8 @@ jobs:
     outputs:
       runner-variables: ${{ steps.generate-runners.outputs.runner-variables }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
       # "npm run build" is only needed for this project to build the CLI ! It shouldn't be required in other projects as the CLI scripts should be installed normally
@@ -100,20 +101,20 @@ jobs:
       matrix:
         runner: ${{ fromJson(needs.generate_runner_variables.outputs.runner-variables) }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Restore "ORIGINAL" load-balancing map for this run attempt
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           fail-on-cache-miss: true
           path: .cypress_load_balancer/spec-map.json
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
 
       - name: Cypress e2e tests (${{ matrix.runner }})
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@v7
         with:
           browser: electron
           # Fix for https://github.com/cypress-io/github-action/issues/480
@@ -124,7 +125,7 @@ jobs:
 
       - name: Upload temp load balancer map
         if: (!cancelled())
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           # Artifacts cannot be saved with a forward slash ( / ), so using runner.name as it is unique
           name: spec-map-${{ runner.name }}
@@ -137,23 +138,23 @@ jobs:
     needs: [cypress_run_e2e]
     if: (!cancelled())
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - run: npm ci && npm run build
 
       - name: Restore "ORIGINAL" load-balancing map for this run attempt
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           fail-on-cache-miss: true
           path: .cypress_load_balancer/spec-map.json
           key: cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-${{ github.run_id }}-ORIGINAL
 
       - name: Download temp maps
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: spec-map-*
           path: temp
@@ -164,7 +165,7 @@ jobs:
 
       - name: Save overwritten cached load-balancing map to workflow
         id: cache-save-load-balancing-map
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           # This saves to the workflow run.
           # To save to the base branch during pull requests, this needs to be uploaded on merge using a separate action.
@@ -177,7 +178,7 @@ jobs:
       # That way, we can merge the source (head) branch's load balancer map to the target (base) branch.
       - name: Upload main load balancer map
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cypress-load-balancer-map
           path: .cypress_load_balancer/spec-map.json

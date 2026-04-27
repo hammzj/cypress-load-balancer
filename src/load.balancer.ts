@@ -4,10 +4,6 @@ import { debug } from "./helpers";
 
 type TestSets = TestFile[][];
 
-function filterOutEmptyArrays<T>(arr: T[]): T[] {
-  return arr.filter((v) => v != null);
-}
-
 export class LoadBalancer {
   private loadBalancingMap: LoadBalancingMap;
 
@@ -76,7 +72,6 @@ export class LoadBalancer {
   }
 
   /**
-   * @TODO: use a priority queue instead of constantly sorting
    * Attempts to get a uniform total run time between all runners by separating the longest-running tests
    * into their own runners first, and attempting to keep all other runners equal to or lower than its time.
    * If there are more tests than runners, then it will continually keep a check of the total run time of
@@ -89,99 +84,95 @@ export class LoadBalancer {
    * This algorithm involves making the slowest runners as fast as possible, or other runners equal to it
    *
    * Approach:
-   * - Initialize an array of X runners.
-   * - Sort the filePaths by their stats, from longest to shortest median time.
-   * - Record the highest median time as a temporary value of "highestRunnerTime".
+   * - Initialize X number of tuples, containing a list of files and their aggregate total timings, for each runner.
    * - This section is repeated:
-   * - RoundRobin: Pop out the top "X" times and put it into each runner as its starting value.
-   * - Balance By Highest RunTime: Take the next runner that has a total time lower than the "highestRunnerTime" and fill it with the smallest
-   * time values until it is greater than the "highestRunnerTime".
-   * - Re-record the highest time: Set the new "highestRunnerTime" if that runner has a larger time.
-   * - Move on to the next runner.
-   * - If there are more files left, then repeat against all runners, until there are no more times left to place into the runners.
-   *
+   * - RoundRobin: Pop out the top "X" files and put it into each tuple as its starting value. Add each timing to their aggregates as well.
+   * - Record the index of the tuple with the highest time as "hi".
+   * - Balance By Highest RunTime: For each tuples starting with the smallest, check if its timing is smaller than the largest, and if so, add a file to its array of test files.
+   * - Re-record the highest time: Set the new "hi" if the current tuple has a larger time.
+   * - Move to next runner.
+   * - If there are more files left, then repeat against all tuples, until there are no more left to place into the tuples.
+   * - Finally, return only the test file arrays, sorted from largest to smallest, with empties filtered out.
    *
    * **Use cases**: This should be the default approach, since most test executions
    * will need to wait for the longest test to complete in order to continue post-execution operations.
    * If all parallelized jobs are within the same time frame as the single longest test, then it should
    * still make the Cypress execution faster than the other algorithms.
-   * **Tradeoffs**: Runner times are more uniform, but there could be a larger set of slow runners overall. Could be a slow O-time and memory heavy; has not been calculated.
+   * **Tradeoffs**: Runner times are more uniform, but there could be a larger set of slow runners overall.
    *
    * @param runnerCount {number}
    * @param testFiles {TestFile[]}
    */
   private balanceByWeightedLargestRunner(runnerCount: number, testFiles: TestFile[]): TestSets {
-    const sum = (arr: number[]): number => {
-      return arr.filter((n) => !Number.isNaN(n) || n != null).reduce((acc, next) => acc + next, 0);
-    };
-    const getTotalTime = (testFiles: TestFile[]) => sum(testFiles.map((tf) => tf.getMedian()));
-    const addHighestFileToTestSet = (testSet: TestFile[]) => {
+    const addHighestFileToTestSet = (i: number) => {
       const testFile = sortedTestFiles.shift();
       if (testFile == null) {
         debug("No more files");
         return;
       }
-      testSet.push(testFile);
+      tuples[i][0].push(testFile);
+      tuples[i][1] += testFile.getMedian();
     };
 
     //Sort descending order by median runtime
-    const sortedTestFiles: TestFile[] = testFiles.toSorted(
-      (a: TestFile, b: TestFile) => getTotalTime([b]) - getTotalTime([a])
-    );
+    const sortedTestFiles: TestFile[] = testFiles.toSorted((a: TestFile, b: TestFile) => b.getMedian() - a.getMedian());
 
     if (runnerCount === 1) return [sortedTestFiles];
 
     //Splice array from files without durations to be handled later
     const indexOfNewFile = sortedTestFiles.findIndex((tf) => tf.isNewFile());
     const brandNewFiles = indexOfNewFile > -1 ? sortedTestFiles.splice(indexOfNewFile) : [];
-    const testSets: TestSets = Array.from({ length: runnerCount }, () => []);
+
+    //Tuples of test Files and their total aggregated file timings
+    const tuples = Array.from<number, [TestFile[], number]>({ length: runnerCount }, () => [[], 0]);
+    const getRunners = () => tuples.map(([tfs]) => tfs);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const getTimings = () => tuples.map(([_, timing]) => timing);
+
+    //Index of runner with highest timing ("highest index")
+    let hi = 0;
 
     //Debugging purposes only
     let currentIteration = 0;
 
-    //This could be done more efficiently by using array indices alongside an array of every test sets' total time,
-    // instead of resorting each iteration.
-    performIteration: do {
+    do {
       debug(`%s Current Iteration: %d`, `weighted-largest`, ++currentIteration);
       if (sortedTestFiles.length === 0) break;
 
       //When all runners are equal in time, pop out the file with the next highest runtime for each runner
       //This will prevent a deadlock state while also keeping files evenly spread amongst runners while still balanced
-      if (testSets.every((ts) => getTotalTime(ts) === getTotalTime(testSets[0]))) {
-        testSets.map(addHighestFileToTestSet);
-      }
 
-      //Get the highest runner runtime of this iteration to compare against the other smaller runners
-      testSets.sort((a, b) => getTotalTime(a) - getTotalTime(b));
-      const highestRunTime = getTotalTime(testSets[testSets.length - 1]);
+      const allEqualTimings = getTimings().every((t) => t === tuples[0][1]);
+      if (allEqualTimings) tuples.map((_, i) => addHighestFileToTestSet(i));
 
-      debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, testSets);
-      debug("Current highest runtime: %d", highestRunTime);
+      hi = getTimings().indexOf(Math.max(...getTimings()));
+
+      debug(`%s Sorted runner configurations for the current iteration: %o`, `weighted-largest`, getRunners());
+      debug("Current highest runtime: %d", tuples[hi][1]);
 
       /*
       For each test set besides the largest,
       Put a file into each one, starting from the smallest.
       Repeat until there are no more files, or if rebalancing needs to occur.
        */
-      for (let i = 0; i <= testSets.length - 2; i++) {
-        if (sortedTestFiles.length === 0) break performIteration;
-
-        const currentTestSet = testSets[i];
-        if (getTotalTime(currentTestSet) >= highestRunTime) continue;
-        addHighestFileToTestSet(currentTestSet);
+      for (let i = tuples.length - 1; i >= 0 && sortedTestFiles.length > 0; i--) {
+        if (i !== hi && getTimings()[i] < getTimings()[hi]) {
+          addHighestFileToTestSet(i);
+          if (getTimings()[i] > getTimings()[hi]) hi = i;
+        }
       }
     } while (sortedTestFiles.length > 0);
 
     if (brandNewFiles.length > 0) {
       debug("Handling for %d new files", brandNewFiles.length);
-      this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles).map((ts, i) => testSets[i].push(...ts));
+      this.balanceByMatchingArrayIndices(runnerCount, brandNewFiles).map((tfs, i) => getRunners()[i].push(...tfs));
     }
 
     debug(`%s Total iterations: %d`, `weighted-largest`, currentIteration);
     debug(
       `%s Total run time of each runner: %o`,
       `weighted-largest`,
-      testSets.map((r, i) => `Runner ${i}: ${getTotalTime(r)}`)
+      getTimings().map((timing, i) => `Runner ${i}: ${timing}`)
     );
     debug(`%s Completed load balancing algorithm`, `weighted-largest`);
 
@@ -192,9 +183,10 @@ export class LoadBalancer {
      * This is to make sure if there is additional filtering that means less files than runners,
      * then the earlier runners will have files and the later runners are empty.
      */
-    return testSets
-      .map(filterOutEmptyArrays<TestFile>)
-      .toSorted((a: TestFile[], b: TestFile[]) => getTotalTime(b) - getTotalTime(a));
+    return tuples
+      .filter(([tfs]) => tfs.map((v) => v != null))
+      .toSorted((a, b) => b[1] - a[1])
+      .map(([tfs]) => tfs);
   }
 
   /**
