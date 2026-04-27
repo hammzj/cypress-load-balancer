@@ -59,6 +59,7 @@ jobs:
           restore-keys: |
             cypress-load-balancer-map-${{ github.head_ref || github.ref_name }}-
             cypress-load-balancer-map-${{ github.base_ref || 'main' }}
+            cypress-load-balancer-map-main
 
       - name: Initialize map if not present
         if: ${{ hashFiles('.cypress_load_balancer/**/spec-map.json') == '' }}
