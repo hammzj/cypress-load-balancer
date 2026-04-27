@@ -20,9 +20,9 @@ jobs:
       - run: |
           echo PR #${{ github.event.number }} has been merged
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -79,7 +79,7 @@ jobs:
           path: .cypress_load_balancer/spec-map.json
           key: cypress-load-balancer-map-${{ github.base_ref }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cypress-load-balancer-map
           path: .cypress_load_balancer/spec-map.json
